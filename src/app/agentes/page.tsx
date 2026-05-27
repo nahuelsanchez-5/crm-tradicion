@@ -1,21 +1,37 @@
-import PageHeader from "@/components/PageHeader"
-import { Users } from "lucide-react"
+import { createServerClient } from "@/lib/supabase"
+import AgentesClient from "./AgentesClient"
 
-export default function AgentesPage() {
+const MES  = 5
+const ANIO = 2026
+
+export default async function AgentesPage() {
+  const supabase = createServerClient()
+
+  // Fetch agentes y planes del mes actual en paralelo
+  const [{ data: agentes }, { data: planes }] = await Promise.all([
+    supabase
+      .from("agentes")
+      .select("id, nombre, email, telefono, fecha_alta, fecha_baja, activo")
+      .order("nombre"),
+
+    supabase
+      .from("planes_crm")
+      .select("agente_id, tipo_plan, pagado")
+      .eq("mes", MES)
+      .eq("anio", ANIO),
+  ])
+
+  // Merge: agregar plan del mes a cada agente
+  const agentesConPlan = (agentes ?? []).map(a => ({
+    ...a,
+    plan: (planes ?? []).find(p => p.agente_id === a.id) ?? null,
+  }))
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <PageHeader title="Agentes" description="Gestión del equipo REMAX Tradición" />
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ textAlign: "center", color: "#94A3B8" }}>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "12px" }}>
-            <Users size={40} strokeWidth={1.5} />
-          </div>
-          <div style={{ fontSize: "16px", fontWeight: 700, color: "#64748B", marginBottom: "4px" }}>
-            Módulo Agentes
-          </div>
-          <div style={{ fontSize: "13px" }}>En construcción 🚧</div>
-        </div>
-      </div>
-    </div>
+    <AgentesClient
+      agentes={agentesConPlan}
+      mes={MES}
+      anio={ANIO}
+    />
   )
 }
