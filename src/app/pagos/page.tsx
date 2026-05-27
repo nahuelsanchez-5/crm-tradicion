@@ -1,21 +1,24 @@
-import PageHeader from "@/components/PageHeader"
-import { CreditCard } from "lucide-react"
+import { createServerClient } from "@/lib/supabase"
+import PagosClient, { PagoRow, AgenteSimple } from "./PagosClient"
 
-export default function PagosPage() {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <PageHeader title="Pagos" description="Control de planes CRM y deudas del equipo" />
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ textAlign: "center", color: "#94A3B8" }}>
-          <div style={{ display: "flex", justifyContent: "center", marginBottom: "12px" }}>
-            <CreditCard size={40} strokeWidth={1.5} />
-          </div>
-          <div style={{ fontSize: "16px", fontWeight: 700, color: "#64748B", marginBottom: "4px" }}>
-            Módulo Pagos
-          </div>
-          <div style={{ fontSize: "13px" }}>En construcción 🚧</div>
-        </div>
-      </div>
-    </div>
-  )
+export default async function PagosPage() {
+  const supabase = createServerClient()
+
+  const [{ data: pagosRaw }, { data: agentesRaw }] = await Promise.all([
+    supabase
+      .from("pagos")
+      .select("id, agente_id, fecha, concepto, monto_debe, monto_pagado, estado, agentes(nombre)")
+      .order("fecha", { ascending: false }),
+
+    supabase
+      .from("agentes")
+      .select("id, nombre")
+      .eq("activo", true)
+      .order("nombre"),
+  ])
+
+  const pagos   = ((pagosRaw  ?? []) as unknown) as PagoRow[]
+  const agentes = (agentesRaw ?? []) as AgenteSimple[]
+
+  return <PagosClient pagos={pagos} agentes={agentes} />
 }
