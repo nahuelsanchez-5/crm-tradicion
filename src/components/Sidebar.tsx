@@ -10,6 +10,7 @@ import {
   ClipboardList,
   Building2,
   FileText,
+  Settings,
   LucideIcon,
 } from "lucide-react"
 
@@ -29,7 +30,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/carteleria",  label: "Cartelería",   icon: MapPin,          group: "modulos" },
   { href: "/encuestas",   label: "Encuestas",    icon: ClipboardList,   group: "modulos" },
   { href: "/operaciones", label: "Operaciones",  icon: Building2,       group: "modulos" },
-  { href: "/facturacion", label: "Facturación",  icon: FileText,        group: "modulos" },
+  { href: "/facturacion",    label: "Facturación",  icon: FileText,  group: "modulos" },
+  { href: "/configuracion", label: "Configuración", icon: Settings,  group: "modulos" },
 ]
 
 export default function Sidebar() {
