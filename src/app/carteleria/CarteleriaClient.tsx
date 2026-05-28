@@ -3,48 +3,74 @@
 import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import KpiCard from "@/components/KpiCard"
-import { guardarCarteleria } from "./actions"
-import type { CarteleriaFormData } from "./actions"
-import { MapPin, TrendingUp, CheckCircle, X, Loader2 } from "lucide-react"
+import { crearCartel, editarCartel } from "./actions"
+import type { CartelFormData } from "./actions"
+import { MapPin, AlertTriangle, Award, X, Loader2, Plus, Search } from "lucide-react"
 
-// ── Constants ────────────────────────────────────────
-const MONTH_NAMES = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
+// ── Types ─────────────────────────────────────────────
+export interface CartelRow {
+  id:            string
+  numero:        number
+  direccion:     string
+  mlsId:         string
+  vencimiento:   string   // YYYY-MM-DD
+  diasRestantes: number
+  tipo:          string
+  agente:        string
+}
+
+interface ModalForm {
+  numero:      string
+  direccion:   string
+  mlsId:       string
+  vencimiento: string
+  tipo:        string
+  agente:      string
+}
+
+// ── Constants ─────────────────────────────────────────
+const TIPOS = ["Casa", "Terreno", "Local", "Departamento", "Campo", "Galpón"]
+
+// Fallback: nombres exactos del singleSelect de Airtable (usados si Supabase devuelve vacío)
+const AGENTES_AIRTABLE = [
+  "Aleli Portillo", "Anabella Yñiguez", "Analia Olivero",
+  "Cecilia Frigerio", "Clara Cabrera", "Erika Valoriani",
+  "Florencia Ciacovschi", "Jelena Capitanich", "Juanjo Alunni",
+  "Mabel Chamorro", "Marcela Matijasevich", "Mario Speroni",
+  "Mateo Feldmann", "Moyra Panzich", "Natalia Miño",
+  "Pedro Aleman", "Rocío Vildósola", "Romina Prieto",
+  "Romina Villaboa", "Sapo Pagano", "Silvana Ameri",
+  "Silvina Scordo", "Vanina Bravo",
 ]
-const ANIO      = 2026
-const OBJETIVO  = 95   // porcentaje objetivo de recuperación
 
-// ── Types ────────────────────────────────────────────
-export interface CarteleriaRow {
-  id:          string
-  mes:         number
-  anio:        number
-  entregados:  number
-  recuperados: number
+// ── Helpers ───────────────────────────────────────────
+function diasColor(d: number): string {
+  if (d > 30)  return "#059669"
+  if (d >= 10) return "#D97706"
+  return "#E11D48"
 }
 
-interface MesData {
-  mes:         number
-  nombre:      string
-  entregados:  number
-  recuperados: number
-  id:          string | null
-  isFuture:    boolean
+function diasBg(d: number): string {
+  if (d > 30)  return "#ECFDF5"
+  if (d >= 10) return "#FFFBEB"
+  return "#FFF1F2"
 }
 
-interface FormData {
-  entregados:  string
-  recuperados: string
+function fmtDate(iso: string): string {
+  if (!iso) return "—"
+  const p = iso.split("-")
+  return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : iso
 }
 
-// ── Helpers ──────────────────────────────────────────
-function pct(recuperados: number, entregados: number): number {
-  if (entregados <= 0) return 0
-  return Math.round((recuperados / entregados) * 100)
+// ── Shared styles ─────────────────────────────────────
+const inp: React.CSSProperties = {
+  width: "100%", padding: "9px 12px",
+  borderRadius: "8px", border: "1.5px solid #EAECF2",
+  fontSize: "13px", fontFamily: "inherit",
+  color: "#0F172A", outline: "none", background: "white",
+  boxSizing: "border-box",
 }
 
-// ── Sub-components ───────────────────────────────────
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: "14px" }}>
@@ -60,170 +86,139 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-const inp: React.CSSProperties = {
-  width: "100%", padding: "9px 12px",
-  borderRadius: "8px", border: "1.5px solid #EAECF2",
-  fontSize: "13px", fontFamily: "inherit",
-  color: "#0F172A", outline: "none", background: "white",
-  boxSizing: "border-box",
-}
-
-// ── Progress bar ─────────────────────────────────────
-function ProgressBar({ value, isFuture }: { value: number; isFuture: boolean }) {
-  const capped    = Math.min(value, 100)
-  const meets     = value >= OBJETIVO
-  const barColor  = isFuture ? "#CBD5E1" : meets ? "#059669" : "#E11D48"
-
-  return (
-    <div style={{ position: "relative" }}>
-      <div style={{
-        width: "100%", height: "8px", borderRadius: "4px",
-        background: "#F1F5F9", overflow: "hidden",
-      }}>
-        <div style={{
-          width: `${isFuture ? 0 : capped}%`,
-          height: "100%", borderRadius: "4px",
-          background: barColor,
-          transition: "width 0.4s ease",
-        }} />
-      </div>
-      {/* 95% marker */}
-      <div style={{
-        position: "absolute", top: "-4px",
-        left: `${OBJETIVO}%`, transform: "translateX(-1px)",
-        width: "2px", height: "16px",
-        background: "#94A3B8",
-      }} />
-    </div>
-  )
-}
-
-// ── Estado badge ──────────────────────────────────────
-function EstadoBadge({ p, isFuture, entregados }: { p: number; isFuture: boolean; entregados: number }) {
-  if (isFuture || entregados === 0) {
-    return (
-      <span style={{
-        padding: "2px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700,
-        background: "#F1F5F9", color: "#94A3B8",
-      }}>
-        Pendiente
-      </span>
-    )
-  }
-  if (p >= OBJETIVO) {
-    return (
-      <span style={{
-        padding: "2px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700,
-        background: "#ECFDF5", color: "#059669",
-      }}>
-        ✓ En objetivo
-      </span>
-    )
-  }
-  return (
-    <span style={{
-      padding: "2px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700,
-      background: "#FFF1F2", color: "#E11D48",
-    }}>
-      Bajo {OBJETIVO}%
-    </span>
-  )
-}
-
 // ═══════════════════════════════════════════════════════
 //  MAIN COMPONENT
 // ═══════════════════════════════════════════════════════
 interface Props {
-  rows: CarteleriaRow[]
+  carteles: CartelRow[]
+  agentes:  string[]       // de Supabase (fallback a AGENTES_AIRTABLE si vacío)
 }
 
-export default function CarteleriaClient({ rows }: Props) {
+const EMPTY_FORM: ModalForm = {
+  numero: "", direccion: "", mlsId: "", vencimiento: "", tipo: "", agente: "",
+}
+
+export default function CarteleriaClient({ carteles, agentes }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
-  const currentMonth = new Date().getMonth() + 1
+  // ── Filters ────────────────────────────────────────
+  const [busqueda,     setBusqueda]     = useState("")
+  const [filtroAgente, setFiltroAgente] = useState("")
+  const [filtroTipo,   setFiltroTipo]   = useState("")
 
-  const meses: MesData[] = useMemo(() => {
-    return MONTH_NAMES.map((nombre, idx) => {
-      const mes = idx + 1
-      const row = rows.find(r => r.mes === mes && r.anio === ANIO)
-      return {
-        mes,
-        nombre,
-        entregados:  row?.entregados  ?? 0,
-        recuperados: row?.recuperados ?? 0,
-        id:          row?.id          ?? null,
-        isFuture:    mes > currentMonth,
-      }
-    })
-  }, [rows, currentMonth])
+  // ── Modal ──────────────────────────────────────────
+  const [modalMode,   setModalMode]   = useState<"none" | "nuevo" | "editar">("none")
+  const [editTarget,  setEditTarget]  = useState<CartelRow | null>(null)
+  const [form,        setForm]        = useState<ModalForm>(EMPTY_FORM)
+  const [error,       setError]       = useState("")
 
   // ── KPI stats ──────────────────────────────────────
   const stats = useMemo(() => {
-    const completados = meses.filter(m => !m.isFuture && m.entregados > 0)
-    const totalEntregados  = completados.reduce((s, m) => s + m.entregados,  0)
-    const totalRecuperados = completados.reduce((s, m) => s + m.recuperados, 0)
-    const pctGlobal        = pct(totalRecuperados, totalEntregados)
-    const mesesEnObjetivo  = completados.filter(m => pct(m.recuperados, m.entregados) >= OBJETIVO).length
-    return { totalEntregados, totalRecuperados, pctGlobal, mesesEnObjetivo, completados: completados.length }
-  }, [meses])
+    const total    = carteles.length
+    const urgentes = carteles.filter(c => c.diasRestantes < 10).length
+    const byAgente: Record<string, number> = {}
+    carteles.forEach(c => {
+      if (c.agente) byAgente[c.agente] = (byAgente[c.agente] ?? 0) + 1
+    })
+    const top = Object.entries(byAgente).sort((a, b) => b[1] - a[1])[0] ?? null
+    return { total, urgentes, top }
+  }, [carteles])
 
-  // ── Modal ──────────────────────────────────────────
-  const [modalMes, setModalMes] = useState<MesData | null>(null)
-  const [form,     setForm]     = useState<FormData>({ entregados: "", recuperados: "" })
-  const [error,    setError]    = useState("")
+  // ── Filtered rows ──────────────────────────────────
+  const filtered = useMemo(() => {
+    const q = busqueda.toLowerCase()
+    return carteles.filter(c => {
+      if (q && !c.direccion.toLowerCase().includes(q) && !c.mlsId.toLowerCase().includes(q)) return false
+      if (filtroAgente && c.agente !== filtroAgente) return false
+      if (filtroTipo   && c.tipo   !== filtroTipo)   return false
+      return true
+    })
+  }, [carteles, busqueda, filtroAgente, filtroTipo])
 
-  const closeModal = useCallback(() => { setModalMes(null); setError("") }, [])
+  // ── Unique values for filter dropdowns ─────────────
+  const agentOptions = useMemo(() =>
+    Array.from(new Set(carteles.map(c => c.agente).filter(Boolean))).sort()
+  , [carteles])
+
+  const tipoOptions = useMemo(() =>
+    Array.from(new Set(carteles.map(c => c.tipo).filter(Boolean))).sort()
+  , [carteles])
+
+  // ── Modal handlers ─────────────────────────────────
+  const closeModal = useCallback(() => {
+    setModalMode("none"); setEditTarget(null); setError("")
+  }, [])
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") closeModal() }
-    if (modalMes) document.addEventListener("keydown", h)
+    if (modalMode !== "none") document.addEventListener("keydown", h)
     return () => document.removeEventListener("keydown", h)
-  }, [modalMes, closeModal])
+  }, [modalMode, closeModal])
 
-  function openModal(m: MesData) {
-    setForm({
-      entregados:  m.entregados  > 0 ? String(m.entregados)  : "",
-      recuperados: m.recuperados > 0 ? String(m.recuperados) : "",
-    })
-    setError("")
-    setModalMes(m)
+  function openNuevo() {
+    setForm(EMPTY_FORM); setError(""); setModalMode("nuevo")
   }
 
+  function openEditar(c: CartelRow) {
+    setForm({
+      numero:      c.numero > 0 ? String(c.numero) : "",
+      direccion:   c.direccion,
+      mlsId:       c.mlsId,
+      vencimiento: c.vencimiento,
+      tipo:        c.tipo,
+      agente:      c.agente,
+    })
+    setError("")
+    setEditTarget(c)
+    setModalMode("editar")
+  }
+
+  function patch(field: keyof ModalForm) {
+    return (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+      setForm(f => ({ ...f, [field]: e.target.value }))
+  }
+
+  // ── Submit ─────────────────────────────────────────
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError("")
-    if (!modalMes) return
 
-    const entregados  = parseInt(form.entregados)  || 0
-    const recuperados = parseInt(form.recuperados) || 0
+    const numero = parseInt(form.numero) || 0
+    if (numero <= 0)            { setError("Ingresá el número de cartel"); return }
+    if (!form.direccion.trim()) { setError("La dirección es requerida"); return }
+    if (!form.vencimiento)      { setError("La fecha de vencimiento es requerida"); return }
+    if (!form.tipo)             { setError("Seleccioná el tipo de propiedad"); return }
+    if (!form.agente)           { setError("Seleccioná un agente"); return }
 
-    if (entregados <= 0)       { setError("Los carteles entregados deben ser mayor a 0"); return }
-    if (recuperados > entregados) { setError("Los recuperados no pueden superar los entregados"); return }
-
-    const payload: CarteleriaFormData = {
-      mes:         modalMes.mes,
-      anio:        ANIO,
-      entregados,
-      recuperados,
+    const payload: CartelFormData = {
+      numero,
+      direccion:   form.direccion.trim(),
+      mlsId:       form.mlsId.trim(),
+      vencimiento: form.vencimiento,
+      tipo:        form.tipo,
+      agente:      form.agente,
     }
 
     startTransition(async () => {
-      const result = await guardarCarteleria(payload)
+      const result = modalMode === "editar" && editTarget
+        ? await editarCartel(editTarget.id, payload)
+        : await crearCartel(payload)
       if (result.error) setError(result.error)
       else { closeModal(); router.refresh() }
     })
   }
 
+  // ── Agentes para el modal ──────────────────────────
+  const modalAgentes = agentes.length > 0 ? agentes : AGENTES_AIRTABLE
+
+  // ── Styles ─────────────────────────────────────────
   const cardStyle: React.CSSProperties = {
     background: "white", borderRadius: "14px",
     border: "1.5px solid #EAECF2", overflow: "hidden",
   }
 
-  const previewPct = pct(
-    parseInt(form.recuperados) || 0,
-    parseInt(form.entregados)  || 1,
-  )
+  const hasFilters = busqueda || filtroAgente || filtroTipo
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -239,16 +234,23 @@ export default function CarteleriaClient({ rows }: Props) {
             Cartelería
           </h1>
           <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "1px" }}>
-            Seguimiento de carteles entregados y recuperados — {ANIO}
+            {stats.total} carteles activos · datos en tiempo real desde Airtable
           </p>
         </div>
-        <div style={{
-          padding: "6px 14px", borderRadius: "8px",
-          background: "#F8F9FC", border: "1.5px solid #EAECF2",
-          fontSize: "13px", fontWeight: 700, color: "#64748B",
-        }}>
-          Objetivo: {OBJETIVO}%
-        </div>
+        <button
+          onClick={openNuevo}
+          style={{
+            display: "flex", alignItems: "center", gap: "7px",
+            padding: "8px 18px", borderRadius: "9px", border: "none",
+            background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+            color: "white", fontSize: "13px", fontWeight: 700,
+            cursor: "pointer", fontFamily: "inherit",
+            boxShadow: "0 2px 8px rgba(227,24,55,0.3)",
+          }}
+        >
+          <Plus size={15} />
+          Nuevo cartel
+        </button>
       </div>
 
       {/* ── Scrollable content ────────────────────── */}
@@ -257,46 +259,103 @@ export default function CarteleriaClient({ rows }: Props) {
         {/* ── KPI Cards ─────────────────────────── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px", marginBottom: "20px" }}>
           <KpiCard
-            title="Carteles entregados acumulados"
-            value={stats.totalEntregados.toLocaleString("es-AR")}
-            badge={`${stats.totalRecuperados.toLocaleString("es-AR")} recuperados`}
+            title="Total carteles activos"
+            value={stats.total}
+            badge="En Airtable"
             gradient="linear-gradient(135deg,#0D9488 0%,#0F766E 100%)"
             shadowColor="rgba(13,148,136,0.3)"
             icon={<MapPin size={20} color="white" />}
           />
           <KpiCard
-            title="% Recuperación acumulada"
-            value={`${stats.pctGlobal}%`}
-            badge={stats.pctGlobal >= OBJETIVO ? "✓ En objetivo" : `Meta: ${OBJETIVO}%`}
+            title="Vencen en menos de 10 días"
+            value={stats.urgentes}
+            badge={stats.urgentes > 0 ? "Atención requerida" : "Sin urgencias"}
             gradient={
-              stats.pctGlobal >= OBJETIVO
-                ? "linear-gradient(135deg,#059669 0%,#047857 100%)"
-                : "linear-gradient(135deg,#E11D48 0%,#BE123C 100%)"
+              stats.urgentes > 0
+                ? "linear-gradient(135deg,#E11D48 0%,#BE123C 100%)"
+                : "linear-gradient(135deg,#059669 0%,#047857 100%)"
             }
-            shadowColor={stats.pctGlobal >= OBJETIVO ? "rgba(5,150,105,0.3)" : "rgba(225,29,72,0.3)"}
-            icon={<TrendingUp size={20} color="white" />}
+            shadowColor={stats.urgentes > 0 ? "rgba(225,29,72,0.3)" : "rgba(5,150,105,0.3)"}
+            icon={<AlertTriangle size={20} color="white" />}
           />
           <KpiCard
-            title="Meses en objetivo"
-            value={`${stats.mesesEnObjetivo} / ${stats.completados}`}
-            badge={stats.completados > 0
-              ? `${Math.round((stats.mesesEnObjetivo / stats.completados) * 100)}% de los meses`
-              : "Sin datos aún"}
+            title="Agente con más carteles"
+            value={stats.top ? stats.top[0].split(" ")[0] : "—"}
+            badge={stats.top ? `${stats.top[1]} cartel${stats.top[1] !== 1 ? "es" : ""}` : "Sin datos"}
             gradient="linear-gradient(135deg,#E31837 0%,#9B0F26 100%)"
             shadowColor="rgba(227,24,55,0.3)"
-            icon={<CheckCircle size={20} color="white" />}
+            icon={<Award size={20} color="white" />}
           />
         </div>
 
-        {/* ── Tabla anual ──────────────────────────── */}
+        {/* ── Filtros ──────────────────────────────── */}
+        <div style={{ display: "flex", gap: "10px", marginBottom: "14px", flexWrap: "wrap", alignItems: "center" }}>
+
+          {/* Buscador */}
+          <div style={{ position: "relative", flex: "1", minWidth: "220px" }}>
+            <Search size={14} style={{
+              position: "absolute", left: "11px", top: "50%",
+              transform: "translateY(-50%)", color: "#94A3B8", pointerEvents: "none",
+            }} />
+            <input
+              type="text"
+              placeholder="Buscar por dirección o MLS-ID..."
+              value={busqueda}
+              onChange={e => setBusqueda(e.target.value)}
+              style={{ ...inp, paddingLeft: "33px" }}
+            />
+          </div>
+
+          {/* Filtro Agente */}
+          <select
+            value={filtroAgente}
+            onChange={e => setFiltroAgente(e.target.value)}
+            style={{ ...inp, width: "auto", minWidth: "170px", cursor: "pointer" }}
+          >
+            <option value="">Todos los agentes</option>
+            {agentOptions.map(a => <option key={a} value={a}>{a}</option>)}
+          </select>
+
+          {/* Filtro Tipo */}
+          <select
+            value={filtroTipo}
+            onChange={e => setFiltroTipo(e.target.value)}
+            style={{ ...inp, width: "auto", minWidth: "150px", cursor: "pointer" }}
+          >
+            <option value="">Todos los tipos</option>
+            {tipoOptions.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+
+          {/* Clear */}
+          {hasFilters && (
+            <button
+              onClick={() => { setBusqueda(""); setFiltroAgente(""); setFiltroTipo("") }}
+              style={{
+                padding: "9px 14px", borderRadius: "8px",
+                border: "1.5px solid #EAECF2", background: "white",
+                fontSize: "12px", fontWeight: 600, color: "#64748B",
+                cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+              }}
+            >
+              Limpiar filtros
+            </button>
+          )}
+        </div>
+
+        {/* ── Tabla ──────────────────────────────────── */}
         <div style={cardStyle}>
           <div style={{
-            display: "flex", alignItems: "center", gap: "8px",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
             padding: "14px 20px", borderBottom: "1px solid #EAECF2",
           }}>
-            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-            <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
-              Detalle mensual {ANIO}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
+              <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
+                Carteles activos
+              </span>
+            </div>
+            <span style={{ fontSize: "12px", color: "#94A3B8", fontWeight: 600 }}>
+              {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
             </span>
           </div>
 
@@ -304,7 +363,7 @@ export default function CarteleriaClient({ rows }: Props) {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
-                  {["Mes","Entregados","Recuperados","% Recuperación","Progreso (95%)","Estado",""].map(h => (
+                  {["Nº","Dirección","MLS-ID","Tipo","Agente","Vencimiento","Días restantes",""].map(h => (
                     <th key={h} style={{
                       padding: "10px 16px", textAlign: "left",
                       fontSize: "10.5px", fontWeight: 700,
@@ -317,117 +376,119 @@ export default function CarteleriaClient({ rows }: Props) {
                   ))}
                 </tr>
               </thead>
+
               <tbody>
-                {meses.map((m, i) => {
-                  const p         = pct(m.recuperados, m.entregados)
-                  const isLast    = i === 11
-                  const isCurrent = m.mes === currentMonth
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} style={{
+                      padding: "48px", textAlign: "center",
+                      color: "#94A3B8", fontSize: "13px",
+                    }}>
+                      No se encontraron carteles con los filtros aplicados
+                    </td>
+                  </tr>
+                ) : filtered.map((c, i) => {
+                  const isLast    = i === filtered.length - 1
+                  const urgente   = c.diasRestantes < 10
+                  const vencido   = c.diasRestantes < 0
 
                   return (
                     <tr
-                      key={m.mes}
+                      key={c.id}
                       style={{
                         borderBottom: isLast ? "none" : "1px solid #F3F4F6",
-                        background: isCurrent ? "rgba(227,24,55,0.03)" : undefined,
+                        background: urgente ? "rgba(225,29,72,0.025)" : undefined,
                       }}
                     >
-                      {/* Mes */}
-                      <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      {/* Nº */}
+                      <td style={{ padding: "13px 16px", fontSize: "13px", fontWeight: 700, color: "#64748B", whiteSpace: "nowrap" }}>
+                        {c.numero || "—"}
+                      </td>
+
+                      {/* Dirección */}
+                      <td style={{ padding: "13px 16px", maxWidth: "240px" }}>
+                        <span style={{
+                          fontSize: "13px", fontWeight: 600, color: "#0F172A",
+                          display: "block", overflow: "hidden",
+                          textOverflow: "ellipsis", whiteSpace: "nowrap",
+                        }}>
+                          {c.direccion || "—"}
+                        </span>
+                      </td>
+
+                      {/* MLS-ID */}
+                      <td style={{ padding: "13px 16px", fontSize: "12px", color: "#64748B", fontFamily: "monospace", whiteSpace: "nowrap" }}>
+                        {c.mlsId || <span style={{ color: "#CBD5E1" }}>—</span>}
+                      </td>
+
+                      {/* Tipo */}
+                      <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}>
+                        {c.tipo ? (
                           <span style={{
-                            fontSize: "13px", fontWeight: isCurrent ? 800 : 600,
-                            color: isCurrent ? "#E31837" : "#0F172A",
+                            padding: "2px 10px", borderRadius: "20px",
+                            fontSize: "11px", fontWeight: 700,
+                            background: "#F1F5F9", color: "#475569",
                           }}>
-                            {m.nombre}
+                            {c.tipo}
                           </span>
-                          {isCurrent && (
-                            <span style={{
-                              fontSize: "10px", fontWeight: 700,
-                              background: "#FFF1F2", color: "#E11D48",
-                              padding: "1px 7px", borderRadius: "10px",
-                            }}>
-                              HOY
-                            </span>
-                          )}
-                        </div>
+                        ) : <span style={{ color: "#CBD5E1", fontSize: "13px" }}>—</span>}
                       </td>
 
-                      {/* Entregados */}
-                      <td style={{ padding: "14px 16px", fontSize: "13px", color: "#64748B" }}>
-                        {m.entregados > 0 ? m.entregados.toLocaleString("es-AR") : <span style={{ color: "#CBD5E1" }}>—</span>}
+                      {/* Agente */}
+                      <td style={{ padding: "13px 16px", fontSize: "13px", color: "#0F172A", whiteSpace: "nowrap" }}>
+                        {c.agente || <span style={{ color: "#CBD5E1" }}>—</span>}
                       </td>
 
-                      {/* Recuperados */}
-                      <td style={{ padding: "14px 16px", fontSize: "13px", fontWeight: 600,
-                        color: m.recuperados > 0 ? "#0F172A" : "#CBD5E1" }}>
-                        {m.recuperados > 0 ? m.recuperados.toLocaleString("es-AR") : "—"}
+                      {/* Vencimiento */}
+                      <td style={{ padding: "13px 16px", fontSize: "13px", color: "#64748B", whiteSpace: "nowrap" }}>
+                        {fmtDate(c.vencimiento)}
                       </td>
 
-                      {/* % */}
-                      <td style={{ padding: "14px 16px", fontWeight: 700, fontSize: "14px", whiteSpace: "nowrap",
-                        color: m.isFuture || m.entregados === 0 ? "#CBD5E1" : p >= OBJETIVO ? "#059669" : "#E11D48" }}>
-                        {m.isFuture || m.entregados === 0 ? "—" : `${p}%`}
+                      {/* Días restantes */}
+                      <td style={{ padding: "13px 16px", whiteSpace: "nowrap" }}>
+                        <span style={{
+                          display: "inline-block",
+                          padding: "3px 10px", borderRadius: "20px",
+                          fontSize: "12px", fontWeight: 700,
+                          background: diasBg(c.diasRestantes),
+                          color: diasColor(c.diasRestantes),
+                        }}>
+                          {vencido
+                            ? `Vencido (${Math.abs(c.diasRestantes)}d)`
+                            : c.diasRestantes === 0
+                              ? "Vence hoy"
+                              : `${c.diasRestantes}d`
+                          }
+                        </span>
                       </td>
 
-                      {/* Progress bar */}
-                      <td style={{ padding: "14px 16px", minWidth: "140px" }}>
-                        {m.entregados > 0 && (
-                          <ProgressBar value={p} isFuture={m.isFuture} />
-                        )}
-                      </td>
-
-                      {/* Estado */}
-                      <td style={{ padding: "14px 16px" }}>
-                        <EstadoBadge p={p} isFuture={m.isFuture} entregados={m.entregados} />
-                      </td>
-
-                      {/* Action */}
-                      <td style={{ padding: "14px 16px" }}>
+                      {/* Acción */}
+                      <td style={{ padding: "13px 16px" }}>
                         <button
-                          onClick={() => openModal(m)}
+                          onClick={() => openEditar(c)}
                           style={{
                             padding: "5px 14px", borderRadius: "7px",
                             border: "1.5px solid #EAECF2", background: "white",
                             fontSize: "12px", fontWeight: 600, color: "#0F172A",
-                            cursor: "pointer", fontFamily: "inherit",
-                            whiteSpace: "nowrap",
+                            cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
                           }}
                         >
-                          {m.id ? "Editar" : "Cargar"}
+                          Editar
                         </button>
                       </td>
                     </tr>
                   )
                 })}
               </tbody>
-
-              <tfoot>
-                <tr style={{ background: "#F8F9FC", borderTop: "2px solid #EAECF2" }}>
-                  <td style={{ padding: "12px 16px", fontWeight: 800, fontSize: "13px", color: "#0F172A" }}>
-                    TOTAL {ANIO}
-                  </td>
-                  <td style={{ padding: "12px 16px", fontWeight: 700, fontSize: "13px", color: "#64748B" }}>
-                    {meses.reduce((s, m) => s + m.entregados, 0).toLocaleString("es-AR")}
-                  </td>
-                  <td style={{ padding: "12px 16px", fontWeight: 700, fontSize: "13px", color: "#0F172A" }}>
-                    {meses.reduce((s, m) => s + m.recuperados, 0).toLocaleString("es-AR")}
-                  </td>
-                  <td style={{ padding: "12px 16px", fontWeight: 800, fontSize: "14px",
-                    color: stats.pctGlobal >= OBJETIVO ? "#059669" : "#E11D48" }}>
-                    {stats.pctGlobal}%
-                  </td>
-                  <td colSpan={3} />
-                </tr>
-              </tfoot>
             </table>
           </div>
         </div>
       </div>
 
       {/* ════════════════════════════════════════════
-          MODAL — CARGAR / EDITAR CARTELERÍA
+          MODAL — NUEVO / EDITAR CARTEL
       ════════════════════════════════════════════ */}
-      {modalMes && (
+      {modalMode !== "none" && (
         <div
           onClick={closeModal}
           style={{
@@ -441,7 +502,7 @@ export default function CarteleriaClient({ rows }: Props) {
             onClick={e => e.stopPropagation()}
             style={{
               background: "white", borderRadius: "16px",
-              width: "100%", maxWidth: "420px",
+              width: "100%", maxWidth: "500px",
               boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
             }}
           >
@@ -452,10 +513,13 @@ export default function CarteleriaClient({ rows }: Props) {
             }}>
               <div>
                 <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
-                  {modalMes.id ? "Editar cartelería" : "Cargar cartelería"}
+                  {modalMode === "nuevo" ? "Nuevo cartel" : "Editar cartel"}
                 </h2>
                 <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
-                  {modalMes.nombre} {ANIO}
+                  {modalMode === "nuevo"
+                    ? "Se creará un registro en Airtable"
+                    : `Cartel #${editTarget?.numero} · ${editTarget?.direccion}`
+                  }
                 </p>
               </div>
               <button onClick={closeModal} style={{
@@ -469,58 +533,81 @@ export default function CarteleriaClient({ rows }: Props) {
             </div>
 
             <form onSubmit={handleSubmit} style={{ padding: "20px" }}>
-              <Field label="Total entregados *">
+
+              {/* Row 1: Nº + MLS-ID */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
+                <Field label="Nº de cartel *">
+                  <input
+                    type="number" min="1" step="1"
+                    value={form.numero}
+                    onChange={patch("numero")}
+                    placeholder="296"
+                    style={inp}
+                    required
+                    autoFocus
+                  />
+                </Field>
+                <Field label="MLS-ID">
+                  <input
+                    type="text"
+                    value={form.mlsId}
+                    onChange={patch("mlsId")}
+                    placeholder="421871024-95"
+                    style={inp}
+                  />
+                </Field>
+              </div>
+
+              {/* Dirección */}
+              <Field label="Dirección *">
                 <input
-                  type="number" min="0" step="1"
-                  value={form.entregados}
-                  onChange={e => setForm(f => ({ ...f, entregados: e.target.value }))}
-                  placeholder="0"
+                  type="text"
+                  value={form.direccion}
+                  onChange={patch("direccion")}
+                  placeholder="Av. San Martín 1234"
                   style={inp}
                   required
-                  autoFocus
                 />
               </Field>
 
-              <Field label="Total recuperados">
-                <input
-                  type="number" min="0" step="1"
-                  value={form.recuperados}
-                  onChange={e => setForm(f => ({ ...f, recuperados: e.target.value }))}
-                  placeholder="0"
-                  style={inp}
-                />
+              {/* Row 2: Tipo + Vencimiento */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 16px" }}>
+                <Field label="Tipo de propiedad *">
+                  <select
+                    value={form.tipo}
+                    onChange={patch("tipo")}
+                    style={{ ...inp, cursor: "pointer" }}
+                    required
+                  >
+                    <option value="">Seleccionar...</option>
+                    {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </Field>
+                <Field label="Vencimiento *">
+                  <input
+                    type="date"
+                    value={form.vencimiento}
+                    onChange={patch("vencimiento")}
+                    style={inp}
+                    required
+                  />
+                </Field>
+              </div>
+
+              {/* Agente */}
+              <Field label="Agente *">
+                <select
+                  value={form.agente}
+                  onChange={patch("agente")}
+                  style={{ ...inp, cursor: "pointer" }}
+                  required
+                >
+                  <option value="">Seleccionar agente...</option>
+                  {modalAgentes.map(a => <option key={a} value={a}>{a}</option>)}
+                </select>
               </Field>
 
-              {/* Preview */}
-              {form.entregados && (
-                <div style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "10px 12px", borderRadius: "8px",
-                  background: "#F8F9FC", border: "1px solid #EAECF2",
-                  marginBottom: "14px",
-                }}>
-                  <span style={{ fontSize: "12px", color: "#64748B", fontWeight: 500 }}>
-                    % Recuperación:
-                  </span>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span style={{
-                      fontWeight: 800, fontSize: "16px",
-                      color: previewPct >= OBJETIVO ? "#059669" : "#E11D48",
-                    }}>
-                      {previewPct}%
-                    </span>
-                    <span style={{
-                      fontSize: "11px", fontWeight: 700,
-                      padding: "2px 8px", borderRadius: "10px",
-                      background: previewPct >= OBJETIVO ? "#ECFDF5" : "#FFF1F2",
-                      color: previewPct >= OBJETIVO ? "#059669" : "#E11D48",
-                    }}>
-                      {previewPct >= OBJETIVO ? "✓ En objetivo" : `Meta: ${OBJETIVO}%`}
-                    </span>
-                  </div>
-                </div>
-              )}
-
+              {/* Error */}
               {error && (
                 <div style={{
                   background: "#FFF1F2", border: "1px solid #FECDD3",
@@ -531,28 +618,41 @@ export default function CarteleriaClient({ rows }: Props) {
                 </div>
               )}
 
+              {/* Actions */}
               <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                <button type="button" onClick={closeModal} disabled={isPending}
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  disabled={isPending}
                   style={{
                     padding: "9px 20px", borderRadius: "8px",
                     border: "1.5px solid #EAECF2", background: "white",
                     fontSize: "13px", fontWeight: 600, color: "#64748B",
                     cursor: "pointer", fontFamily: "inherit",
-                  }}>
+                  }}
+                >
                   Cancelar
                 </button>
-                <button type="submit" disabled={isPending}
+                <button
+                  type="submit"
+                  disabled={isPending}
                   style={{
                     padding: "9px 24px", borderRadius: "8px", border: "none",
-                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                    background: isPending
+                      ? "#CBD5E1"
+                      : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
                     color: "white", fontSize: "13px", fontWeight: 700,
                     cursor: isPending ? "not-allowed" : "pointer",
                     fontFamily: "inherit",
                     display: "flex", alignItems: "center", gap: "6px",
                     boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
-                  }}>
+                  }}
+                >
                   {isPending && <Loader2 size={14} className="animate-spin" />}
-                  {isPending ? "Guardando..." : "Guardar"}
+                  {isPending
+                    ? "Guardando..."
+                    : modalMode === "nuevo" ? "Crear cartel" : "Guardar cambios"
+                  }
                 </button>
               </div>
             </form>

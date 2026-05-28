@@ -1,46 +1,78 @@
 "use server"
 
-import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 
-export interface CarteleriaFormData {
-  mes:         number
-  anio:        number
-  entregados:  number
-  recuperados: number
+// ── Field IDs ─────────────────────────────────────────
+// fldClqD1zmj0AYlBn = Días restantes → fórmula, solo lectura, NO se envía en writes
+const F = {
+  numero:      "fldsAoewlr0711e3s",
+  direccion:   "fldjm8EB1HVvQeCSQ",
+  mlsId:       "fldvdpI7rmmvu3cym",
+  vencimiento: "fldnLaQjKRCD8vezt",
+  tipo:        "fldEhBVzBXTCu5mQC",
+  agente:      "fldyJFGEej2UzAUmp",
+} as const
+
+function apiUrl() {
+  return `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${process.env.AIRTABLE_CARTELERIA_TABLE_ID}`
 }
 
-export async function guardarCarteleria(data: CarteleriaFormData) {
-  const supabase = createServerClient()
+function authHeaders() {
+  return {
+    "Authorization": `Bearer ${process.env.AIRTABLE_TOKEN}`,
+    "Content-Type": "application/json",
+  }
+}
 
-  const { data: existing } = await supabase
-    .from("carteleria")
-    .select("id")
-    .eq("mes",  data.mes)
-    .eq("anio", data.anio)
-    .maybeSingle()
+function buildFields(data: CartelFormData) {
+  return {
+    [F.numero]:      data.numero,
+    [F.direccion]:   data.direccion,
+    [F.mlsId]:       data.mlsId,
+    [F.vencimiento]: data.vencimiento,
+    [F.tipo]:        data.tipo,
+    [F.agente]:      data.agente,
+  }
+}
 
-  let error: string | undefined
+export interface CartelFormData {
+  numero:      number
+  direccion:   string
+  mlsId:       string
+  vencimiento: string   // YYYY-MM-DD
+  tipo:        string   // nombre del singleSelect
+  agente:      string   // nombre del singleSelect
+}
 
-  if (existing) {
-    const { error: e } = await supabase
-      .from("carteleria")
-      .update({ entregados: data.entregados, recuperados: data.recuperados })
-      .eq("id", existing.id)
-    error = e?.message
-  } else {
-    const { error: e } = await supabase
-      .from("carteleria")
-      .insert({
-        mes:         data.mes,
-        anio:        data.anio,
-        entregados:  data.entregados,
-        recuperados: data.recuperados,
-      })
-    error = e?.message
+export async function crearCartel(data: CartelFormData) {
+  const res = await fetch(apiUrl(), {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ records: [{ fields: buildFields(data) }] }),
+  })
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    const msg  = (body as { error?: { message?: string } }).error?.message
+    return { error: msg ?? `Error Airtable ${res.status}` }
   }
 
-  if (error) return { error }
+  revalidatePath("/carteleria")
+  return { success: true }
+}
+
+export async function editarCartel(id: string, data: CartelFormData) {
+  const res = await fetch(apiUrl(), {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ records: [{ id, fields: buildFields(data) }] }),
+  })
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    const msg  = (body as { error?: { message?: string } }).error?.message
+    return { error: msg ?? `Error Airtable ${res.status}` }
+  }
 
   revalidatePath("/carteleria")
   return { success: true }
