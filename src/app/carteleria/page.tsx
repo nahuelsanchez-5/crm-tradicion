@@ -17,17 +17,13 @@ interface AirtableRecord {
   fields: Record<string, unknown>
 }
 
-interface AirtableSelectValue {
-  name?: string
-}
-
 async function fetchCarteles(): Promise<CartelRow[]> {
   const params = new URLSearchParams()
   FIELD_IDS.forEach(id => params.append("fields[]", id))
   params.set("returnFieldsByFieldId", "true")
-  params.set("sort[0][field]",        "fldClqD1zmj0AYlBn")
-  params.set("sort[0][direction]",    "asc")
-  params.set("pageSize",              "200")
+  params.set("sort[0][field]",     "fldClqD1zmj0AYlBn")
+  params.set("sort[0][direction]", "asc")
+  params.set("pageSize",           "100")   // Airtable v0 max = 100
 
   try {
     const res = await fetch(
@@ -41,15 +37,16 @@ async function fetchCarteles(): Promise<CartelRow[]> {
     if (!res.ok) return []
 
     const json = (await res.json()) as { records?: AirtableRecord[] }
+    // Con returnFieldsByFieldId=true los singleSelect vuelven como string plano, no {name}
     return (json.records ?? []).map(r => ({
       id:            r.id,
-      numero:        (r.fields["fldsAoewlr0711e3s"] as number) ?? 0,
+      numero:        (r.fields["fldsAoewlr0711e3s"] as number)  ?? 0,
       direccion:     ((r.fields["fldjm8EB1HVvQeCSQ"] as string) ?? "").trim(),
       mlsId:         ((r.fields["fldvdpI7rmmvu3cym"] as string) ?? "").trim(),
-      vencimiento:   (r.fields["fldnLaQjKRCD8vezt"] as string) ?? "",
-      diasRestantes: (r.fields["fldClqD1zmj0AYlBn"] as number) ?? 0,
-      tipo:          ((r.fields["fldEhBVzBXTCu5mQC"] as AirtableSelectValue)?.name) ?? "",
-      agente:        ((r.fields["fldyJFGEej2UzAUmp"] as AirtableSelectValue)?.name) ?? "",
+      vencimiento:   (r.fields["fldnLaQjKRCD8vezt"]  as string) ?? "",
+      diasRestantes: (r.fields["fldClqD1zmj0AYlBn"]  as number) ?? 0,
+      tipo:          (r.fields["fldEhBVzBXTCu5mQC"]  as string) ?? "",
+      agente:        (r.fields["fldyJFGEej2UzAUmp"]  as string) ?? "",
     }))
   } catch {
     return []
