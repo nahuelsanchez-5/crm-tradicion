@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
@@ -56,48 +57,18 @@ export default function Sidebar() {
         style={{
           padding: "20px 18px",
           borderBottom: "1px solid rgba(255,255,255,0.06)",
+          display: "flex",
+          justifyContent: "center",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div
-            style={{
-              width: "38px",
-              height: "38px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #E31837 0%, #c0122d 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 12px rgba(227,24,55,0.35)",
-              flexShrink: 0,
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-              <path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z" />
-            </svg>
-          </div>
-          <div>
-            <div
-              style={{
-                fontSize: "14px",
-                fontWeight: 700,
-                color: "#FFFFFF",
-                lineHeight: "1.2",
-              }}
-            >
-              REMAX Tradición
-            </div>
-            <div
-              style={{
-                fontSize: "10px",
-                color: "rgba(255,255,255,0.35)",
-                letterSpacing: "0.5px",
-              }}
-            >
-              CRM · Panel Oficina
-            </div>
-          </div>
-        </div>
+        <Image
+          src="/logo-sidebar-crema.png"
+          alt="REMAX Tradición"
+          width={160}
+          height={60}
+          style={{ objectFit: "contain", maxWidth: "160px" }}
+          priority
+        />
       </div>
 
       {/* ── Navigation ───────────────────────────── */}
