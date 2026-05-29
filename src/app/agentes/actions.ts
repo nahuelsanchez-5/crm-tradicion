@@ -53,6 +53,24 @@ export async function crearAgente(data: AgenteFormData) {
 }
 
 // ─────────────────────────────────────────────────────
+//  ACTUALIZAR PAGA_FEE
+// ─────────────────────────────────────────────────────
+export async function actualizarPagaFee(id: string, pagaFee: boolean) {
+  const supabase = createServerClient()
+
+  const { error } = await supabase
+    .from("agentes")
+    .update({ paga_fee: pagaFee })
+    .eq("id", id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath("/agentes")
+  revalidatePath("/pagos")
+  return { success: true }
+}
+
+// ─────────────────────────────────────────────────────
 //  ACTUALIZAR AGENTE
 // ─────────────────────────────────────────────────────
 export async function actualizarAgente(id: string, data: AgenteFormData) {

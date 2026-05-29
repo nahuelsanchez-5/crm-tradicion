@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import KpiCard from "@/components/KpiCard"
-import { crearAgente, actualizarAgente, type AgenteFormData } from "./actions"
+import { crearAgente, actualizarAgente, actualizarPagaFee, type AgenteFormData } from "./actions"
 import { Users, Star, CheckCircle, Clock, X, Loader2 } from "lucide-react"
 
 // ── Types ────────────────────────────────────────────
@@ -22,6 +22,7 @@ export interface AgenteConPlan {
   fecha_alta: string
   fecha_baja: string | null
   activo: boolean
+  paga_fee: boolean | null
   plan: Plan_CRM | null
 }
 
@@ -66,6 +67,12 @@ function initials(nombre: string) {
 function fmtFecha(fechaStr: string) {
   const [a, m, d] = fechaStr.split("-")
   return `${parseInt(d)}/${parseInt(m)}/${a}`
+}
+
+function getEfectivoPagaFee(ag: AgenteConPlan): boolean {
+  if (ag.paga_fee !== null) return ag.paga_fee
+  const diffDays = Math.floor((Date.now() - new Date(ag.fecha_alta).getTime()) / 86_400_000)
+  return diffDays >= 180
 }
 
 // ── Sub-components ───────────────────────────────────
@@ -139,12 +146,23 @@ export default function AgentesClient({ agentes, mes, anio }: Props) {
   const [selectedAgent, setSelectedAgent] = useState<AgenteConPlan | null>(null)
   const [form,          setForm]          = useState<AgenteFormData>(EMPTY_FORM)
   const [error,         setError]         = useState("")
+  const [feeLoading,    setFeeLoading]    = useState<string | null>(null)
 
   // ── Stats ──────────────────────────────────────────
   const totalActivos  = agentes.filter(a => a.activo).length
   const conPlan       = agentes.filter(a => a.plan !== null).length
   const pagados       = agentes.filter(a => a.plan?.pagado === true).length
   const pendientes    = agentes.filter(a => a.plan !== null && !a.plan.pagado).length
+
+  // ── Paga FEE inline ────────────────────────────────
+  function handlePagaFee(id: string, value: boolean) {
+    setFeeLoading(id)
+    startTransition(async () => {
+      await actualizarPagaFee(id, value)
+      setFeeLoading(null)
+      router.refresh()
+    })
+  }
 
   // ── Modal handlers ─────────────────────────────────
   const closeModal = useCallback(() => {
@@ -301,7 +319,7 @@ export default function AgentesClient({ agentes, mes, anio }: Props) {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
-                  {["Nombre", "Email", "Teléfono", "Fecha alta", "Plan actual", "Estado", ""].map(h => (
+                  {["Nombre", "Email", "Teléfono", "Fecha alta", "Plan actual", "Paga FEE", "Estado", ""].map(h => (
                     <th key={h} style={{
                       padding: "10px 18px", textAlign: "left",
                       fontSize: "10.5px", fontWeight: 700,
@@ -317,7 +335,7 @@ export default function AgentesClient({ agentes, mes, anio }: Props) {
               <tbody>
                 {agentes.length === 0 ? (
                   <tr>
-                    <td colSpan={7} style={{ padding: "40px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
+                    <td colSpan={8} style={{ padding: "40px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
                       No hay agentes registrados. Hacé clic en &quot;+ Nuevo Agente&quot; para empezar.
                     </td>
                   </tr>
@@ -355,6 +373,25 @@ export default function AgentesClient({ agentes, mes, anio }: Props) {
                       </td>
                       <td style={{ padding: "12px 18px" }}>
                         <PlanBadge plan={ag.plan?.tipo_plan ?? null} />
+                      </td>
+                      <td style={{ padding: "12px 18px" }}>
+                        <select
+                          value={getEfectivoPagaFee(ag) ? "si" : "no"}
+                          disabled={feeLoading === ag.id}
+                          onChange={e => handlePagaFee(ag.id, e.target.value === "si")}
+                          onClick={e => e.stopPropagation()}
+                          style={{
+                            padding: "4px 8px", borderRadius: "7px",
+                            border: "1.5px solid #EAECF2", background: "white",
+                            fontSize: "12px", fontWeight: 600,
+                            color: getEfectivoPagaFee(ag) ? "#059669" : "#64748B",
+                            cursor: "pointer", fontFamily: "inherit",
+                            opacity: feeLoading === ag.id ? 0.5 : 1,
+                          }}
+                        >
+                          <option value="si">Sí</option>
+                          <option value="no">No</option>
+                        </select>
                       </td>
                       <td style={{ padding: "12px 18px" }}>
                         <EstadoBadge activo={ag.activo} />
