@@ -1,6 +1,5 @@
 import { createServerClient } from "@/lib/supabase"
 import KpiCard from "@/components/KpiCard"
-import PageHeader from "@/components/PageHeader"
 import DashboardActions from "./DashboardActions"
 import Image from "next/image"
 import { Users, Building2, DollarSign, CreditCard } from "lucide-react"
@@ -179,19 +178,48 @@ export default async function DashboardPage() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
       {/* ── Header ─────────────────────────────────── */}
-      <PageHeader
-        title="Buenos días 👋"
-        description={`Estás viendo ${MES_LABEL} · REMAX Tradición`}
-      >
-        <div style={{
-          display: "flex", alignItems: "center", gap: "6px",
-          background: "#F0F2F7", border: "1.5px solid #EAECF2",
-          borderRadius: "8px", padding: "5px 12px",
-          fontSize: "12.5px", fontWeight: 600, color: "#0F172A",
-        }}>
-          📅 {MES_LABEL}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1fr auto 1fr",
+        alignItems: "center",
+        minHeight: "62px",
+        padding: "0 24px",
+        background: "white",
+        borderBottom: "1px solid #EAECF2",
+        flexShrink: 0,
+      }}>
+        {/* Izquierda */}
+        <div>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0, lineHeight: 1.3 }}>
+            Buenos días 👋
+          </h1>
+          <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "1px" }}>
+            {`Estás viendo ${MES_LABEL} · REMAX Tradición`}
+          </p>
         </div>
-      </PageHeader>
+
+        {/* Centro — logo */}
+        <Image
+          src="/logo.png"
+          alt="REMAX Tradición"
+          width={180}
+          height={56}
+          style={{ objectFit: "contain", maxWidth: "180px", display: "block" }}
+          priority
+        />
+
+        {/* Derecha */}
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: "6px",
+            background: "#F0F2F7", border: "1.5px solid #EAECF2",
+            borderRadius: "8px", padding: "5px 12px",
+            fontSize: "12.5px", fontWeight: 600, color: "#0F172A",
+          }}>
+            📅 {MES_LABEL}
+          </div>
+        </div>
+      </div>
 
       {/* ── Scrollable content ─────────────────────── */}
       <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
@@ -232,17 +260,8 @@ export default async function DashboardPage() {
           />
         </div>
 
-        {/* ── Logo + Accesos rápidos ───────────────── */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "8px" }}>
-          <Image
-            src="/logo.png"
-            alt="REMAX Tradición"
-            width={280}
-            height={120}
-            style={{ objectFit: "contain", maxWidth: "280px", margin: "0 auto 4px" }}
-          />
-          <DashboardActions agentes={agentesForActions} />
-        </div>
+        {/* ── Accesos rápidos ──────────────────────── */}
+        <DashboardActions agentes={agentesForActions} />
 
         {/* ── Bottom 2-col ─────────────────────────── */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "16px" }}>
