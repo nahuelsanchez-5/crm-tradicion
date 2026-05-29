@@ -1,10 +1,9 @@
 "use client"
 
-import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
+import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
-import KpiCard from "@/components/KpiCard"
 import { crearPago, actualizarPago } from "./actions"
-import { DollarSign, TrendingUp, BarChart2, X, Loader2 } from "lucide-react"
+import { DollarSign, BarChart2, X, Loader2, MessageCircle } from "lucide-react"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -28,21 +27,16 @@ const MONTHS_OPTIONS: Array<{ label: string; value: string }> = (() => {
 })()
 
 const CONCEPTOS = [
-  "Plan PRO", "Plan PRO+", "Plan B_QR", "Plan B_OFI",
-  "FEE mensual", "Otro",
+  "FEE mensual",
+  "Licencias CRM",
+  "Mainstreet",
+  "Otros",
 ]
 
-const PLAN_STYLES: Record<string, { bg: string; color: string }> = {
-  PRO:   { bg: "#EFF6FF", color: "#2563EB" },
-  "PRO+":{ bg: "#F5F3FF", color: "#7C3AED" },
-  B_QR:  { bg: "#F0FDFA", color: "#0D9488" },
-  B_OFI: { bg: "#FFFBEB", color: "#D97706" },
-}
-
 const ESTADO_STYLES: Record<string, { bg: string; color: string }> = {
-  Pagado:   { bg: "#ECFDF5", color: "#059669" },
-  Parcial:  { bg: "#FFFBEB", color: "#D97706" },
-  Pendiente:{ bg: "#FFF1F2", color: "#E11D48" },
+  Pagado:    { bg: "#ECFDF5", color: "#059669" },
+  Parcial:   { bg: "#FFFBEB", color: "#D97706" },
+  Pendiente: { bg: "#FFF1F2", color: "#E11D48" },
 }
 
 // ── Types ────────────────────────────────────────────
@@ -57,9 +51,12 @@ export interface PagoRow {
   agentes: { nombre: string } | null
 }
 
-export interface AgenteSimple {
+export interface AgenteInfo {
   id: string
   nombre: string
+  telefono: string | null
+  activo: boolean
+  paga_fee: boolean | null
 }
 
 interface NuevoForm {
@@ -76,14 +73,24 @@ interface EditForm {
 
 // ── Helpers ──────────────────────────────────────────
 function calcEstado(debe: number, pagado: number): string {
-  if (pagado <= 0)       return "Pendiente"
-  if (pagado >= debe)    return "Pagado"
+  if (pagado <= 0)    return "Pendiente"
+  if (pagado >= debe) return "Pagado"
   return "Parcial"
 }
 
-function extractPlan(concepto: string): string | null {
-  const m = concepto.match(/PRO\+|PRO|B_QR|B_OFI/)
-  return m ? m[0] : null
+function calcEstadoGeneral(totalDebe: number, totalPagado: number): string {
+  if (totalDebe <= 0)          return "Pagado"
+  if (totalPagado <= 0)        return "Pendiente"
+  if (totalPagado >= totalDebe) return "Pagado"
+  return "Parcial"
+}
+
+function getConceptGroup(concepto: string): "FEE" | "CRM" | "Mainstreet" | "Otros" {
+  const c = concepto.toLowerCase()
+  if (c.includes("fee"))                                        return "FEE"
+  if (c.includes("pro") || c.includes("crm") || c.includes("plan") || c.includes("licencia")) return "CRM"
+  if (c.includes("mainstreet"))                                 return "Mainstreet"
+  return "Otros"
 }
 
 function fmtUSD(n: number): string {
@@ -95,28 +102,33 @@ function fmtUSD(n: number): string {
 }
 
 function fmtFecha(fechaStr: string) {
+  if (!fechaStr) return "—"
   const [a, m, d] = fechaStr.split("-")
   return `${parseInt(d)} ${MONTH_NAMES[parseInt(m) - 1].slice(0, 3)} ${a}`
 }
 
-// ── Sub-components ───────────────────────────────────
-function PlanBadge({ concepto }: { concepto: string }) {
-  const plan = extractPlan(concepto)
-  if (!plan) return <span style={{ color: "#94A3B8", fontSize: "11px" }}>—</span>
-  const s = PLAN_STYLES[plan] ?? { bg: "#F1F5F9", color: "#64748B" }
-  return (
-    <span style={{ ...s, padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700 }}>
-      {plan}
-    </span>
-  )
+function mesLabel(monthVal: string): string {
+  if (monthVal === "todos") return "el período"
+  const [y, m] = monthVal.split("-")
+  return `${MONTH_NAMES[parseInt(m) - 1]} ${y}`
 }
 
+// ── Sub-components ───────────────────────────────────
 function EstadoBadge({ estado }: { estado: string }) {
   const s = ESTADO_STYLES[estado] ?? { bg: "#F1F5F9", color: "#64748B" }
   return (
     <span style={{ ...s, padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700 }}>
       {estado}
     </span>
+  )
+}
+
+function ProgressBar({ pct }: { pct: number }) {
+  const color = pct >= 80 ? "#059669" : pct >= 50 ? "#D97706" : "#E11D48"
+  return (
+    <div style={{ width: "100%", height: "5px", borderRadius: "3px", background: "#F1F5F9", overflow: "hidden", marginTop: "6px" }}>
+      <div style={{ width: `${Math.min(pct, 100)}%`, height: "100%", background: color, borderRadius: "3px", transition: "width 0.4s" }} />
+    </div>
   )
 }
 
@@ -149,7 +161,6 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
   )
 }
 
-// ── Input/Select styles ───────────────────────────────
 const inp: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
   borderRadius: "8px", border: "1.5px solid #EAECF2",
@@ -158,7 +169,6 @@ const inp: React.CSSProperties = {
   boxSizing: "border-box",
 }
 
-// ── Filter button style ──────────────────────────────
 function filterBtnStyle(key: string, selected: boolean): React.CSSProperties {
   const base: React.CSSProperties = {
     padding: "5px 14px", borderRadius: "7px",
@@ -168,12 +178,47 @@ function filterBtnStyle(key: string, selected: boolean): React.CSSProperties {
   }
   if (!selected) return { ...base, border: "1.5px solid #EAECF2", background: "white", color: "#64748B" }
   const active: Record<string, React.CSSProperties> = {
-    todos:    { border: "1.5px solid #0F172A",  background: "#0F172A",  color: "white" },
-    Pagado:   { border: "1.5px solid #6EE7B7",  background: "#ECFDF5",  color: "#059669" },
-    Parcial:  { border: "1.5px solid #FCD34D",  background: "#FFFBEB",  color: "#D97706" },
-    Pendiente:{ border: "1.5px solid #FECDD3",  background: "#FFF1F2",  color: "#E11D48" },
+    todos:     { border: "1.5px solid #0F172A",  background: "#0F172A",  color: "white" },
+    Pagado:    { border: "1.5px solid #6EE7B7",  background: "#ECFDF5",  color: "#059669" },
+    Parcial:   { border: "1.5px solid #FCD34D",  background: "#FFFBEB",  color: "#D97706" },
+    Pendiente: { border: "1.5px solid #FECDD3",  background: "#FFF1F2",  color: "#E11D48" },
   }
   return { ...base, fontWeight: 700, ...(active[key] ?? active.todos) }
+}
+
+// ── KPI box component ────────────────────────────────
+function KpiConcepto({
+  label, x, y, pct, color, gradient,
+}: {
+  label: string; x: number; y?: number; pct?: number; color: string; gradient: string
+}) {
+  return (
+    <div style={{
+      background: gradient, borderRadius: "14px",
+      padding: "16px 18px", color: "white",
+      boxShadow: `0 6px 20px ${color}55`,
+      position: "relative", overflow: "hidden",
+    }}>
+      <div style={{ position: "absolute", top: "-15px", right: "-15px", width: "80px", height: "80px",
+        borderRadius: "50%", background: "rgba(255,255,255,0.08)" }} />
+      <div style={{ fontSize: "11px", fontWeight: 600, opacity: 0.8, marginBottom: "6px",
+        textTransform: "uppercase" as const, letterSpacing: "0.6px" }}>
+        {label}
+      </div>
+      <div style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "-0.5px", lineHeight: 1 }}>
+        {y !== undefined ? `${x}/${y}` : String(x)}
+        <span style={{ fontSize: "14px", fontWeight: 500, opacity: 0.75, marginLeft: "4px" }}>cobrados</span>
+      </div>
+      {pct !== undefined && (
+        <>
+          <ProgressBar pct={pct} />
+          <div style={{ fontSize: "12px", fontWeight: 700, marginTop: "4px", opacity: 0.9 }}>
+            {pct}% cobranza
+          </div>
+        </>
+      )}
+    </div>
+  )
 }
 
 // ═══════════════════════════════════════════════════════
@@ -181,10 +226,11 @@ function filterBtnStyle(key: string, selected: boolean): React.CSSProperties {
 // ═══════════════════════════════════════════════════════
 interface Props {
   pagos: PagoRow[]
-  agentes: AgenteSimple[]
+  agentes: AgenteInfo[]
+  mensajeWhatsapp: string
 }
 
-export default function PagosClient({ pagos, agentes }: Props) {
+export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -195,13 +241,15 @@ export default function PagosClient({ pagos, agentes }: Props) {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
   })
 
+  // ── Expanded row ───────────────────────────────────
+  const [expandedAgent, setExpandedAgent] = useState<string | null>(null)
+
   // ── Modal ──────────────────────────────────────────
   type ModalT = "none" | "nuevo" | "editar"
   const [modal,        setModal]        = useState<ModalT>("none")
   const [selectedPago, setSelectedPago] = useState<PagoRow | null>(null)
   const [error,        setError]        = useState("")
 
-  // ── Forms ──────────────────────────────────────────
   const todayStr = new Date().toISOString().split("T")[0]
 
   const [nuevoForm, setNuevoForm] = useState<NuevoForm>({
@@ -214,38 +262,82 @@ export default function PagosClient({ pagos, agentes }: Props) {
 
   const [editForm, setEditForm] = useState<EditForm>({ monto_pagado: "0" })
 
-  // ── Computed ───────────────────────────────────────
-  const filteredPagos = useMemo(() => {
-    return pagos.filter(p => {
-      if (selectedMonth !== "todos") {
-        if (p.fecha.substring(0, 7) !== selectedMonth) return false
-      }
-      if (selectedEstado !== "todos" && p.estado !== selectedEstado) return false
-      return true
+  // ── Computed: KPI stats ────────────────────────────
+  const kpiStats = useMemo(() => {
+    const monthPagos = pagos.filter(p =>
+      selectedMonth === "todos" || p.fecha.startsWith(selectedMonth)
+    )
+
+    const agentesActivos    = agentes.filter(a => a.activo)
+    const agentesActivosCount = agentesActivos.length
+    const agentesFeeCount   = agentes.filter(a => a.paga_fee === true).length
+
+    // FEE
+    const feePagos  = monthPagos.filter(p => getConceptGroup(p.concepto) === "FEE")
+    const feeCobrX  = new Set(feePagos.filter(p => p.estado === "Pagado").map(p => p.agente_id)).size
+    const feePct    = agentesFeeCount > 0 ? Math.round((feeCobrX / agentesFeeCount) * 100) : 0
+
+    // CRM
+    const crmPagos  = monthPagos.filter(p => getConceptGroup(p.concepto) === "CRM")
+    const crmCobrX  = new Set(crmPagos.filter(p => p.estado === "Pagado").map(p => p.agente_id)).size
+    const crmPct    = agentesActivosCount > 0 ? Math.round((crmCobrX / agentesActivosCount) * 100) : 0
+
+    // Mainstreet
+    const mainPagos = monthPagos.filter(p => getConceptGroup(p.concepto) === "Mainstreet")
+    const mainCobrX = new Set(mainPagos.filter(p => p.estado === "Pagado").map(p => p.agente_id)).size
+    const mainPct   = agentesActivosCount > 0 ? Math.round((mainCobrX / agentesActivosCount) * 100) : 0
+
+    // Otros
+    const otrosPagos  = monthPagos.filter(p => getConceptGroup(p.concepto) === "Otros")
+    const otrosCobrX  = otrosPagos.filter(p => p.estado === "Pagado").length
+
+    const pctGeneral  = Math.round((feePct + crmPct + mainPct) / 3)
+
+    return {
+      feeCobrX, feeTotal: agentesFeeCount, feePct,
+      crmCobrX, crmTotal: agentesActivosCount, crmPct,
+      mainCobrX, mainTotal: agentesActivosCount, mainPct,
+      otrosCobrX, pctGeneral,
+    }
+  }, [pagos, agentes, selectedMonth])
+
+  // ── Computed: agentes view ─────────────────────────
+  const agentesPagos = useMemo(() => {
+    const monthPagos = pagos.filter(p =>
+      selectedMonth === "todos" || p.fecha.startsWith(selectedMonth)
+    )
+
+    const grouped = new Map<string, PagoRow[]>()
+    for (const p of monthPagos) {
+      const arr = grouped.get(p.agente_id) ?? []
+      arr.push(p)
+      grouped.set(p.agente_id, arr)
+    }
+
+    const rows = Array.from(grouped.entries()).map(([agente_id, agentePagos]) => {
+      const totalDebe   = agentePagos.reduce((s, p) => s + Number(p.monto_debe),   0)
+      const totalPagado = agentePagos.reduce((s, p) => s + Number(p.monto_pagado), 0)
+      const saldo       = totalDebe - totalPagado
+      const estadoGral  = calcEstadoGeneral(totalDebe, totalPagado)
+      const ultimoMov   = agentePagos.reduce((mx, p) => p.fecha > mx ? p.fecha : mx, "")
+      const nombre      = (agentePagos[0].agentes as { nombre: string } | null)?.nombre ?? "—"
+      const info        = agentes.find(a => a.id === agente_id)
+      return { agente_id, nombre, telefono: info?.telefono ?? null, saldo, totalDebe, totalPagado, estadoGral, ultimoMov, pagos: agentePagos }
     })
-  }, [pagos, selectedMonth, selectedEstado])
 
-  const stats = useMemo(() => {
-    const totalDebe    = filteredPagos.reduce((s, p) => s + Number(p.monto_debe), 0)
-    const totalCobrado = filteredPagos.reduce((s, p) => s + Number(p.monto_pagado), 0)
-    const totalSaldo   = filteredPagos.reduce((s, p) =>
-      s + Math.max(0, Number(p.monto_debe) - Number(p.monto_pagado)), 0)
-    const pct = totalDebe > 0 ? Math.round((totalCobrado / totalDebe) * 100) : 100
-    return { totalCobrado, totalSaldo, pct, totalDebe }
-  }, [filteredPagos])
+    return rows
+      .filter(r => selectedEstado === "todos" || r.estadoGral === selectedEstado)
+      .sort((a, b) => b.saldo - a.saldo)
+  }, [pagos, agentes, selectedMonth, selectedEstado])
 
-  // Estado calculado en tiempo real para nuevo pago
+  // ── Real-time form estado ──────────────────────────
   const nuevoEstado = useMemo(() => {
-    const debe   = parseFloat(nuevoForm.monto_debe)   || 0
-    const pagado = parseFloat(nuevoForm.monto_pagado) || 0
-    return calcEstado(debe, pagado)
+    return calcEstado(parseFloat(nuevoForm.monto_debe) || 0, parseFloat(nuevoForm.monto_pagado) || 0)
   }, [nuevoForm.monto_debe, nuevoForm.monto_pagado])
 
-  // Estado calculado en tiempo real para editar
   const editEstado = useMemo(() => {
     if (!selectedPago) return "Pendiente"
-    const pagado = parseFloat(editForm.monto_pagado) || 0
-    return calcEstado(Number(selectedPago.monto_debe), pagado)
+    return calcEstado(Number(selectedPago.monto_debe), parseFloat(editForm.monto_pagado) || 0)
   }, [selectedPago, editForm.monto_pagado])
 
   // ── Keyboard ───────────────────────────────────────
@@ -258,9 +350,9 @@ export default function PagosClient({ pagos, agentes }: Props) {
   }, [modal, closeModal])
 
   // ── Open modals ────────────────────────────────────
-  function openNuevo() {
+  function openNuevo(preAgente?: string) {
     setNuevoForm({
-      agente_id:    agentes[0]?.id ?? "",
+      agente_id:    preAgente ?? agentes[0]?.id ?? "",
       concepto:     CONCEPTOS[0],
       monto_debe:   "",
       monto_pagado: "0",
@@ -277,13 +369,25 @@ export default function PagosClient({ pagos, agentes }: Props) {
     setModal("editar")
   }
 
+  // ── WhatsApp ───────────────────────────────────────
+  function openWhatsApp(nombre: string, telefono: string | null, saldo: number) {
+    if (!telefono) return
+    const mes  = mesLabel(selectedMonth)
+    const msg  = mensajeWhatsapp
+      .replace(/\[nombre\]/g, nombre)
+      .replace(/\[monto\]/g,  fmtUSD(saldo).replace("USD ", ""))
+      .replace(/\[mes\]/g,    mes)
+    const num  = telefono.replace(/\D/g, "")
+    window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, "_blank")
+  }
+
   // ── Submit handlers ────────────────────────────────
   function handleNuevo(e: React.FormEvent) {
     e.preventDefault()
     setError("")
     const debe   = parseFloat(nuevoForm.monto_debe)   || 0
     const pagado = parseFloat(nuevoForm.monto_pagado) || 0
-    if (debe <= 0) { setError("El monto que debe ser mayor a 0"); return }
+    if (debe <= 0) { setError("El monto debe ser mayor a 0"); return }
 
     startTransition(async () => {
       const result = await crearPago({
@@ -314,7 +418,6 @@ export default function PagosClient({ pagos, agentes }: Props) {
     })
   }
 
-  // ── Shared modal shell ─────────────────────────────
   const cardStyle: React.CSSProperties = {
     background: "white", borderRadius: "14px",
     border: "1.5px solid #EAECF2", overflow: "hidden",
@@ -337,11 +440,11 @@ export default function PagosClient({ pagos, agentes }: Props) {
             Pagos
           </h1>
           <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "1px" }}>
-            Control de planes CRM y deudas del equipo
+            Control de cobros por concepto — REMAX Tradición
           </p>
         </div>
         <button
-          onClick={openNuevo}
+          onClick={() => openNuevo()}
           style={{
             background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
             color: "white", border: "none",
@@ -358,46 +461,68 @@ export default function PagosClient({ pagos, agentes }: Props) {
       {/* ── Scrollable content ────────────────────── */}
       <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
 
-        {/* ── KPI Cards (3 cols) ─────────────────── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px", marginBottom: "20px" }}>
-          <KpiCard
-            title="Total cobrado"
-            value={fmtUSD(stats.totalCobrado)}
-            badge={`de ${fmtUSD(stats.totalDebe)}`}
+        {/* ── KPI boxes (4 conceptos) ───────────────── */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "14px", marginBottom: "20px" }}>
+          <KpiConcepto
+            label="FEE mensual"
+            x={kpiStats.feeCobrX}
+            y={kpiStats.feeTotal}
+            pct={kpiStats.feePct}
+            color="#E31837"
+            gradient="linear-gradient(135deg,#E31837 0%,#9B0F26 100%)"
+          />
+          <KpiConcepto
+            label="Licencias CRM"
+            x={kpiStats.crmCobrX}
+            y={kpiStats.crmTotal}
+            pct={kpiStats.crmPct}
+            color="#7C3AED"
+            gradient="linear-gradient(135deg,#7C3AED 0%,#5B21B6 100%)"
+          />
+          <KpiConcepto
+            label="Mainstreet"
+            x={kpiStats.mainCobrX}
+            y={kpiStats.mainTotal}
+            pct={kpiStats.mainPct}
+            color="#0D9488"
             gradient="linear-gradient(135deg,#0D9488 0%,#0F766E 100%)"
-            shadowColor="rgba(13,148,136,0.3)"
-            icon={<DollarSign size={20} color="white" />}
           />
-          <KpiCard
-            title="Total pendiente"
-            value={fmtUSD(stats.totalSaldo)}
-            badge={`${filteredPagos.filter(p => p.estado !== "Pagado").length} registros`}
+          <KpiConcepto
+            label="Otros"
+            x={kpiStats.otrosCobrX}
+            color="#D97706"
             gradient="linear-gradient(135deg,#D97706 0%,#B45309 100%)"
-            shadowColor="rgba(217,119,6,0.3)"
-            icon={<TrendingUp size={20} color="white" />}
           />
-          <KpiCard
-            title="% Cobranza"
-            value={`${stats.pct}%`}
-            badge={stats.pct >= 80 ? "✓ Buen rendimiento" : "Por mejorar"}
-            gradient={
-              stats.pct >= 80
-                ? "linear-gradient(135deg,#7C3AED 0%,#5B21B6 100%)"
-                : "linear-gradient(135deg,#E31837 0%,#9B0F26 100%)"
-            }
-            shadowColor={stats.pct >= 80 ? "rgba(124,58,237,0.3)" : "rgba(227,24,55,0.3)"}
-            icon={<BarChart2 size={20} color="white" />}
-          />
+        </div>
+
+        {/* ── % general ──────────────────────────────── */}
+        <div style={{
+          ...cardStyle,
+          display: "flex", alignItems: "center", gap: "16px",
+          padding: "12px 20px", marginBottom: "16px", overflow: "visible",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1 }}>
+            <DollarSign size={14} color="#E31837" />
+            <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#0F172A" }}>
+              Cobranza general: <strong style={{
+                color: kpiStats.pctGeneral >= 80 ? "#059669" : kpiStats.pctGeneral >= 50 ? "#D97706" : "#E11D48"
+              }}>{kpiStats.pctGeneral}%</strong>
+            </span>
+            <div style={{ flex: 1, maxWidth: "200px" }}>
+              <ProgressBar pct={kpiStats.pctGeneral} />
+            </div>
+          </div>
+          <span style={{ fontSize: "11px", color: "#94A3B8" }}>
+            Promedio FEE + CRM + Mainstreet
+          </span>
         </div>
 
         {/* ── Filtros ──────────────────────────────── */}
         <div style={{
           ...cardStyle,
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "12px 18px", marginBottom: "16px",
-          overflow: "visible",
+          padding: "12px 18px", marginBottom: "16px", overflow: "visible",
         }}>
-          {/* Status filter */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ fontSize: "12px", fontWeight: 600, color: "#94A3B8", marginRight: "4px" }}>
               ESTADO
@@ -412,8 +537,6 @@ export default function PagosClient({ pagos, agentes }: Props) {
               </button>
             ))}
           </div>
-
-          {/* Month filter */}
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <span style={{ fontSize: "12px", fontWeight: 600, color: "#94A3B8" }}>MES</span>
             <select
@@ -431,12 +554,12 @@ export default function PagosClient({ pagos, agentes }: Props) {
               ))}
             </select>
             <span style={{ fontSize: "12px", color: "#94A3B8", whiteSpace: "nowrap" }}>
-              {filteredPagos.length} registro{filteredPagos.length !== 1 ? "s" : ""}
+              {agentesPagos.length} agente{agentesPagos.length !== 1 ? "s" : ""}
             </span>
           </div>
         </div>
 
-        {/* ── Tabla ────────────────────────────────── */}
+        {/* ── Tabla por agente ─────────────────────── */}
         <div style={cardStyle}>
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -445,11 +568,11 @@ export default function PagosClient({ pagos, agentes }: Props) {
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
               <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
-                Historial de pagos
+                Estado de cobros por agente
               </span>
             </div>
-            {filteredPagos.length === 0 && (
-              <span style={{ fontSize: "12px", color: "#94A3B8" }}>Sin resultados para este filtro</span>
+            {agentesPagos.length === 0 && (
+              <span style={{ fontSize: "12px", color: "#94A3B8" }}>Sin resultados</span>
             )}
           </div>
 
@@ -457,7 +580,7 @@ export default function PagosClient({ pagos, agentes }: Props) {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
-                  {["Agente", "Plan", "Concepto", "Fecha", "Debe", "Pagado", "Saldo", "Estado", ""].map(h => (
+                  {["Agente", "Último movimiento", "Saldo del mes", "Estado", "WhatsApp", ""].map(h => (
                     <th key={h} style={{
                       padding: "10px 16px", textAlign: "left",
                       fontSize: "10.5px", fontWeight: 700,
@@ -471,67 +594,183 @@ export default function PagosClient({ pagos, agentes }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {filteredPagos.length === 0 ? (
+                {agentesPagos.length === 0 ? (
                   <tr>
-                    <td colSpan={9} style={{ padding: "40px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
+                    <td colSpan={6} style={{ padding: "40px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
                       No hay registros para el filtro seleccionado.
                     </td>
                   </tr>
                 ) : (
-                  filteredPagos.map((p, i) => {
-                    const saldo   = Math.max(0, Number(p.monto_debe) - Number(p.monto_pagado))
-                    const nombre  = (p.agentes as { nombre: string } | null)?.nombre ?? "—"
-                    const isLast  = i === filteredPagos.length - 1
+                  agentesPagos.map((ag, i) => {
+                    const isExpanded = expandedAgent === ag.agente_id
+                    const isLast     = i === agentesPagos.length - 1 && !isExpanded
                     return (
-                      <tr
-                        key={p.id}
-                        style={{ borderBottom: isLast ? "none" : "1px solid #F3F4F6" }}
-                        className="hover:bg-[#FAFBFF]"
-                      >
-                        <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: "13px", color: "#0F172A", whiteSpace: "nowrap" }}>
-                          {nombre}
-                        </td>
-                        <td style={{ padding: "12px 16px" }}>
-                          <PlanBadge concepto={p.concepto} />
-                        </td>
-                        <td style={{ padding: "12px 16px", fontSize: "12px", color: "#64748B", maxWidth: "180px" }}>
-                          <span title={p.concepto} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {p.concepto}
-                          </span>
-                        </td>
-                        <td style={{ padding: "12px 16px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>
-                          {fmtFecha(p.fecha)}
-                        </td>
-                        <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: "13px", color: "#0F172A", whiteSpace: "nowrap" }}>
-                          {fmtUSD(Number(p.monto_debe))}
-                        </td>
-                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "#059669", fontWeight: 600, whiteSpace: "nowrap" }}>
-                          {fmtUSD(Number(p.monto_pagado))}
-                        </td>
-                        <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap",
-                          color: saldo > 0 ? "#E11D48" : "#059669" }}>
-                          {saldo > 0 ? fmtUSD(saldo) : "—"}
-                        </td>
-                        <td style={{ padding: "12px 16px" }}>
-                          <EstadoBadge estado={p.estado} />
-                        </td>
-                        <td style={{ padding: "12px 16px" }}>
-                          {p.estado !== "Pagado" && (
-                            <button
-                              onClick={() => openEditar(p)}
-                              style={{
-                                padding: "5px 14px", borderRadius: "7px",
-                                border: "1.5px solid #EAECF2", background: "white",
-                                fontSize: "12px", fontWeight: 600, color: "#0F172A",
-                                cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
-                              }}
-                              className="hover:bg-[#F8F9FC]"
-                            >
-                              Registrar pago
-                            </button>
-                          )}
-                        </td>
-                      </tr>
+                      <Fragment key={ag.agente_id}>
+                        {/* ── Main row ── */}
+                        <tr
+                          onClick={() => setExpandedAgent(isExpanded ? null : ag.agente_id)}
+                          style={{
+                            borderBottom: (isLast && !isExpanded) ? "none" : "1px solid #F3F4F6",
+                            cursor: "pointer",
+                            background: isExpanded ? "#FAFBFF" : "white",
+                            transition: "background 0.1s",
+                          }}
+                        >
+                          <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: "13px", color: "#0F172A", whiteSpace: "nowrap" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{
+                                fontSize: "11px", color: "#64748B", fontWeight: 400,
+                                transform: isExpanded ? "rotate(90deg)" : "none",
+                                display: "inline-block", transition: "transform 0.15s",
+                              }}>▶</span>
+                              {ag.nombre}
+                            </div>
+                          </td>
+                          <td style={{ padding: "12px 16px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>
+                            {fmtFecha(ag.ultimoMov)}
+                          </td>
+                          <td style={{
+                            padding: "12px 16px", fontWeight: 700, fontSize: "13px", whiteSpace: "nowrap",
+                            color: ag.saldo > 0 ? "#E11D48" : "#059669",
+                          }}>
+                            {ag.saldo > 0 ? `- ${fmtUSD(ag.saldo)}` : ag.saldo < 0 ? `+ ${fmtUSD(-ag.saldo)}` : fmtUSD(0)}
+                          </td>
+                          <td style={{ padding: "12px 16px" }}>
+                            <EstadoBadge estado={ag.estadoGral} />
+                          </td>
+                          <td style={{ padding: "12px 16px" }}>
+                            {ag.telefono ? (
+                              <button
+                                onClick={e => { e.stopPropagation(); openWhatsApp(ag.nombre, ag.telefono, ag.saldo) }}
+                                title="Enviar WhatsApp"
+                                style={{
+                                  background: "#25D366", border: "none", borderRadius: "8px",
+                                  width: "32px", height: "32px", display: "flex",
+                                  alignItems: "center", justifyContent: "center",
+                                  cursor: "pointer", color: "white", flexShrink: 0,
+                                }}
+                              >
+                                <MessageCircle size={15} />
+                              </button>
+                            ) : (
+                              <span style={{ color: "#CBD5E1", fontSize: "12px" }}>—</span>
+                            )}
+                          </td>
+                          <td style={{ padding: "12px 16px" }}>
+                            {ag.estadoGral !== "Pagado" && (
+                              <button
+                                onClick={e => { e.stopPropagation(); openNuevo(ag.agente_id) }}
+                                style={{
+                                  padding: "5px 14px", borderRadius: "7px",
+                                  border: "1.5px solid #EAECF2", background: "white",
+                                  fontSize: "12px", fontWeight: 600, color: "#0F172A",
+                                  cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                                }}
+                              >
+                                Registrar pago
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+
+                        {/* ── Expanded detail ── */}
+                        {isExpanded && (
+                          <tr style={{ borderBottom: isLast ? "none" : "1px solid #F3F4F6" }}>
+                            <td colSpan={6} style={{ padding: 0 }}>
+                              <div style={{
+                                background: "#F8FAFF", borderTop: "1px solid #EEF0F8",
+                                padding: "16px 24px",
+                              }}>
+                                {/* Summary strip */}
+                                <div style={{
+                                  display: "flex", gap: "20px", marginBottom: "12px",
+                                  fontSize: "12.5px",
+                                }}>
+                                  <span>
+                                    <span style={{ color: "#64748B" }}>Total pagado: </span>
+                                    <strong style={{ color: "#059669" }}>{fmtUSD(ag.totalPagado)}</strong>
+                                  </span>
+                                  <span>
+                                    <span style={{ color: "#64748B" }}>Total pendiente: </span>
+                                    <strong style={{ color: "#E11D48" }}>{fmtUSD(Math.max(0, ag.saldo))}</strong>
+                                  </span>
+                                  <span>
+                                    <span style={{ color: "#64748B" }}>Estado: </span>
+                                    <EstadoBadge estado={ag.estadoGral} />
+                                  </span>
+                                </div>
+
+                                {/* Movement detail */}
+                                <table style={{ width: "100%", borderCollapse: "collapse", background: "white", borderRadius: "10px", overflow: "hidden", border: "1px solid #EAECF2" }}>
+                                  <thead>
+                                    <tr style={{ background: "#F1F5F9" }}>
+                                      {["Fecha", "Concepto", "Debe", "Pagado", "Estado", ""].map(h => (
+                                        <th key={h} style={{
+                                          padding: "8px 14px", textAlign: "left",
+                                          fontSize: "10px", fontWeight: 700,
+                                          textTransform: "uppercase" as const,
+                                          letterSpacing: "0.7px", color: "#94A3B8",
+                                        }}>
+                                          {h}
+                                        </th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {ag.pagos.map((p, pi) => (
+                                      <tr key={p.id} style={{ borderTop: pi > 0 ? "1px solid #F3F4F6" : "none" }}>
+                                        <td style={{ padding: "10px 14px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>
+                                          {fmtFecha(p.fecha)}
+                                        </td>
+                                        <td style={{ padding: "10px 14px", fontSize: "12px", color: "#0F172A" }}>
+                                          {p.concepto}
+                                        </td>
+                                        <td style={{ padding: "10px 14px", fontSize: "12px", fontWeight: 600, color: "#0F172A", whiteSpace: "nowrap" }}>
+                                          {fmtUSD(Number(p.monto_debe))}
+                                        </td>
+                                        <td style={{ padding: "10px 14px", fontSize: "12px", color: "#059669", fontWeight: 600, whiteSpace: "nowrap" }}>
+                                          {fmtUSD(Number(p.monto_pagado))}
+                                        </td>
+                                        <td style={{ padding: "10px 14px" }}>
+                                          <EstadoBadge estado={p.estado} />
+                                        </td>
+                                        <td style={{ padding: "10px 14px" }}>
+                                          {p.estado !== "Pagado" && (
+                                            <button
+                                              onClick={() => openEditar(p)}
+                                              style={{
+                                                padding: "3px 10px", borderRadius: "6px",
+                                                border: "1.5px solid #EAECF2", background: "white",
+                                                fontSize: "11px", fontWeight: 600, color: "#0F172A",
+                                                cursor: "pointer", fontFamily: "inherit",
+                                              }}
+                                            >
+                                              Editar
+                                            </button>
+                                          )}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+
+                                {/* Balance neto */}
+                                <div style={{
+                                  marginTop: "10px", textAlign: "right",
+                                  fontSize: "14px", fontWeight: 700,
+                                  color: ag.saldo > 0 ? "#E11D48" : "#059669",
+                                }}>
+                                  Saldo: {ag.saldo > 0
+                                    ? `- ${fmtUSD(ag.saldo)}`
+                                    : ag.saldo < 0
+                                      ? `+ ${fmtUSD(-ag.saldo)}`
+                                      : "✓ Al día"}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
                     )
                   })
                 )}
@@ -562,7 +801,6 @@ export default function PagosClient({ pagos, agentes }: Props) {
               boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
             }}
           >
-            {/* Header */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               padding: "18px 20px", borderBottom: "1px solid #EAECF2",
@@ -586,7 +824,6 @@ export default function PagosClient({ pagos, agentes }: Props) {
             </div>
 
             <form onSubmit={handleNuevo} style={{ padding: "20px" }}>
-              {/* Agente */}
               <Field label="Agente *">
                 <select
                   value={nuevoForm.agente_id}
@@ -600,7 +837,6 @@ export default function PagosClient({ pagos, agentes }: Props) {
                 </select>
               </Field>
 
-              {/* Concepto + Fecha */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <Field label="Concepto *">
                   <select
@@ -623,14 +859,10 @@ export default function PagosClient({ pagos, agentes }: Props) {
                 </Field>
               </div>
 
-              {/* Montos */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <Field label="Monto que debe (USD) *">
                   <input
-                    type="number"
-                    min="0"
-                    step="100"
-                    placeholder="15000"
+                    type="number" min="0" step="0.01" placeholder="95.25"
                     value={nuevoForm.monto_debe}
                     onChange={e => setNuevoForm(f => ({ ...f, monto_debe: e.target.value }))}
                     style={inp}
@@ -639,10 +871,7 @@ export default function PagosClient({ pagos, agentes }: Props) {
                 </Field>
                 <Field label="Monto pagado (USD)">
                   <input
-                    type="number"
-                    min="0"
-                    step="100"
-                    placeholder="0"
+                    type="number" min="0" step="0.01" placeholder="0"
                     value={nuevoForm.monto_pagado}
                     onChange={e => setNuevoForm(f => ({ ...f, monto_pagado: e.target.value }))}
                     style={inp}
@@ -650,7 +879,6 @@ export default function PagosClient({ pagos, agentes }: Props) {
                 </Field>
               </div>
 
-              {/* Estado calculado */}
               <div style={{
                 display: "flex", alignItems: "center", gap: "8px",
                 padding: "10px 12px", borderRadius: "8px",
@@ -703,7 +931,7 @@ export default function PagosClient({ pagos, agentes }: Props) {
       )}
 
       {/* ════════════════════════════════════════════
-          MODAL — REGISTRAR PAGO PARCIAL (EDITAR)
+          MODAL — EDITAR PAGO
       ════════════════════════════════════════════ */}
       {modal === "editar" && selectedPago && (
         <div
@@ -723,7 +951,6 @@ export default function PagosClient({ pagos, agentes }: Props) {
               boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
             }}
           >
-            {/* Header */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               padding: "18px 20px", borderBottom: "1px solid #EAECF2",
@@ -747,24 +974,18 @@ export default function PagosClient({ pagos, agentes }: Props) {
             </div>
 
             <form onSubmit={handleEditar} style={{ padding: "20px" }}>
-              {/* Info readonly */}
               <ReadOnlyField
                 label="Agente"
                 value={(selectedPago.agentes as { nombre: string } | null)?.nombre ?? "—"}
               />
-
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <ReadOnlyField label="Concepto" value={selectedPago.concepto} />
                 <ReadOnlyField label="Monto que debe" value={fmtUSD(Number(selectedPago.monto_debe))} />
               </div>
 
-              {/* Monto pagado editable */}
               <Field label="Nuevo monto pagado total (USD) *">
                 <input
-                  type="number"
-                  min="0"
-                  max={Number(selectedPago.monto_debe)}
-                  step="100"
+                  type="number" min="0" max={Number(selectedPago.monto_debe)} step="0.01"
                   value={editForm.monto_pagado}
                   onChange={e => setEditForm({ monto_pagado: e.target.value })}
                   style={inp}
@@ -773,7 +994,6 @@ export default function PagosClient({ pagos, agentes }: Props) {
                 />
               </Field>
 
-              {/* Estado calculado en tiempo real */}
               <div style={{
                 display: "flex", alignItems: "center", gap: "8px",
                 padding: "10px 12px", borderRadius: "8px",
