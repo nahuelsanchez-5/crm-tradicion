@@ -139,8 +139,9 @@ function SubmitRow({
 export default function DashboardActions({ agentes }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [modal,  setModal]  = useState<ModalT>("none")
-  const [error,  setError]  = useState("")
+  const [modal,      setModal]      = useState<ModalT>("none")
+  const [error,      setError]      = useState("")
+  const [hoveredBtn, setHoveredBtn] = useState<ModalT | null>(null)
 
   const todayStr = new Date().toISOString().split("T")[0]
 
@@ -269,14 +270,35 @@ export default function DashboardActions({ agentes }: Props) {
     })
   }
 
-  const btnBase: React.CSSProperties = {
-    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-    gap: "8px", padding: "18px 12px", borderRadius: "14px",
-    border: "1.5px solid #EAECF2", background: "white",
-    cursor: "pointer", fontFamily: "inherit",
-    fontSize: "13px", fontWeight: 700, color: "#0F172A",
-    transition: "all 0.15s", boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
-  }
+  const QUICK_BTNS: Array<{
+    emoji: string; label: string; sublabel: string; m: ModalT
+    bg: string; bgHover: string; color: string; border: string; shadow: string; shadowHover: string
+  }> = [
+    {
+      emoji: "💰", label: "Registrar", sublabel: "Pago", m: "pago",
+      bg: "#ECFDF5", bgHover: "#D1FAE5", color: "#059669",
+      border: "#6EE7B7", shadow: "0 2px 8px rgba(5,150,105,0.12)",
+      shadowHover: "0 8px 24px rgba(5,150,105,0.22)",
+    },
+    {
+      emoji: "🪧", label: "Devolución", sublabel: "Cartelería", m: "carteleria",
+      bg: "#FFFBEB", bgHover: "#FEF3C7", color: "#D97706",
+      border: "#FCD34D", shadow: "0 2px 8px rgba(217,119,6,0.12)",
+      shadowHover: "0 8px 24px rgba(217,119,6,0.22)",
+    },
+    {
+      emoji: "📋", label: "Registrar", sublabel: "Encuesta", m: "encuesta",
+      bg: "#EFF6FF", bgHover: "#DBEAFE", color: "#2563EB",
+      border: "#93C5FD", shadow: "0 2px 8px rgba(37,99,235,0.12)",
+      shadowHover: "0 8px 24px rgba(37,99,235,0.22)",
+    },
+    {
+      emoji: "🏠", label: "Registrar", sublabel: "Operación", m: "operacion",
+      bg: "#FFF7ED", bgHover: "#FFEDD5", color: "#EA580C",
+      border: "#FDBA74", shadow: "0 2px 8px rgba(234,88,12,0.12)",
+      shadowHover: "0 8px 24px rgba(234,88,12,0.22)",
+    },
+  ]
 
   const ErrorBox = () => error ? (
     <div style={{
@@ -293,19 +315,53 @@ export default function DashboardActions({ agentes }: Props) {
       {/* ── Quick action buttons ─────────────────────── */}
       <div style={{
         display: "grid", gridTemplateColumns: "repeat(4,1fr)",
-        gap: "12px", margin: "20px 0",
+        gap: "14px", margin: "4px 0 20px",
       }}>
-        {[
-          { emoji: "💰", label: "Registrar\nPago",       m: "pago"       as ModalT },
-          { emoji: "🪧", label: "Devolución\nCartelería", m: "carteleria" as ModalT },
-          { emoji: "📋", label: "Registrar\nEncuesta",   m: "encuesta"   as ModalT },
-          { emoji: "🏠", label: "Registrar\nOperación",  m: "operacion"  as ModalT },
-        ].map(({ emoji, label, m }) => (
-          <button key={m} onClick={() => openModal(m)} style={btnBase}>
-            <span style={{ fontSize: "26px", lineHeight: 1 }}>{emoji}</span>
-            <span style={{ textAlign: "center", lineHeight: 1.3, whiteSpace: "pre-line" }}>{label}</span>
-          </button>
-        ))}
+        {QUICK_BTNS.map(({ emoji, label, sublabel, m, bg, bgHover, color, border, shadow, shadowHover }) => {
+          const isHovered = hoveredBtn === m
+          return (
+            <button
+              key={m}
+              onClick={() => openModal(m)}
+              onMouseEnter={() => setHoveredBtn(m)}
+              onMouseLeave={() => setHoveredBtn(null)}
+              style={{
+                display: "flex", flexDirection: "column",
+                alignItems: "center", justifyContent: "center",
+                gap: "10px", padding: "20px 12px 16px",
+                borderRadius: "16px",
+                border: `1.5px solid ${border}`,
+                background: isHovered ? bgHover : bg,
+                cursor: "pointer", fontFamily: "inherit",
+                boxShadow: isHovered ? shadowHover : shadow,
+                transform: isHovered ? "translateY(-2px)" : "none",
+                transition: "all 0.18s ease",
+                minHeight: "110px",
+              }}
+            >
+              {/* Icon bubble */}
+              <div style={{
+                width: "48px", height: "48px", borderRadius: "14px",
+                background: "white",
+                boxShadow: `0 2px 8px ${color}30`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "24px", lineHeight: 1,
+                flexShrink: 0,
+              }}>
+                {emoji}
+              </div>
+              {/* Label */}
+              <div style={{ textAlign: "center", lineHeight: 1.25 }}>
+                <div style={{ fontSize: "11px", fontWeight: 500, color, opacity: 0.7, letterSpacing: "0.2px" }}>
+                  {label}
+                </div>
+                <div style={{ fontSize: "13px", fontWeight: 800, color, marginTop: "1px" }}>
+                  {sublabel}
+                </div>
+              </div>
+            </button>
+          )
+        })}
       </div>
 
       {/* ════════════ MODAL PAGO ════════════ */}

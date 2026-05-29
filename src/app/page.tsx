@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase"
 import KpiCard from "@/components/KpiCard"
 import DashboardActions from "./DashboardActions"
+import DashboardClock from "./DashboardClock"
 import Image from "next/image"
 import { Users, Building2, DollarSign, CreditCard } from "lucide-react"
 
@@ -188,23 +189,16 @@ export default async function DashboardPage() {
         borderBottom: "1px solid #EAECF2",
         flexShrink: 0,
       }}>
-        {/* Izquierda */}
-        <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0, lineHeight: 1.3 }}>
-            Buenos días 👋
-          </h1>
-          <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "1px" }}>
-            {`Estás viendo ${MES_LABEL} · REMAX Tradición`}
-          </p>
-        </div>
+        {/* Izquierda — reloj en tiempo real */}
+        <DashboardClock />
 
         {/* Centro — logo */}
         <Image
           src="/logo.png"
           alt="REMAX Tradición"
-          width={180}
-          height={56}
-          style={{ objectFit: "contain", maxWidth: "180px", display: "block" }}
+          width={280}
+          height={88}
+          style={{ objectFit: "contain", maxWidth: "280px", display: "block" }}
           priority
         />
 
