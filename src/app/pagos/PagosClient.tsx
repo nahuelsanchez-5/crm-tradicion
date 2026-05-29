@@ -86,8 +86,12 @@ function extractPlan(concepto: string): string | null {
   return m ? m[0] : null
 }
 
-function fmtARS(n: number) {
-  return `$${Math.round(n).toLocaleString("es-AR")}`
+function fmtUSD(n: number): string {
+  const rounded = Math.round(n * 100) / 100
+  if (rounded === Math.floor(rounded)) {
+    return `USD ${rounded.toLocaleString("es-AR")}`
+  }
+  return `USD ${rounded.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function fmtFecha(fechaStr: string) {
@@ -358,15 +362,15 @@ export default function PagosClient({ pagos, agentes }: Props) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px", marginBottom: "20px" }}>
           <KpiCard
             title="Total cobrado"
-            value={fmtARS(stats.totalCobrado)}
-            badge={`de ${fmtARS(stats.totalDebe)}`}
+            value={fmtUSD(stats.totalCobrado)}
+            badge={`de ${fmtUSD(stats.totalDebe)}`}
             gradient="linear-gradient(135deg,#0D9488 0%,#0F766E 100%)"
             shadowColor="rgba(13,148,136,0.3)"
             icon={<DollarSign size={20} color="white" />}
           />
           <KpiCard
             title="Total pendiente"
-            value={fmtARS(stats.totalSaldo)}
+            value={fmtUSD(stats.totalSaldo)}
             badge={`${filteredPagos.filter(p => p.estado !== "Pagado").length} registros`}
             gradient="linear-gradient(135deg,#D97706 0%,#B45309 100%)"
             shadowColor="rgba(217,119,6,0.3)"
@@ -499,14 +503,14 @@ export default function PagosClient({ pagos, agentes }: Props) {
                           {fmtFecha(p.fecha)}
                         </td>
                         <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: "13px", color: "#0F172A", whiteSpace: "nowrap" }}>
-                          {fmtARS(Number(p.monto_debe))}
+                          {fmtUSD(Number(p.monto_debe))}
                         </td>
                         <td style={{ padding: "12px 16px", fontSize: "13px", color: "#059669", fontWeight: 600, whiteSpace: "nowrap" }}>
-                          {fmtARS(Number(p.monto_pagado))}
+                          {fmtUSD(Number(p.monto_pagado))}
                         </td>
                         <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap",
                           color: saldo > 0 ? "#E11D48" : "#059669" }}>
-                          {saldo > 0 ? fmtARS(saldo) : "—"}
+                          {saldo > 0 ? fmtUSD(saldo) : "—"}
                         </td>
                         <td style={{ padding: "12px 16px" }}>
                           <EstadoBadge estado={p.estado} />
@@ -621,7 +625,7 @@ export default function PagosClient({ pagos, agentes }: Props) {
 
               {/* Montos */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <Field label="Monto que debe ($) *">
+                <Field label="Monto que debe (USD) *">
                   <input
                     type="number"
                     min="0"
@@ -633,7 +637,7 @@ export default function PagosClient({ pagos, agentes }: Props) {
                     required
                   />
                 </Field>
-                <Field label="Monto pagado ($)">
+                <Field label="Monto pagado (USD)">
                   <input
                     type="number"
                     min="0"
@@ -751,11 +755,11 @@ export default function PagosClient({ pagos, agentes }: Props) {
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <ReadOnlyField label="Concepto" value={selectedPago.concepto} />
-                <ReadOnlyField label="Monto que debe" value={fmtARS(Number(selectedPago.monto_debe))} />
+                <ReadOnlyField label="Monto que debe" value={fmtUSD(Number(selectedPago.monto_debe))} />
               </div>
 
               {/* Monto pagado editable */}
-              <Field label="Nuevo monto pagado total ($) *">
+              <Field label="Nuevo monto pagado total (USD) *">
                 <input
                   type="number"
                   min="0"
@@ -782,7 +786,7 @@ export default function PagosClient({ pagos, agentes }: Props) {
                 <EstadoBadge estado={editEstado} />
                 <span style={{ marginLeft: "auto", fontSize: "12px", color: "#64748B" }}>
                   Saldo: <strong style={{ color: editEstado === "Pagado" ? "#059669" : "#E11D48" }}>
-                    {fmtARS(Math.max(0, Number(selectedPago.monto_debe) - (parseFloat(editForm.monto_pagado) || 0)))}
+                    {fmtUSD(Math.max(0, Number(selectedPago.monto_debe) - (parseFloat(editForm.monto_pagado) || 0)))}
                   </strong>
                 </span>
               </div>

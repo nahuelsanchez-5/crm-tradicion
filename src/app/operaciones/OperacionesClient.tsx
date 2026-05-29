@@ -63,8 +63,12 @@ interface FormData {
 }
 
 // ── Helpers ──────────────────────────────────────────
-function fmtUSD(n: number) {
-  return `USD ${Math.round(n).toLocaleString("es-AR")}`
+function fmtUSD(n: number): string {
+  const rounded = Math.round(n * 100) / 100
+  if (rounded === Math.floor(rounded)) {
+    return `USD ${rounded.toLocaleString("es-AR")}`
+  }
+  return `USD ${rounded.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function fmtFecha(fechaStr: string) {

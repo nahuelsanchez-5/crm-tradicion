@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "PowerShell(npm *)",
-      "PowerShell(npm run *)"
+      "PowerShell(npm run *)",
+      "mcp__claude_ai_Airtable__list_records_for_table",
+      "mcp__claude_ai_Airtable__get_table_schema",
+      "PowerShell(Out-Null *)",
+      "PowerShell(netstat *)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Stop-Process *)"
     ]
   }
 }

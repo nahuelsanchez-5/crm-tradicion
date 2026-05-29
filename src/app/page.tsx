@@ -9,13 +9,12 @@ const ANIO      = 2026
 const MES_LABEL = "Mayo 2026"
 
 // ── Helpers de formato ────────────────────────────────
-function fmtUSD(n: number) {
-  if (n >= 1000) return `$${(n / 1000).toFixed(1)}k`
-  return `$${n}`
-}
-
-function fmtARS(n: number) {
-  return `$${Number(n).toLocaleString("es-AR")}`
+function fmtUSD(n: number): string {
+  const rounded = Math.round(n * 100) / 100
+  if (rounded === Math.floor(rounded)) {
+    return `USD ${rounded.toLocaleString("es-AR")}`
+  }
+  return `USD ${rounded.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function fmtFecha(fechaStr: string) {
@@ -286,10 +285,10 @@ export default async function DashboardPage() {
                           </td>
                           <td style={{ padding: "12px 18px" }}><Tag estado={plan} /></td>
                           <td style={{ padding: "12px 18px", fontWeight: 700, fontSize: "13px", color: "#0F172A" }}>
-                            {fmtARS(p.monto_debe)}
+                            {fmtUSD(p.monto_debe)}
                           </td>
                           <td style={{ padding: "12px 18px", fontSize: "13px", color: "#64748B" }}>
-                            {fmtARS(p.monto_pagado)}
+                            {fmtUSD(p.monto_pagado)}
                           </td>
                           <td style={{ padding: "12px 18px" }}><Tag estado={p.estado} /></td>
                         </tr>
@@ -370,7 +369,7 @@ export default async function DashboardPage() {
                         </div>
                         <div style={{ fontSize: "10.5px", color: "#94A3B8", marginTop: "2px" }}>
                           {fmtFecha(op.fecha)} ·{" "}
-                          <strong style={{ color }}>{fmtUSD(op.comision_neta)} USD</strong>
+                          <strong style={{ color }}>{fmtUSD(op.comision_neta)}</strong>
                         </div>
                       </div>
                     </div>
