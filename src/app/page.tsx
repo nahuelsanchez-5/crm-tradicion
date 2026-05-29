@@ -1,6 +1,8 @@
 import { createServerClient } from "@/lib/supabase"
 import KpiCard from "@/components/KpiCard"
 import PageHeader from "@/components/PageHeader"
+import DashboardActions from "./DashboardActions"
+import Image from "next/image"
 import { Users, Building2, DollarSign, CreditCard } from "lucide-react"
 
 // ── Constantes del mes actual ──────────────────────────
@@ -102,6 +104,7 @@ export default async function DashboardPage() {
   // ── Fetch all data in parallel ──────────────────────
   const [
     { data: agentesData },
+    { data: agentesListData },
     { data: opsMesData },
     { data: facturacionData },
     { data: planesData },
@@ -112,6 +115,8 @@ export default async function DashboardPage() {
   ] = await Promise.all([
 
     supabase.from("agentes").select("id").eq("activo", true),
+
+    supabase.from("agentes").select("id, nombre").eq("activo", true).order("nombre"),
 
     supabase.from("operaciones").select("id")
       .gte("fecha", `${ANIO}-${String(MES).padStart(2, "0")}-01`)
@@ -163,9 +168,9 @@ export default async function DashboardPage() {
     ? `${Math.round((factReal / factObj) * 100)}% obj.`
     : "—"
 
-  const opsFeed = (opsFeedRaw ?? []) as OperacionRow[]
-  // Double-cast: Supabase infiere agentes como array, pero en runtime es objeto (join many-to-one)
-  const pagos   = ((pagosRaw ?? []) as unknown) as PagoRow[]
+  const opsFeed            = (opsFeedRaw    ?? []) as OperacionRow[]
+  const pagos              = ((pagosRaw     ?? []) as unknown) as PagoRow[]
+  const agentesForActions  = (agentesListData ?? []) as { id: string; nombre: string }[]
 
   // ═══════════════════════════════════════════════════
   //  RENDER
@@ -186,15 +191,6 @@ export default async function DashboardPage() {
         }}>
           📅 {MES_LABEL}
         </div>
-        <button style={{
-          background: "linear-gradient(135deg, #E31837 0%, #c0122d 100%)",
-          color: "white", border: "none",
-          padding: "8px 18px", borderRadius: "9px",
-          fontSize: "13px", fontWeight: 700, cursor: "pointer",
-          boxShadow: "0 2px 10px rgba(227,24,55,0.35)", fontFamily: "inherit",
-        }}>
-          + Nueva Operación
-        </button>
       </PageHeader>
 
       {/* ── Scrollable content ─────────────────────── */}
@@ -234,6 +230,18 @@ export default async function DashboardPage() {
             shadowColor="rgba(217,119,6,0.3)"
             icon={<CreditCard size={20} color="white" />}
           />
+        </div>
+
+        {/* ── Logo + Accesos rápidos ───────────────── */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "8px" }}>
+          <Image
+            src="/logo.png"
+            alt="REMAX Tradición"
+            width={280}
+            height={120}
+            style={{ objectFit: "contain", maxWidth: "280px", margin: "0 auto 4px" }}
+          />
+          <DashboardActions agentes={agentesForActions} />
         </div>
 
         {/* ── Bottom 2-col ─────────────────────────── */}
