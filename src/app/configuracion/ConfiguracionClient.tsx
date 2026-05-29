@@ -21,13 +21,23 @@ const DEFAULT_CONFIG: ConfigEntry[] = [
   { clave: "obj_facturacion_usd",  valor: "28000",  etiqueta: "Objetivo facturación mensual (USD)", grupo: "kpis" },
   { clave: "obj_carteleria_pct",   valor: "95",     etiqueta: "Objetivo recuperación cartelería (%)", grupo: "kpis" },
   { clave: "obj_encuestas_pct",    valor: "60",     etiqueta: "Objetivo respuesta encuestas (%)",   grupo: "kpis" },
+  // Comunicación
+  {
+    clave:    "mensaje_whatsapp",
+    valor:    "Hola [nombre], te recordamos que tenés un saldo pendiente de USD [monto] correspondiente a [mes]. Cualquier consulta estamos a disposición. REMAX Tradición",
+    etiqueta: "Mensaje WhatsApp de cobro",
+    grupo:    "comunicacion",
+  },
 ]
 
 const GRUPO_LABELS: Record<string, string> = {
-  planes: "Nombres de planes",
-  bonos:  "Montos de bonos",
-  kpis:   "Objetivos de KPIs",
+  planes:       "Nombres de planes",
+  bonos:        "Montos de bonos",
+  kpis:         "Objetivos de KPIs",
+  comunicacion: "Comunicación",
 }
+
+const TEXTAREA_CLAVES = new Set(["mensaje_whatsapp"])
 
 // ── Styles ────────────────────────────────────────────
 const inp: React.CSSProperties = {
@@ -68,7 +78,7 @@ export default function ConfiguracionClient({ initialEntries }: Props) {
 
     const entries: ConfigEntry[] = DEFAULT_CONFIG.map(def => ({
       clave:    def.clave,
-      valor:    values[def.clave] ?? def.valor,
+      valor:    (values[def.clave] ?? def.valor).trim(),
       etiqueta: def.etiqueta,
       grupo:    def.grupo,
     }))
@@ -163,12 +173,35 @@ export default function ConfiguracionClient({ initialEntries }: Props) {
                         }}>
                           {entry.etiqueta}
                         </label>
-                        <input
-                          type="text"
-                          value={values[entry.clave] ?? entry.valor}
-                          onChange={e => handleChange(entry.clave, e.target.value)}
-                          style={inp}
-                        />
+                        {TEXTAREA_CLAVES.has(entry.clave) ? (
+                          <>
+                            <textarea
+                              value={values[entry.clave] ?? entry.valor}
+                              onChange={e => handleChange(entry.clave, e.target.value)}
+                              rows={4}
+                              style={{ ...inp, resize: "vertical", lineHeight: 1.5 }}
+                            />
+                            <div style={{ fontSize: "11px", color: "#64748B", marginTop: "5px" }}>
+                              Variables disponibles:{" "}
+                              {["[nombre]", "[monto]", "[mes]"].map(v => (
+                                <code key={v} style={{
+                                  background: "#F1F5F9", color: "#0D9488",
+                                  padding: "1px 5px", borderRadius: "4px",
+                                  fontSize: "10.5px", marginRight: "4px", fontFamily: "monospace",
+                                }}>
+                                  {v}
+                                </code>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <input
+                            type="text"
+                            value={values[entry.clave] ?? entry.valor}
+                            onChange={e => handleChange(entry.clave, e.target.value)}
+                            style={inp}
+                          />
+                        )}
                         <div style={{ fontSize: "10.5px", color: "#94A3B8", marginTop: "4px", fontFamily: "monospace" }}>
                           {entry.clave}
                         </div>
