@@ -12,6 +12,7 @@ import {
   Building2,
   FileText,
   Settings,
+  Handshake,
   LucideIcon,
 } from "lucide-react"
 
@@ -31,6 +32,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/carteleria",  label: "Cartelería",   icon: MapPin,          group: "modulos" },
   { href: "/encuestas",   label: "Encuestas",    icon: ClipboardList,   group: "modulos" },
   { href: "/operaciones", label: "Operaciones",  icon: Building2,       group: "modulos" },
+  { href: "/ofertas",     label: "Ofertas",      icon: Handshake,       group: "modulos" },
   { href: "/facturacion",    label: "Facturación",  icon: FileText,  group: "modulos" },
   { href: "/configuracion", label: "Configuración", icon: Settings,  group: "modulos" },
 ]
