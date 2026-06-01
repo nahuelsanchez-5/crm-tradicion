@@ -1,0 +1,779 @@
+"use client"
+
+import { useState, useTransition, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { cambiarEstado, agregarMovimiento, toggleChecklist } from "../actions"
+import {
+  ArrowLeft, X, Loader2, ChevronRight,
+  DollarSign, Calendar, User, FileText, CheckSquare, Clock,
+} from "lucide-react"
+
+// ── Types ─────────────────────────────────────────────
+export interface AgenteSimple {
+  id:     string
+  nombre: string
+}
+
+export interface OfertaDetalle {
+  id:                       string
+  numero:                   number
+  agente_vendedor_id:       string | null
+  agente_comprador_id:      string | null
+  agente_vendedor_externo:  string | null
+  agente_comprador_externo: string | null
+  direccion:                string
+  tipologia:                string
+  tipo_operacion:           string
+  tiene_reserva:            boolean
+  monto_reserva_usd:        number | null
+  monto_refuerzo_usd:       number | null
+  monto_ofertado_usd:       number | null
+  precio_publicacion_usd:   number | null
+  precio_acordado_usd:      number | null
+  valor_escritura_usd:      number | null
+  fecha_oferta:             string | null
+  fecha_cierre:             string | null
+  estado:                   string
+  es_bis:                   boolean
+  numero_padre:             number | null
+  comision_cobrada:         boolean
+  checklist_completado:     boolean
+  notas:                    string | null
+}
+
+export interface HistorialItem {
+  id:          string
+  oferta_id:   string
+  tipo:        string
+  descripcion: string
+  monto_usd:   number | null
+  created_at:  string
+}
+
+export interface ChecklistItem {
+  id:          string
+  oferta_id:   string
+  item:        string
+  completado:  boolean
+  orden:       number
+}
+
+// ── Constants ─────────────────────────────────────────
+const ESTADOS = [
+  "Espera rta. vendedor",
+  "Espera rta. comprador",
+  "Aceptadas / Pre cierre",
+  "Cerradas",
+  "Caídas",
+] as const
+
+const TIPOS_MOVIMIENTO = [
+  "Contraoferta", "Rechazo", "Aceptación",
+  "Seña", "Refuerzo", "Nota", "Otro",
+] as const
+
+const ESTADO_STYLE: Record<string, { bg: string; color: string }> = {
+  "Espera rta. vendedor":    { bg: "#EFF6FF", color: "#2563EB" },
+  "Espera rta. comprador":   { bg: "#FEFCE8", color: "#A16207" },
+  "Aceptadas / Pre cierre":  { bg: "#FFF7ED", color: "#C2410C" },
+  "Cerradas":                { bg: "#ECFDF5", color: "#059669" },
+  "Caídas":                  { bg: "#F8FAFC", color: "#64748B" },
+}
+
+const TIPO_MOV_STYLE: Record<string, { bg: string; color: string }> = {
+  Alta:             { bg: "#ECFDF5", color: "#059669" },
+  "Cambio de estado":{ bg: "#EFF6FF", color: "#2563EB" },
+  Contraoferta:     { bg: "#FEFCE8", color: "#A16207" },
+  Rechazo:          { bg: "#FFF1F2", color: "#E11D48" },
+  Aceptación:       { bg: "#ECFDF5", color: "#059669" },
+  Seña:             { bg: "#F0FDFA", color: "#0D9488" },
+  Refuerzo:         { bg: "#F0FDFA", color: "#0D9488" },
+  Nota:             { bg: "#F5F3FF", color: "#7C3AED" },
+  Otro:             { bg: "#F1F5F9", color: "#64748B" },
+}
+
+const CHECKLIST_CATS: Array<{ id: "pre_sena" | "documentacion" | "post_cierre"; label: string; from: number; to: number }> = [
+  { id: "pre_sena",      label: "Pre-seña",      from: 1,  to: 12 },
+  { id: "documentacion", label: "Documentación", from: 13, to: 22 },
+  { id: "post_cierre",   label: "Post-cierre",   from: 23, to: 36 },
+]
+
+const MONTH_NAMES = [
+  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
+]
+
+// ── Helpers ───────────────────────────────────────────
+function fmtUSD(n: number | null | undefined): string {
+  if (n == null) return "—"
+  return `USD ${Math.round(n).toLocaleString("es-AR")}`
+}
+
+function fmtFecha(s: string | null): string {
+  if (!s) return "—"
+  const [a, m, d] = s.split("-")
+  return `${parseInt(d)} ${MONTH_NAMES[parseInt(m) - 1]} ${a}`
+}
+
+function fmtDateTime(s: string): string {
+  const d = new Date(s)
+  return `${d.getDate()} ${MONTH_NAMES[d.getMonth()].slice(0, 3)} ${d.getFullYear()} · ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+}
+
+function pctNeg(ofertado: number | null, publicacion: number | null): string {
+  if (!ofertado || !publicacion || publicacion === 0) return "—"
+  return `${(((publicacion - ofertado) / publicacion) * 100).toFixed(1)}%`
+}
+
+// ── Sub-components ────────────────────────────────────
+function EstadoBadge({ estado, large }: { estado: string; large?: boolean }) {
+  const s = ESTADO_STYLE[estado] ?? { bg: "#F1F5F9", color: "#64748B" }
+  return (
+    <span style={{
+      ...s,
+      padding: large ? "6px 16px" : "3px 9px",
+      borderRadius: "20px",
+      fontSize: large ? "13px" : "11px",
+      fontWeight: 700, whiteSpace: "nowrap" as const,
+    }}>
+      {estado}
+    </span>
+  )
+}
+
+function DataRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", padding: "10px 0", borderBottom: "1px solid #F3F4F6" }}>
+      <span style={{ fontSize: "12px", color: "#94A3B8", fontWeight: 600, minWidth: "180px", flexShrink: 0 }}>
+        {label}
+      </span>
+      <span style={{ fontSize: "13px", color: "#0F172A", fontWeight: 500 }}>
+        {value}
+      </span>
+    </div>
+  )
+}
+
+function SectionCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div style={{
+      background: "white", borderRadius: "14px",
+      border: "1.5px solid #EAECF2", overflow: "hidden",
+      marginBottom: "16px",
+    }}>
+      <div style={{
+        display: "flex", alignItems: "center", gap: "8px",
+        padding: "14px 20px", borderBottom: "1px solid #EAECF2",
+      }}>
+        <div style={{
+          width: "28px", height: "28px", borderRadius: "8px",
+          background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          flexShrink: 0,
+        }}>
+          {icon}
+        </div>
+        <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>{title}</span>
+      </div>
+      <div style={{ padding: "0 20px 4px" }}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: "14px" }}>
+      <label style={{
+        display: "block", fontSize: "11px", fontWeight: 700,
+        letterSpacing: "0.8px", textTransform: "uppercase" as const,
+        color: "#64748B", marginBottom: "5px",
+      }}>
+        {label}
+      </label>
+      {children}
+    </div>
+  )
+}
+
+const inp: React.CSSProperties = {
+  width: "100%", padding: "9px 12px",
+  borderRadius: "8px", border: "1.5px solid #EAECF2",
+  fontSize: "13px", fontFamily: "inherit",
+  color: "#0F172A", outline: "none", background: "white",
+  boxSizing: "border-box",
+}
+
+// ═══════════════════════════════════════════════════════
+//  MAIN COMPONENT
+// ═══════════════════════════════════════════════════════
+interface Props {
+  oferta:   OfertaDetalle
+  historial: HistorialItem[]
+  checklist: ChecklistItem[]
+  agentes:  AgenteSimple[]
+}
+
+export default function OfertaDetalleClient({ oferta, historial, checklist, agentes }: Props) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+
+  // ── Agent lookup ───────────────────────────────────
+  const agenteMap = new Map(agentes.map(a => [a.id, a.nombre]))
+  function agenteName(id: string | null, externo: string | null): string {
+    if (id)      return agenteMap.get(id) ?? "Desconocido"
+    if (externo) return `${externo} (ext.)`
+    return "Sin agente"
+  }
+
+  // ── Checklist local state (optimistic) ─────────────
+  const [checklistState, setChecklistState] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(checklist.map(ci => [ci.id, ci.completado])),
+  )
+  const totalItems    = checklist.length
+  const doneItems     = Object.values(checklistState).filter(Boolean).length
+
+  async function handleToggle(ci: ChecklistItem) {
+    const newVal = !checklistState[ci.id]
+    setChecklistState(prev => ({ ...prev, [ci.id]: newVal }))
+    const result = await toggleChecklist(ci.id, oferta.id, newVal)
+    if (result.error) {
+      setChecklistState(prev => ({ ...prev, [ci.id]: !newVal }))
+    }
+  }
+
+  // ── Modal: Cambiar estado ──────────────────────────
+  const [modalEstado, setModalEstado]   = useState(false)
+  const [nuevoEstado,  setNuevoEstado]  = useState(oferta.estado)
+  const [descEstado,   setDescEstado]   = useState("")
+  const [montoEstado,  setMontoEstado]  = useState("")
+  const [errEstado,    setErrEstado]    = useState("")
+
+  // ── Modal: Agregar movimiento ──────────────────────
+  const [modalMov,   setModalMov]    = useState(false)
+  const [tipoMov,    setTipoMov]     = useState<string>("Nota")
+  const [descMov,    setDescMov]     = useState("")
+  const [montoMov,   setMontoMov]    = useState("")
+  const [errMov,     setErrMov]      = useState("")
+
+  const closeAll = useCallback(() => {
+    setModalEstado(false)
+    setModalMov(false)
+    setErrEstado("")
+    setErrMov("")
+  }, [])
+
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") closeAll() }
+    if (modalEstado || modalMov) document.addEventListener("keydown", h)
+    return () => document.removeEventListener("keydown", h)
+  }, [modalEstado, modalMov, closeAll])
+
+  // ── Submit: cambiar estado ─────────────────────────
+  function handleSubmitEstado(e: React.FormEvent) {
+    e.preventDefault()
+    if (!descEstado.trim()) { setErrEstado("La descripción es obligatoria"); return }
+    startTransition(async () => {
+      const result = await cambiarEstado(
+        oferta.id,
+        nuevoEstado,
+        descEstado.trim(),
+        montoEstado ? parseFloat(montoEstado) : null,
+      )
+      if (result.error) { setErrEstado(result.error); return }
+      closeAll()
+      router.refresh()
+    })
+  }
+
+  // ── Submit: agregar movimiento ─────────────────────
+  function handleSubmitMov(e: React.FormEvent) {
+    e.preventDefault()
+    if (!descMov.trim()) { setErrMov("La descripción es obligatoria"); return }
+    startTransition(async () => {
+      const result = await agregarMovimiento(
+        oferta.id,
+        tipoMov,
+        descMov.trim(),
+        montoMov ? parseFloat(montoMov) : null,
+      )
+      if (result.error) { setErrMov(result.error); return }
+      setDescMov("")
+      setMontoMov("")
+      closeAll()
+      router.refresh()
+    })
+  }
+
+  // ── seña total ─────────────────────────────────────
+  const seniaTotal = (oferta.monto_reserva_usd ?? 0) + (oferta.monto_refuerzo_usd ?? 0)
+
+  // ═══════════════════════════════════════════════════
+  //  RENDER
+  // ═══════════════════════════════════════════════════
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+
+      {/* ── Header ──────────────────────────────────── */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        minHeight: "70px", padding: "0 24px",
+        background: "white", borderBottom: "1px solid #EAECF2", flexShrink: 0,
+        gap: "16px",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          <Link href="/ofertas" style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: "34px", height: "34px", borderRadius: "9px",
+            border: "1.5px solid #EAECF2", background: "white",
+            color: "#64748B", textDecoration: "none",
+          }}
+            className="hover:bg-[#F8F9FC]"
+          >
+            <ArrowLeft size={16} />
+          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#94A3B8", fontSize: "12px" }}>
+            <Link href="/ofertas" style={{ color: "#94A3B8", textDecoration: "none" }}>Ofertas</Link>
+            <ChevronRight size={12} />
+            <span style={{ color: "#0F172A", fontWeight: 600 }}>#{oferta.numero}</span>
+          </div>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0 }}>
+                Oferta #{oferta.numero}
+              </h1>
+              <EstadoBadge estado={oferta.estado} large />
+            </div>
+            <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
+              {oferta.direccion}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => { setNuevoEstado(oferta.estado); setDescEstado(""); setMontoEstado(""); setModalEstado(true) }}
+          style={{
+            background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+            color: "white", border: "none",
+            padding: "8px 18px", borderRadius: "9px",
+            fontSize: "13px", fontWeight: 700, cursor: "pointer",
+            boxShadow: "0 2px 10px rgba(227,24,55,0.35)",
+            fontFamily: "inherit", flexShrink: 0,
+          }}
+        >
+          Cambiar estado
+        </button>
+      </div>
+
+      {/* ── Content ─────────────────────────────────── */}
+      <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
+
+        {/* ── Sección 1: Datos de la oferta ─────────── */}
+        <SectionCard title="Datos de la oferta" icon={<FileText size={14} color="white" />}>
+          <DataRow label="Agente vendedor"
+            value={agenteName(oferta.agente_vendedor_id, oferta.agente_vendedor_externo)} />
+          <DataRow label="Agente comprador"
+            value={agenteName(oferta.agente_comprador_id, oferta.agente_comprador_externo)} />
+          <DataRow label="Tipología" value={
+            <span style={{
+              padding: "2px 8px", borderRadius: "20px", fontSize: "12px", fontWeight: 600,
+              background: "#EFF6FF", color: "#2563EB",
+            }}>{oferta.tipologia}</span>
+          } />
+          <DataRow label="Tipo de operación" value={oferta.tipo_operacion} />
+
+          <div style={{ padding: "12px 0", borderBottom: "1px solid #F3F4F6" }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" as const, color: "#94A3B8", marginBottom: "10px" }}>
+              Montos
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "10px" }}>
+              {[
+                { label: "Monto ofertado",    val: oferta.monto_ofertado_usd },
+                { label: "Precio publicación", val: oferta.precio_publicacion_usd },
+                { label: "% Negociación",      val: null, text: pctNeg(oferta.monto_ofertado_usd, oferta.precio_publicacion_usd) },
+                { label: "Precio acordado",    val: oferta.precio_acordado_usd },
+                { label: "Valor escritura",    val: oferta.valor_escritura_usd },
+              ].map(({ label, val, text }) => (
+                <div key={label} style={{
+                  background: "#F8F9FC", borderRadius: "10px", padding: "10px 12px",
+                }}>
+                  <div style={{ fontSize: "10.5px", color: "#94A3B8", fontWeight: 600, marginBottom: "4px" }}>{label}</div>
+                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
+                    {text ?? fmtUSD(val)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {oferta.tiene_reserva && (
+            <div style={{ padding: "12px 0", borderBottom: "1px solid #F3F4F6" }}>
+              <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" as const, color: "#94A3B8", marginBottom: "10px" }}>
+                Seña / Reserva
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "10px" }}>
+                {[
+                  { label: "Monto reserva",  val: oferta.monto_reserva_usd },
+                  { label: "Monto refuerzo", val: oferta.monto_refuerzo_usd },
+                  { label: "Seña total",     val: seniaTotal || null },
+                ].map(({ label, val }) => (
+                  <div key={label} style={{
+                    background: "#ECFDF5", borderRadius: "10px", padding: "10px 12px",
+                  }}>
+                    <div style={{ fontSize: "10.5px", color: "#059669", fontWeight: 600, marginBottom: "4px" }}>{label}</div>
+                    <div style={{ fontSize: "14px", fontWeight: 700, color: "#059669" }}>
+                      {fmtUSD(val)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <DataRow label="Fecha de oferta"  value={fmtFecha(oferta.fecha_oferta)} />
+          <DataRow label="Fecha de cierre"  value={fmtFecha(oferta.fecha_cierre)} />
+          <DataRow label="Es BIS"           value={oferta.es_bis ? `Sí (padre: #${oferta.numero_padre ?? "—"})` : "No"} />
+          <DataRow label="Comisión cobrada" value={oferta.comision_cobrada ? "Sí" : "No"} />
+          {oferta.notas && (
+            <DataRow label="Notas" value={
+              <span style={{ whiteSpace: "pre-wrap", fontSize: "13px", color: "#0F172A" }}>
+                {oferta.notas}
+              </span>
+            } />
+          )}
+        </SectionCard>
+
+        {/* ── Sección 2: Historial ──────────────────── */}
+        <SectionCard title="Historial de movimientos" icon={<Clock size={14} color="white" />}>
+          <div style={{ padding: "8px 0" }}>
+            {historial.length === 0 ? (
+              <p style={{ fontSize: "13px", color: "#94A3B8", padding: "16px 0" }}>Sin movimientos registrados.</p>
+            ) : (
+              <div style={{ position: "relative" }}>
+                <div style={{
+                  position: "absolute", left: "11px", top: 0, bottom: 0,
+                  width: "2px", background: "#F1F5F9",
+                }} />
+                {historial.map(h => {
+                  const s = TIPO_MOV_STYLE[h.tipo] ?? TIPO_MOV_STYLE.Otro
+                  return (
+                    <div key={h.id} style={{ display: "flex", gap: "16px", marginBottom: "16px", position: "relative" }}>
+                      <div style={{
+                        width: "24px", height: "24px", borderRadius: "50%",
+                        background: s.bg, border: `2px solid ${s.color}`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        flexShrink: 0, zIndex: 1,
+                      }}>
+                        <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: s.color }} />
+                      </div>
+                      <div style={{ flex: 1, paddingTop: "2px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px", flexWrap: "wrap" as const }}>
+                          <span style={{
+                            ...s, padding: "2px 8px", borderRadius: "12px",
+                            fontSize: "10.5px", fontWeight: 700,
+                          }}>
+                            {h.tipo}
+                          </span>
+                          <span style={{ fontSize: "11px", color: "#94A3B8" }}>{fmtDateTime(h.created_at)}</span>
+                          {h.monto_usd != null && (
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#059669" }}>
+                              {fmtUSD(h.monto_usd)}
+                            </span>
+                          )}
+                        </div>
+                        <p style={{ fontSize: "13px", color: "#0F172A", margin: 0 }}>{h.descripcion}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+          <div style={{ borderTop: "1px solid #F1F5F9", padding: "12px 0 8px" }}>
+            <button
+              onClick={() => { setDescMov(""); setMontoMov(""); setTipoMov("Nota"); setModalMov(true) }}
+              style={{
+                display: "flex", alignItems: "center", gap: "6px",
+                padding: "7px 16px", borderRadius: "8px",
+                border: "1.5px solid #E31837", background: "white",
+                fontSize: "12px", fontWeight: 700, color: "#E31837",
+                cursor: "pointer", fontFamily: "inherit",
+              }}
+            >
+              + Agregar movimiento
+            </button>
+          </div>
+        </SectionCard>
+
+        {/* ── Sección 3: Checklist (solo Venta) ─────── */}
+        {oferta.tipo_operacion === "Venta" && checklist.length > 0 && (
+          <SectionCard title="Checklist de cierre" icon={<CheckSquare size={14} color="white" />}>
+            {/* Progreso */}
+            <div style={{ padding: "14px 0 10px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                <span style={{ fontSize: "13px", fontWeight: 600, color: "#0F172A" }}>
+                  {doneItems} / {totalItems} completados
+                </span>
+                <span style={{ fontSize: "12px", color: "#94A3B8" }}>
+                  {totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0}%
+                </span>
+              </div>
+              <div style={{
+                width: "100%", height: "8px", borderRadius: "4px",
+                background: "#F1F5F9", overflow: "hidden",
+              }}>
+                <div style={{
+                  width: `${totalItems > 0 ? (doneItems / totalItems) * 100 : 0}%`,
+                  height: "100%", borderRadius: "4px",
+                  background: doneItems === totalItems ? "#059669" : "#2563EB",
+                  transition: "width 0.3s ease",
+                }} />
+              </div>
+            </div>
+
+            {/* Items por categoría */}
+            {CHECKLIST_CATS.map(cat => {
+              const items = checklist.filter(ci => ci.orden >= cat.from && ci.orden <= cat.to)
+              if (items.length === 0) return null
+              return (
+                <div key={cat.id} style={{ marginBottom: "16px" }}>
+                  <div style={{
+                    fontSize: "10.5px", fontWeight: 700, letterSpacing: "1px",
+                    textTransform: "uppercase" as const, color: "#94A3B8",
+                    marginBottom: "8px", marginTop: "4px",
+                  }}>
+                    {cat.label}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                    {items.map(ci => {
+                      const done = checklistState[ci.id] ?? ci.completado
+                      return (
+                        <button
+                          key={ci.id}
+                          onClick={() => handleToggle(ci)}
+                          style={{
+                            display: "flex", alignItems: "center", gap: "10px",
+                            padding: "8px 10px", borderRadius: "8px",
+                            background: done ? "#ECFDF5" : "#F8F9FC",
+                            border: `1.5px solid ${done ? "#A7F3D0" : "#EAECF2"}`,
+                            cursor: "pointer", fontFamily: "inherit",
+                            textAlign: "left" as const, width: "100%",
+                            transition: "all 0.15s",
+                          }}
+                        >
+                          <div style={{
+                            width: "18px", height: "18px", borderRadius: "5px",
+                            border: `2px solid ${done ? "#059669" : "#CBD5E1"}`,
+                            background: done ? "#059669" : "white",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            flexShrink: 0, transition: "all 0.15s",
+                          }}>
+                            {done && <span style={{ color: "white", fontSize: "11px", fontWeight: 700 }}>✓</span>}
+                          </div>
+                          <span style={{
+                            fontSize: "12.5px", color: done ? "#059669" : "#0F172A",
+                            fontWeight: done ? 600 : 400,
+                            textDecoration: done ? "line-through" : "none",
+                          }}>
+                            {ci.item}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </SectionCard>
+        )}
+      </div>
+
+      {/* ══════════════════════════════════════════════
+          MODAL — CAMBIAR ESTADO
+      ══════════════════════════════════════════════ */}
+      {modalEstado && (
+        <div
+          onClick={closeAll}
+          style={{
+            position: "fixed", inset: 0,
+            background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 1000, padding: "20px",
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: "white", borderRadius: "16px",
+              width: "100%", maxWidth: "480px",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+              overflow: "hidden",
+            }}
+          >
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "18px 20px", borderBottom: "1px solid #EAECF2",
+            }}>
+              <div>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>Cambiar estado</h2>
+                <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
+                  Oferta #{oferta.numero} — {oferta.direccion}
+                </p>
+              </div>
+              <button onClick={closeAll} style={{
+                background: "#F8F9FC", border: "none", borderRadius: "8px",
+                width: "32px", height: "32px", display: "flex",
+                alignItems: "center", justifyContent: "center",
+                cursor: "pointer", color: "#64748B",
+              }}>
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={handleSubmitEstado} style={{ padding: "20px" }}>
+              <Field label="Nuevo estado *">
+                <select value={nuevoEstado} onChange={e => setNuevoEstado(e.target.value)} style={inp} required>
+                  {ESTADOS.map(e => <option key={e} value={e}>{e}</option>)}
+                </select>
+              </Field>
+              <Field label="Descripción *">
+                <textarea value={descEstado} onChange={e => setDescEstado(e.target.value)}
+                  rows={3} placeholder="¿Qué pasó? Describí el motivo del cambio..."
+                  style={{ ...inp, resize: "vertical" as const }} required />
+              </Field>
+              <Field label="Monto (USD, opcional)">
+                <input type="number" value={montoEstado} onChange={e => setMontoEstado(e.target.value)}
+                  min="0" step="100" placeholder="Si hubo movimiento de dinero" style={inp} />
+              </Field>
+              {errEstado && (
+                <div style={{
+                  background: "#FFF1F2", border: "1px solid #FECDD3",
+                  borderRadius: "8px", padding: "10px 12px",
+                  fontSize: "12.5px", color: "#E11D48", marginBottom: "14px",
+                }}>
+                  ⚠️ {errEstado}
+                </div>
+              )}
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button type="button" onClick={closeAll} disabled={isPending}
+                  style={{
+                    padding: "9px 20px", borderRadius: "8px",
+                    border: "1.5px solid #EAECF2", background: "white",
+                    fontSize: "13px", fontWeight: 600, color: "#64748B",
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}>
+                  Cancelar
+                </button>
+                <button type="submit" disabled={isPending}
+                  style={{
+                    padding: "9px 24px", borderRadius: "8px", border: "none",
+                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                    color: "white", fontSize: "13px", fontWeight: 700,
+                    cursor: isPending ? "not-allowed" : "pointer",
+                    fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
+                    boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
+                  }}>
+                  {isPending && <Loader2 size={14} className="animate-spin" />}
+                  {isPending ? "Guardando..." : "Confirmar cambio"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════
+          MODAL — AGREGAR MOVIMIENTO
+      ══════════════════════════════════════════════ */}
+      {modalMov && (
+        <div
+          onClick={closeAll}
+          style={{
+            position: "fixed", inset: 0,
+            background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 1000, padding: "20px",
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: "white", borderRadius: "16px",
+              width: "100%", maxWidth: "480px",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+              overflow: "hidden",
+            }}
+          >
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "18px 20px", borderBottom: "1px solid #EAECF2",
+            }}>
+              <div>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>Agregar movimiento</h2>
+                <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
+                  Registrá un evento en el historial de la oferta
+                </p>
+              </div>
+              <button onClick={closeAll} style={{
+                background: "#F8F9FC", border: "none", borderRadius: "8px",
+                width: "32px", height: "32px", display: "flex",
+                alignItems: "center", justifyContent: "center",
+                cursor: "pointer", color: "#64748B",
+              }}>
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={handleSubmitMov} style={{ padding: "20px" }}>
+              <Field label="Tipo *">
+                <select value={tipoMov} onChange={e => setTipoMov(e.target.value)} style={inp} required>
+                  {TIPOS_MOVIMIENTO.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </Field>
+              <Field label="Descripción *">
+                <textarea value={descMov} onChange={e => setDescMov(e.target.value)}
+                  rows={3} placeholder="Describí el movimiento..."
+                  style={{ ...inp, resize: "vertical" as const }} required />
+              </Field>
+              <Field label="Monto (USD, opcional)">
+                <input type="number" value={montoMov} onChange={e => setMontoMov(e.target.value)}
+                  min="0" step="100" placeholder="Si hubo movimiento de dinero" style={inp} />
+              </Field>
+              {errMov && (
+                <div style={{
+                  background: "#FFF1F2", border: "1px solid #FECDD3",
+                  borderRadius: "8px", padding: "10px 12px",
+                  fontSize: "12.5px", color: "#E11D48", marginBottom: "14px",
+                }}>
+                  ⚠️ {errMov}
+                </div>
+              )}
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button type="button" onClick={closeAll} disabled={isPending}
+                  style={{
+                    padding: "9px 20px", borderRadius: "8px",
+                    border: "1.5px solid #EAECF2", background: "white",
+                    fontSize: "13px", fontWeight: 600, color: "#64748B",
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}>
+                  Cancelar
+                </button>
+                <button type="submit" disabled={isPending}
+                  style={{
+                    padding: "9px 24px", borderRadius: "8px", border: "none",
+                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                    color: "white", fontSize: "13px", fontWeight: 700,
+                    cursor: isPending ? "not-allowed" : "pointer",
+                    fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
+                    boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
+                  }}>
+                  {isPending && <Loader2 size={14} className="animate-spin" />}
+                  {isPending ? "Guardando..." : "Registrar movimiento"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
