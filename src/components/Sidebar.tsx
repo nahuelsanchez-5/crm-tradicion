@@ -68,7 +68,7 @@ export default function Sidebar() {
           alt="REMAX Tradición"
           width={160}
           height={60}
-          style={{ objectFit: "contain", maxWidth: "160px" }}
+          style={{ objectFit: "contain", maxWidth: "160px", width: "auto" }}
           priority
         />
       </div>
