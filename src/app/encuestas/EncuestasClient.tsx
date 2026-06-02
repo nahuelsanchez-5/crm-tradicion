@@ -1,59 +1,130 @@
 "use client"
 
-import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
+import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
-import KpiCard from "@/components/KpiCard"
-import { guardarEncuesta } from "./actions"
-import type { EncuestaFormData } from "./actions"
-import { ClipboardList, TrendingUp, Star, X, Loader2 } from "lucide-react"
+import { registrarEncuesta } from "./actions"
+import type { RegistroEncuestaData } from "./actions"
+import type { RegistroRow } from "./page"
+import { ClipboardList, TrendingUp, Star, X, Loader2, ChevronDown, ChevronRight } from "lucide-react"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
   "Enero","Febrero","Marzo","Abril","Mayo","Junio",
   "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
 ]
-const ANIO     = 2026
-const OBJETIVO = 60   // % de respuesta objetivo
 
 // ── Types ────────────────────────────────────────────
-export interface EncuestaRow {
-  id:           string
-  mes:          number
-  anio:         number
-  enviadas:     number
-  respondidas:  number
-  nps_promedio: number | null
+interface Props {
+  registros:  RegistroRow[]
+  objetivoPct: number
+  mesActual:  number
+  anio:       number
 }
 
-interface MesData {
-  mes:          number
-  nombre:       string
-  enviadas:     number
-  respondidas:  number
-  nps_promedio: number | null
-  id:           string | null
-  isFuture:     boolean
-}
-
-interface FormData {
-  enviadas:     string
-  respondidas:  string
-  nps_promedio: string
+interface FormState {
+  tipo:       "ESPONTANEA" | "MAILING"
+  subtipo:    string
+  referencia: string
+  nps:        string
+  comentario: string
+  fecha:      string
 }
 
 // ── Helpers ──────────────────────────────────────────
-function pct(respondidas: number, enviadas: number): number {
-  if (enviadas <= 0) return 0
-  return Math.round((respondidas / enviadas) * 100)
-}
-
-function npsColor(nps: number): string {
-  if (nps >= 70) return "#059669"
-  if (nps >= 40) return "#D97706"
+function npsColor(nps: number | null): string {
+  if (nps === null) return "#94A3B8"
+  if (nps >= 50)  return "#059669"
+  if (nps >= 0)   return "#D97706"
   return "#E11D48"
 }
 
+function npsLabel(nps: number | null): string {
+  if (nps === null) return "—"
+  if (nps >= 70) return "Promotor"
+  if (nps >= 0)  return "Neutral"
+  return "Detractor"
+}
+
+function fmtFecha(fechaStr: string): string {
+  if (!fechaStr) return "—"
+  const [a, m, d] = fechaStr.split("-")
+  return `${parseInt(d).toString().padStart(2,"0")}/${parseInt(m).toString().padStart(2,"0")}/${a}`
+}
+
+function mesKey(fechaStr: string): string {
+  return fechaStr.substring(0, 7) // "YYYY-MM"
+}
+
+function mesNombre(key: string): string {
+  const [y, m] = key.split("-")
+  return `${MONTH_NAMES[parseInt(m) - 1]} ${y}`
+}
+
 // ── Sub-components ───────────────────────────────────
+function KpiCard({
+  title, value, badge, gradient, shadowColor, icon,
+}: {
+  title: string; value: string | number; badge: string
+  gradient: string; shadowColor: string; icon: React.ReactNode
+}) {
+  return (
+    <div style={{
+      background: gradient, borderRadius: "14px",
+      padding: "18px 20px", color: "white",
+      boxShadow: `0 6px 20px ${shadowColor}`,
+      position: "relative", overflow: "hidden",
+    }}>
+      <div style={{ position: "absolute", top: "-15px", right: "-15px", width: "80px", height: "80px",
+        borderRadius: "50%", background: "rgba(255,255,255,0.08)" }} />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+        <div style={{ fontSize: "11px", fontWeight: 600, opacity: 0.8, textTransform: "uppercase" as const,
+          letterSpacing: "0.6px" }}>
+          {title}
+        </div>
+        <div style={{ opacity: 0.85 }}>{icon}</div>
+      </div>
+      <div style={{ fontSize: "32px", fontWeight: 800, letterSpacing: "-0.5px", lineHeight: 1 }}>{value}</div>
+      <div style={{ fontSize: "12px", opacity: 0.85, marginTop: "6px", fontWeight: 500 }}>{badge}</div>
+    </div>
+  )
+}
+
+function NpsBadge({ nps }: { nps: number | null }) {
+  const color = npsColor(nps)
+  const bg    = nps === null ? "#F1F5F9" : nps >= 50 ? "#ECFDF5" : nps >= 0 ? "#FFFBEB" : "#FFF1F2"
+  return (
+    <span style={{
+      background: bg, color, padding: "2px 9px",
+      borderRadius: "12px", fontSize: "11px", fontWeight: 700,
+      display: "inline-block",
+    }}>
+      {nps !== null ? `NPS ${nps}` : "Sin NPS"}
+    </span>
+  )
+}
+
+function TipoBadge({ tipo }: { tipo: string }) {
+  const isMailling = tipo === "MAILING"
+  return (
+    <span style={{
+      background: isMailling ? "#EFF6FF" : "#F5F3FF",
+      color:      isMailling ? "#2563EB" : "#7C3AED",
+      padding: "2px 9px", borderRadius: "12px",
+      fontSize: "10.5px", fontWeight: 700, display: "inline-block",
+    }}>
+      {tipo === "ESPONTANEA" ? "ESPONTÁNEA" : "MAILING"}
+    </span>
+  )
+}
+
+const inp: React.CSSProperties = {
+  width: "100%", padding: "9px 12px",
+  borderRadius: "8px", border: "1.5px solid #EAECF2",
+  fontSize: "13px", fontFamily: "inherit",
+  color: "#0F172A", outline: "none", background: "white",
+  boxSizing: "border-box",
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: "14px" }}>
@@ -69,167 +140,103 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-const inp: React.CSSProperties = {
-  width: "100%", padding: "9px 12px",
-  borderRadius: "8px", border: "1.5px solid #EAECF2",
-  fontSize: "13px", fontFamily: "inherit",
-  color: "#0F172A", outline: "none", background: "white",
-  boxSizing: "border-box",
-}
-
-// ── Progress bar ─────────────────────────────────────
-function ProgressBar({ value, isFuture }: { value: number; isFuture: boolean }) {
-  const capped   = Math.min(value, 100)
-  const meets    = value >= OBJETIVO
-  const barColor = isFuture ? "#CBD5E1" : meets ? "#059669" : "#E11D48"
-
-  return (
-    <div style={{ position: "relative" }}>
-      <div style={{
-        width: "100%", height: "8px", borderRadius: "4px",
-        background: "#F1F5F9", overflow: "hidden",
-      }}>
-        <div style={{
-          width: `${isFuture ? 0 : capped}%`,
-          height: "100%", borderRadius: "4px",
-          background: barColor,
-          transition: "width 0.4s ease",
-        }} />
-      </div>
-      {/* 60% marker */}
-      <div style={{
-        position: "absolute", top: "-4px",
-        left: `${OBJETIVO}%`, transform: "translateX(-1px)",
-        width: "2px", height: "16px",
-        background: "#94A3B8",
-      }} />
-    </div>
-  )
-}
-
-// ── Estado badge ──────────────────────────────────────
-function EstadoBadge({ p, isFuture, enviadas }: { p: number; isFuture: boolean; enviadas: number }) {
-  if (isFuture || enviadas === 0) {
-    return (
-      <span style={{
-        padding: "2px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700,
-        background: "#F1F5F9", color: "#94A3B8",
-      }}>
-        Pendiente
-      </span>
-    )
-  }
-  if (p >= OBJETIVO) {
-    return (
-      <span style={{
-        padding: "2px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700,
-        background: "#ECFDF5", color: "#059669",
-      }}>
-        ✓ En objetivo
-      </span>
-    )
-  }
-  return (
-    <span style={{
-      padding: "2px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700,
-      background: "#FFF1F2", color: "#E11D48",
-    }}>
-      Bajo {OBJETIVO}%
-    </span>
-  )
-}
-
 // ═══════════════════════════════════════════════════════
 //  MAIN COMPONENT
 // ═══════════════════════════════════════════════════════
-interface Props {
-  rows: EncuestaRow[]
-}
-
-export default function EncuestasClient({ rows }: Props) {
+export default function EncuestasClient({ registros, objetivoPct, mesActual, anio }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [showModal, setShowModal]    = useState(false)
+  const [error,     setError]        = useState("")
+  const todayStr = new Date().toISOString().split("T")[0]
 
-  const currentMonth = new Date().getMonth() + 1
+  const [form, setForm] = useState<FormState>({
+    tipo:       "ESPONTANEA",
+    subtipo:    "Comprador",
+    referencia: "",
+    nps:        "",
+    comentario: "",
+    fecha:      todayStr,
+  })
 
-  const meses: MesData[] = useMemo(() => {
-    return MONTH_NAMES.map((nombre, idx) => {
-      const mes = idx + 1
-      const row = rows.find(r => r.mes === mes && r.anio === ANIO)
-      return {
-        mes,
-        nombre,
-        enviadas:     row?.enviadas     ?? 0,
-        respondidas:  row?.respondidas  ?? 0,
-        nps_promedio: row?.nps_promedio ?? null,
-        id:           row?.id           ?? null,
-        isFuture:     mes > currentMonth,
-      }
+  // ── Expanded month rows ────────────────────────────
+  const [expandedMeses, setExpandedMeses] = useState<Set<string>>(() => {
+    const now = new Date()
+    return new Set([`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`])
+  })
+
+  function toggleMes(key: string) {
+    setExpandedMeses(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
     })
-  }, [rows, currentMonth])
+  }
 
-  // ── KPI stats ──────────────────────────────────────
-  const stats = useMemo(() => {
-    const completados    = meses.filter(m => !m.isFuture && m.enviadas > 0)
-    const totalEnviadas  = completados.reduce((s, m) => s + m.enviadas,    0)
-    const totalResp      = completados.reduce((s, m) => s + m.respondidas, 0)
-    const pctGlobal      = pct(totalResp, totalEnviadas)
-    const mesesEnObj     = completados.filter(m => pct(m.respondidas, m.enviadas) >= OBJETIVO).length
+  // ── KPI: current month ─────────────────────────────
+  const mesActualStr = `${anio}-${String(mesActual).padStart(2, "0")}`
+  const regMesActual = useMemo(() => registros.filter(r => r.fecha.startsWith(mesActualStr)), [registros, mesActualStr])
+  const totalMes     = regMesActual.length
+  const conNpsMes    = regMesActual.filter(r => r.nps !== null)
+  const npsMes       = conNpsMes.length > 0
+    ? Math.round(conNpsMes.reduce((s, r) => s + (r.nps ?? 0), 0) / conNpsMes.length)
+    : null
+  const pctNpsMes    = totalMes > 0 ? Math.round((conNpsMes.length / totalMes) * 100) : 0
 
-    const conNps         = completados.filter(m => m.nps_promedio !== null)
-    const npsAnual       = conNps.length > 0
-      ? Math.round(conNps.reduce((s, m) => s + (m.nps_promedio ?? 0), 0) / conNps.length)
-      : null
-
-    return { totalEnviadas, totalResp, pctGlobal, mesesEnObj, completados: completados.length, npsAnual }
-  }, [meses])
+  // ── Group by month for history ─────────────────────
+  const groupedByMes = useMemo(() => {
+    const map = new Map<string, RegistroRow[]>()
+    for (const r of registros) {
+      const k = mesKey(r.fecha)
+      if (!map.has(k)) map.set(k, [])
+      map.get(k)!.push(r)
+    }
+    return Array.from(map.entries()).sort((a, b) => b[0].localeCompare(a[0]))
+  }, [registros])
 
   // ── Modal ──────────────────────────────────────────
-  const [modalMes, setModalMes] = useState<MesData | null>(null)
-  const [form,     setForm]     = useState<FormData>({ enviadas: "", respondidas: "", nps_promedio: "" })
-  const [error,    setError]    = useState("")
-
-  const closeModal = useCallback(() => { setModalMes(null); setError("") }, [])
+  const closeModal = useCallback(() => { setShowModal(false); setError("") }, [])
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") closeModal() }
-    if (modalMes) document.addEventListener("keydown", h)
+    if (showModal) document.addEventListener("keydown", h)
     return () => document.removeEventListener("keydown", h)
-  }, [modalMes, closeModal])
+  }, [showModal, closeModal])
 
-  function openModal(m: MesData) {
+  function openModal() {
     setForm({
-      enviadas:     m.enviadas    > 0   ? String(m.enviadas)    : "",
-      respondidas:  m.respondidas > 0   ? String(m.respondidas) : "",
-      nps_promedio: m.nps_promedio !== null ? String(m.nps_promedio) : "",
+      tipo:       "ESPONTANEA",
+      subtipo:    "Comprador",
+      referencia: "",
+      nps:        "",
+      comentario: "",
+      fecha:      todayStr,
     })
     setError("")
-    setModalMes(m)
+    setShowModal(true)
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError("")
-    if (!modalMes) return
+    if (!form.referencia.trim()) { setError("Ingresá la referencia"); return }
+    const nps = form.nps !== "" ? parseInt(form.nps) : null
+    if (nps !== null && (isNaN(nps) || nps < -100 || nps > 100)) {
+      setError("El NPS debe estar entre -100 y 100"); return
+    }
 
-    const enviadas    = parseInt(form.enviadas)    || 0
-    const respondidas = parseInt(form.respondidas) || 0
-    const nps         = form.nps_promedio !== "" ? parseFloat(form.nps_promedio) : null
-
-    if (enviadas <= 0)           { setError("Las encuestas enviadas deben ser mayor a 0"); return }
-    if (respondidas > enviadas)  { setError("Las respondidas no pueden superar las enviadas"); return }
-    if (nps !== null && (nps < -100 || nps > 100)) { setError("El NPS debe estar entre -100 y 100"); return }
-
-    const payload: EncuestaFormData = {
-      mes:          modalMes.mes,
-      anio:         ANIO,
-      enviadas,
-      respondidas,
-      nps_promedio: nps,
+    const payload: RegistroEncuestaData = {
+      fecha:      form.fecha,
+      tipo:       form.tipo,
+      subtipo:    form.tipo === "ESPONTANEA" ? form.subtipo : null,
+      referencia: form.referencia,
+      nps,
+      comentario: form.comentario,
     }
 
     startTransition(async () => {
-      const result = await guardarEncuesta(payload)
+      const result = await registrarEncuesta(payload)
       if (result.error) setError(result.error)
       else { closeModal(); router.refresh() }
     })
@@ -239,11 +246,6 @@ export default function EncuestasClient({ rows }: Props) {
     background: "white", borderRadius: "14px",
     border: "1.5px solid #EAECF2", overflow: "hidden",
   }
-
-  const previewPct = pct(
-    parseInt(form.respondidas) || 0,
-    parseInt(form.enviadas)    || 1,
-  )
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -259,16 +261,22 @@ export default function EncuestasClient({ rows }: Props) {
             Encuestas
           </h1>
           <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "1px" }}>
-            Seguimiento de encuestas de satisfacción — {ANIO}
+            Satisfacción de clientes y agentes — {MONTH_NAMES[mesActual - 1]} {anio}
           </p>
         </div>
-        <div style={{
-          padding: "6px 14px", borderRadius: "8px",
-          background: "#F8F9FC", border: "1.5px solid #EAECF2",
-          fontSize: "13px", fontWeight: 700, color: "#64748B",
-        }}>
-          Objetivo: {OBJETIVO}% respuesta
-        </div>
+        <button
+          onClick={openModal}
+          style={{
+            background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+            color: "white", border: "none",
+            padding: "8px 18px", borderRadius: "9px",
+            fontSize: "13px", fontWeight: 700, cursor: "pointer",
+            boxShadow: "0 2px 10px rgba(227,24,55,0.35)",
+            fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
+          }}
+        >
+          <span style={{ fontSize: "16px", lineHeight: 1 }}>+</span> Registrar encuesta
+        </button>
       </div>
 
       {/* ── Scrollable content ────────────────────── */}
@@ -277,48 +285,53 @@ export default function EncuestasClient({ rows }: Props) {
         {/* ── KPI Cards ─────────────────────────── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px", marginBottom: "20px" }}>
           <KpiCard
-            title="Encuestas enviadas acumuladas"
-            value={stats.totalEnviadas.toLocaleString("es-AR")}
-            badge={`${stats.totalResp.toLocaleString("es-AR")} respondidas`}
+            title={`Encuestas — ${MONTH_NAMES[mesActual - 1]}`}
+            value={totalMes}
+            badge={`${regMesActual.filter(r => r.tipo === "ESPONTANEA").length} espontáneas + ${regMesActual.filter(r => r.tipo === "MAILING").length} mailing`}
             gradient="linear-gradient(135deg,#0D9488 0%,#0F766E 100%)"
             shadowColor="rgba(13,148,136,0.3)"
             icon={<ClipboardList size={20} color="white" />}
           />
           <KpiCard
-            title="% Respuesta acumulado"
-            value={`${stats.pctGlobal}%`}
-            badge={stats.pctGlobal >= OBJETIVO ? "✓ En objetivo" : `Meta: ${OBJETIVO}%`}
+            title="% Con NPS del mes"
+            value={`${pctNpsMes}%`}
+            badge={pctNpsMes >= objetivoPct ? `✓ Supera objetivo ${objetivoPct}%` : `Meta: ${objetivoPct}%`}
             gradient={
-              stats.pctGlobal >= OBJETIVO
+              pctNpsMes >= objetivoPct
                 ? "linear-gradient(135deg,#059669 0%,#047857 100%)"
-                : "linear-gradient(135deg,#E11D48 0%,#BE123C 100%)"
+                : totalMes === 0
+                  ? "linear-gradient(135deg,#64748B 0%,#475569 100%)"
+                  : "linear-gradient(135deg,#E11D48 0%,#BE123C 100%)"
             }
-            shadowColor={stats.pctGlobal >= OBJETIVO ? "rgba(5,150,105,0.3)" : "rgba(225,29,72,0.3)"}
+            shadowColor={pctNpsMes >= objetivoPct ? "rgba(5,150,105,0.3)" : "rgba(225,29,72,0.3)"}
             icon={<TrendingUp size={20} color="white" />}
           />
           <KpiCard
-            title="NPS promedio anual"
-            value={stats.npsAnual !== null ? String(stats.npsAnual) : "—"}
-            badge={stats.npsAnual !== null
-              ? (stats.npsAnual >= 70 ? "Excelente" : stats.npsAnual >= 40 ? "Bueno" : "Por mejorar")
-              : "Sin datos NPS"}
+            title="NPS promedio del mes"
+            value={npsMes !== null ? String(npsMes) : "—"}
+            badge={
+              npsMes === null ? "Sin respuestas NPS"
+              : npsMes >= 70  ? "Excelente"
+              : npsMes >= 40  ? "Bueno"
+              :                 "Por mejorar"
+            }
             gradient={
-              stats.npsAnual === null ? "linear-gradient(135deg,#64748B 0%,#475569 100%)"
-              : stats.npsAnual >= 70  ? "linear-gradient(135deg,#059669 0%,#047857 100%)"
-              : stats.npsAnual >= 40  ? "linear-gradient(135deg,#D97706 0%,#B45309 100%)"
-              :                         "linear-gradient(135deg,#E31837 0%,#9B0F26 100%)"
+              npsMes === null ? "linear-gradient(135deg,#64748B 0%,#475569 100%)"
+              : npsMes >= 70  ? "linear-gradient(135deg,#059669 0%,#047857 100%)"
+              : npsMes >= 40  ? "linear-gradient(135deg,#D97706 0%,#B45309 100%)"
+              :                  "linear-gradient(135deg,#E31837 0%,#9B0F26 100%)"
             }
             shadowColor={
-              stats.npsAnual === null ? "rgba(100,116,139,0.3)"
-              : stats.npsAnual >= 70  ? "rgba(5,150,105,0.3)"
-              : stats.npsAnual >= 40  ? "rgba(217,119,6,0.3)"
-              :                         "rgba(227,24,55,0.3)"
+              npsMes === null ? "rgba(100,116,139,0.3)"
+              : npsMes >= 70  ? "rgba(5,150,105,0.3)"
+              : npsMes >= 40  ? "rgba(217,119,6,0.3)"
+              :                  "rgba(227,24,55,0.3)"
             }
             icon={<Star size={20} color="white" />}
           />
         </div>
 
-        {/* ── Tabla anual ──────────────────────────── */}
+        {/* ── Historial por mes ─────────────────── */}
         <div style={cardStyle}>
           <div style={{
             display: "flex", alignItems: "center", gap: "8px",
@@ -326,149 +339,154 @@ export default function EncuestasClient({ rows }: Props) {
           }}>
             <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
             <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
-              Detalle mensual {ANIO}
+              Historial de encuestas
+            </span>
+            <span style={{ fontSize: "12px", color: "#94A3B8", marginLeft: "4px" }}>
+              {registros.length} registros — últimos 6 meses
             </span>
           </div>
 
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
-                  {["Mes","Enviadas","Respondidas","% Respuesta","Progreso (60%)","NPS","Estado",""].map(h => (
-                    <th key={h} style={{
-                      padding: "10px 16px", textAlign: "left",
-                      fontSize: "10.5px", fontWeight: 700,
-                      textTransform: "uppercase" as const,
-                      letterSpacing: "0.8px", color: "#94A3B8",
-                      whiteSpace: "nowrap",
-                    }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {meses.map((m, i) => {
-                  const p         = pct(m.respondidas, m.enviadas)
-                  const isLast    = i === 11
-                  const isCurrent = m.mes === currentMonth
+          {groupedByMes.length === 0 ? (
+            <div style={{ padding: "48px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
+              No hay encuestas registradas. Hacé clic en &quot;+ Registrar encuesta&quot; para empezar.
+            </div>
+          ) : (
+            <div>
+              {groupedByMes.map(([mesK, regs], gi) => {
+                const isOpen    = expandedMeses.has(mesK)
+                const isLast    = gi === groupedByMes.length - 1
+                const conNps    = regs.filter(r => r.nps !== null)
+                const npsAvg    = conNps.length > 0
+                  ? Math.round(conNps.reduce((s, r) => s + (r.nps ?? 0), 0) / conNps.length)
+                  : null
+                const pctNps    = regs.length > 0 ? Math.round(conNps.length / regs.length * 100) : 0
 
-                  return (
-                    <tr
-                      key={m.mes}
+                return (
+                  <Fragment key={mesK}>
+                    {/* Month header row */}
+                    <div
+                      onClick={() => toggleMes(mesK)}
                       style={{
-                        borderBottom: isLast ? "none" : "1px solid #F3F4F6",
-                        background: isCurrent ? "rgba(227,24,55,0.03)" : undefined,
+                        display: "flex", alignItems: "center",
+                        padding: "12px 20px",
+                        borderBottom: isOpen || (!isLast) ? "1px solid #F3F4F6" : "none",
+                        cursor: "pointer",
+                        background: isOpen ? "#FAFBFF" : "white",
+                        transition: "background 0.1s",
+                        userSelect: "none",
                       }}
                     >
-                      {/* Mes */}
-                      <td style={{ padding: "14px 16px", whiteSpace: "nowrap" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1 }}>
+                        {isOpen
+                          ? <ChevronDown size={14} color="#94A3B8" />
+                          : <ChevronRight size={14} color="#94A3B8" />
+                        }
+                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#0F172A" }}>
+                          {mesNombre(mesK)}
+                        </span>
+                        {mesK === mesActualStr && (
                           <span style={{
-                            fontSize: "13px", fontWeight: isCurrent ? 800 : 600,
-                            color: isCurrent ? "#E31837" : "#0F172A",
+                            fontSize: "10px", fontWeight: 700,
+                            background: "#FFF1F2", color: "#E11D48",
+                            padding: "1px 7px", borderRadius: "10px",
                           }}>
-                            {m.nombre}
+                            HOY
                           </span>
-                          {isCurrent && (
-                            <span style={{
-                              fontSize: "10px", fontWeight: 700,
-                              background: "#FFF1F2", color: "#E11D48",
-                              padding: "1px 7px", borderRadius: "10px",
-                            }}>
-                              HOY
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Enviadas */}
-                      <td style={{ padding: "14px 16px", fontSize: "13px", color: "#64748B" }}>
-                        {m.enviadas > 0 ? m.enviadas : <span style={{ color: "#CBD5E1" }}>—</span>}
-                      </td>
-
-                      {/* Respondidas */}
-                      <td style={{ padding: "14px 16px", fontSize: "13px", fontWeight: 600,
-                        color: m.respondidas > 0 ? "#0F172A" : "#CBD5E1" }}>
-                        {m.respondidas > 0 ? m.respondidas : "—"}
-                      </td>
-
-                      {/* % */}
-                      <td style={{ padding: "14px 16px", fontWeight: 700, fontSize: "14px", whiteSpace: "nowrap",
-                        color: m.isFuture || m.enviadas === 0 ? "#CBD5E1" : p >= OBJETIVO ? "#059669" : "#E11D48" }}>
-                        {m.isFuture || m.enviadas === 0 ? "—" : `${p}%`}
-                      </td>
-
-                      {/* Progress bar */}
-                      <td style={{ padding: "14px 16px", minWidth: "140px" }}>
-                        {m.enviadas > 0 && (
-                          <ProgressBar value={p} isFuture={m.isFuture} />
                         )}
-                      </td>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                        <span style={{ fontSize: "12px", color: "#64748B" }}>
+                          <strong style={{ color: "#0F172A" }}>{regs.length}</strong> encuestas
+                        </span>
+                        {npsAvg !== null && (
+                          <span style={{
+                            fontSize: "12px", fontWeight: 700, color: npsColor(npsAvg),
+                          }}>
+                            NPS {npsAvg}
+                          </span>
+                        )}
+                        <span style={{
+                          fontSize: "11px", fontWeight: 700,
+                          background: pctNps >= objetivoPct ? "#ECFDF5" : "#F1F5F9",
+                          color: pctNps >= objetivoPct ? "#059669" : "#94A3B8",
+                          padding: "2px 9px", borderRadius: "10px",
+                        }}>
+                          {pctNps}% NPS
+                        </span>
+                      </div>
+                    </div>
 
-                      {/* NPS */}
-                      <td style={{ padding: "14px 16px", fontWeight: 700, fontSize: "14px",
-                        color: m.nps_promedio !== null ? npsColor(m.nps_promedio) : "#CBD5E1" }}>
-                        {m.nps_promedio !== null ? m.nps_promedio : "—"}
-                      </td>
-
-                      {/* Estado */}
-                      <td style={{ padding: "14px 16px" }}>
-                        <EstadoBadge p={p} isFuture={m.isFuture} enviadas={m.enviadas} />
-                      </td>
-
-                      {/* Action */}
-                      <td style={{ padding: "14px 16px" }}>
-                        <button
-                          onClick={() => openModal(m)}
-                          style={{
-                            padding: "5px 14px", borderRadius: "7px",
-                            border: "1.5px solid #EAECF2", background: "white",
-                            fontSize: "12px", fontWeight: 600, color: "#0F172A",
-                            cursor: "pointer", fontFamily: "inherit",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {m.id ? "Editar" : "Cargar"}
-                        </button>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-
-              <tfoot>
-                <tr style={{ background: "#F8F9FC", borderTop: "2px solid #EAECF2" }}>
-                  <td style={{ padding: "12px 16px", fontWeight: 800, fontSize: "13px", color: "#0F172A" }}>
-                    TOTAL {ANIO}
-                  </td>
-                  <td style={{ padding: "12px 16px", fontWeight: 700, fontSize: "13px", color: "#64748B" }}>
-                    {meses.reduce((s, m) => s + m.enviadas, 0)}
-                  </td>
-                  <td style={{ padding: "12px 16px", fontWeight: 700, fontSize: "13px", color: "#0F172A" }}>
-                    {meses.reduce((s, m) => s + m.respondidas, 0)}
-                  </td>
-                  <td style={{ padding: "12px 16px", fontWeight: 800, fontSize: "14px",
-                    color: stats.pctGlobal >= OBJETIVO ? "#059669" : "#E11D48" }}>
-                    {stats.pctGlobal}%
-                  </td>
-                  <td style={{ padding: "12px 16px" }} />
-                  <td style={{ padding: "12px 16px", fontWeight: 700, fontSize: "13px",
-                    color: stats.npsAnual !== null ? npsColor(stats.npsAnual) : "#CBD5E1" }}>
-                    {stats.npsAnual !== null ? stats.npsAnual : "—"}
-                  </td>
-                  <td colSpan={2} />
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+                    {/* Expanded detail */}
+                    {isOpen && (
+                      <div style={{
+                        background: "#F8FAFF", borderBottom: isLast ? "none" : "1px solid #F3F4F6",
+                        overflowX: "auto",
+                      }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                          <thead>
+                            <tr style={{ background: "#F1F5F9" }}>
+                              {["Fecha","Tipo","Referencia","Subtipo","NPS","Calificación","Comentario"].map(h => (
+                                <th key={h} style={{
+                                  padding: "8px 16px", textAlign: "left",
+                                  fontSize: "10px", fontWeight: 700,
+                                  textTransform: "uppercase" as const,
+                                  letterSpacing: "0.7px", color: "#94A3B8",
+                                  whiteSpace: "nowrap",
+                                }}>
+                                  {h}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {regs.map((r, ri) => (
+                              <tr
+                                key={r.id}
+                                style={{
+                                  borderTop: ri > 0 ? "1px solid #F3F4F6" : "none",
+                                  background: "white",
+                                }}
+                              >
+                                <td style={{ padding: "10px 16px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>
+                                  {fmtFecha(r.fecha)}
+                                </td>
+                                <td style={{ padding: "10px 16px" }}>
+                                  <TipoBadge tipo={r.tipo} />
+                                </td>
+                                <td style={{ padding: "10px 16px", fontSize: "12px", fontWeight: 600, color: "#0F172A" }}>
+                                  {r.referencia}
+                                </td>
+                                <td style={{ padding: "10px 16px", fontSize: "12px", color: "#64748B" }}>
+                                  {r.subtipo ?? "—"}
+                                </td>
+                                <td style={{ padding: "10px 16px" }}>
+                                  <NpsBadge nps={r.nps} />
+                                </td>
+                                <td style={{ padding: "10px 16px", fontSize: "11.5px", color: npsColor(r.nps), fontWeight: 600 }}>
+                                  {npsLabel(r.nps)}
+                                </td>
+                                <td style={{ padding: "10px 16px", fontSize: "12px", color: "#64748B",
+                                  maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                  {r.comentario ?? <span style={{ color: "#CBD5E1" }}>—</span>}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </Fragment>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
 
       {/* ════════════════════════════════════════════
-          MODAL — CARGAR / EDITAR ENCUESTA
+          MODAL — REGISTRAR ENCUESTA
       ════════════════════════════════════════════ */}
-      {modalMes && (
+      {showModal && (
         <div
           onClick={closeModal}
           style={{
@@ -482,7 +500,7 @@ export default function EncuestasClient({ rows }: Props) {
             onClick={e => e.stopPropagation()}
             style={{
               background: "white", borderRadius: "16px",
-              width: "100%", maxWidth: "420px",
+              width: "100%", maxWidth: "500px",
               boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
             }}
           >
@@ -493,10 +511,10 @@ export default function EncuestasClient({ rows }: Props) {
             }}>
               <div>
                 <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
-                  {modalMes.id ? "Editar encuesta" : "Cargar encuesta"}
+                  Registrar Encuesta
                 </h2>
                 <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
-                  {modalMes.nombre} {ANIO}
+                  Nueva respuesta de satisfacción
                 </p>
               </div>
               <button onClick={closeModal} style={{
@@ -510,67 +528,120 @@ export default function EncuestasClient({ rows }: Props) {
             </div>
 
             <form onSubmit={handleSubmit} style={{ padding: "20px" }}>
-              <Field label="Encuestas enviadas *">
-                <input
-                  type="number" min="0" step="1"
-                  value={form.enviadas}
-                  onChange={e => setForm(f => ({ ...f, enviadas: e.target.value }))}
-                  placeholder="0"
-                  style={inp}
-                  required
-                  autoFocus
-                />
+
+              {/* Tipo selector */}
+              <Field label="Tipo de encuesta *">
+                <div style={{ display: "flex", gap: "8px" }}>
+                  {(["ESPONTANEA", "MAILING"] as const).map(t => (
+                    <button
+                      key={t} type="button"
+                      onClick={() => setForm(f => ({ ...f, tipo: t }))}
+                      style={{
+                        flex: 1, padding: "10px 0", borderRadius: "9px",
+                        fontSize: "12.5px", fontWeight: form.tipo === t ? 800 : 500,
+                        cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
+                        border: form.tipo === t
+                          ? `1.5px solid ${t === "ESPONTANEA" ? "#7C3AED" : "#2563EB"}`
+                          : "1.5px solid #EAECF2",
+                        background: form.tipo === t
+                          ? (t === "ESPONTANEA" ? "#F5F3FF" : "#EFF6FF")
+                          : "white",
+                        color: form.tipo === t
+                          ? (t === "ESPONTANEA" ? "#7C3AED" : "#2563EB")
+                          : "#64748B",
+                      }}
+                    >
+                      {t === "ESPONTANEA" ? "ESPONTÁNEA" : "MAILING"}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ fontSize: "11px", color: "#94A3B8", marginTop: "5px" }}>
+                  {form.tipo === "ESPONTANEA"
+                    ? "Feedback espontáneo de un cliente en una operación"
+                    : "Respuesta a una campaña de mailing enviada a un agente"
+                  }
+                </div>
               </Field>
 
-              <Field label="Encuestas respondidas">
-                <input
-                  type="number" min="0" step="1"
-                  value={form.respondidas}
-                  onChange={e => setForm(f => ({ ...f, respondidas: e.target.value }))}
-                  placeholder="0"
-                  style={inp}
-                />
-              </Field>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                {/* Referencia */}
+                <Field label={form.tipo === "ESPONTANEA" ? "N° de oferta *" : "Agente *"}>
+                  <input
+                    type="text"
+                    placeholder={form.tipo === "ESPONTANEA" ? "Ej: 1234" : "Ej: Romina Prieto"}
+                    value={form.referencia}
+                    onChange={e => setForm(f => ({ ...f, referencia: e.target.value }))}
+                    style={inp} required autoFocus
+                  />
+                </Field>
 
-              <Field label="NPS promedio (−100 a 100)">
+                {/* Subtipo (solo ESPONTANEA) */}
+                {form.tipo === "ESPONTANEA" ? (
+                  <Field label="Tipo contacto *">
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      {(["Comprador", "Vendedor"] as const).map(s => (
+                        <button
+                          key={s} type="button"
+                          onClick={() => setForm(f => ({ ...f, subtipo: s }))}
+                          style={{
+                            flex: 1, padding: "9px 0", borderRadius: "8px",
+                            fontSize: "12px", fontWeight: form.subtipo === s ? 700 : 500,
+                            cursor: "pointer", fontFamily: "inherit",
+                            border: form.subtipo === s ? "1.5px solid #7C3AED" : "1.5px solid #EAECF2",
+                            background: form.subtipo === s ? "#F5F3FF" : "white",
+                            color: form.subtipo === s ? "#7C3AED" : "#64748B",
+                          }}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </Field>
+                ) : (
+                  <Field label="Fecha *">
+                    <input type="date" value={form.fecha}
+                      onChange={e => setForm(f => ({ ...f, fecha: e.target.value }))}
+                      style={inp} required />
+                  </Field>
+                )}
+              </div>
+
+              {form.tipo === "ESPONTANEA" && (
+                <Field label="Fecha *">
+                  <input type="date" value={form.fecha}
+                    onChange={e => setForm(f => ({ ...f, fecha: e.target.value }))}
+                    style={inp} required />
+                </Field>
+              )}
+
+              {/* NPS */}
+              <Field label="NPS (−100 a 100)">
                 <input
                   type="number" min="-100" max="100" step="1"
-                  value={form.nps_promedio}
-                  onChange={e => setForm(f => ({ ...f, nps_promedio: e.target.value }))}
-                  placeholder="Opcional"
+                  placeholder="Opcional — ej: 75"
+                  value={form.nps}
+                  onChange={e => setForm(f => ({ ...f, nps: e.target.value }))}
                   style={inp}
                 />
-              </Field>
-
-              {/* Preview */}
-              {form.enviadas && (
-                <div style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "10px 12px", borderRadius: "8px",
-                  background: "#F8F9FC", border: "1px solid #EAECF2",
-                  marginBottom: "14px",
-                }}>
-                  <span style={{ fontSize: "12px", color: "#64748B", fontWeight: 500 }}>
-                    % Respuesta:
-                  </span>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span style={{
-                      fontWeight: 800, fontSize: "16px",
-                      color: previewPct >= OBJETIVO ? "#059669" : "#E11D48",
-                    }}>
-                      {previewPct}%
-                    </span>
-                    <span style={{
-                      fontSize: "11px", fontWeight: 700,
-                      padding: "2px 8px", borderRadius: "10px",
-                      background: previewPct >= OBJETIVO ? "#ECFDF5" : "#FFF1F2",
-                      color: previewPct >= OBJETIVO ? "#059669" : "#E11D48",
-                    }}>
-                      {previewPct >= OBJETIVO ? "✓ En objetivo" : `Meta: ${OBJETIVO}%`}
+                {form.nps !== "" && (
+                  <div style={{ marginTop: "5px" }}>
+                    <NpsBadge nps={parseInt(form.nps) || null} />
+                    <span style={{ fontSize: "11px", color: "#64748B", marginLeft: "6px" }}>
+                      {npsLabel(parseInt(form.nps) || null)}
                     </span>
                   </div>
-                </div>
-              )}
+                )}
+              </Field>
+
+              {/* Comentario */}
+              <Field label="Comentario">
+                <textarea
+                  rows={2} placeholder="Feedback libre (opcional)"
+                  value={form.comentario}
+                  onChange={e => setForm(f => ({ ...f, comentario: e.target.value }))}
+                  style={{ ...inp, resize: "vertical", lineHeight: 1.5 }}
+                />
+              </Field>
 
               {error && (
                 <div style={{
@@ -597,13 +668,12 @@ export default function EncuestasClient({ rows }: Props) {
                     padding: "9px 24px", borderRadius: "8px", border: "none",
                     background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
                     color: "white", fontSize: "13px", fontWeight: 700,
-                    cursor: isPending ? "not-allowed" : "pointer",
-                    fontFamily: "inherit",
+                    cursor: isPending ? "not-allowed" : "pointer", fontFamily: "inherit",
                     display: "flex", alignItems: "center", gap: "6px",
                     boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
                   }}>
                   {isPending && <Loader2 size={14} className="animate-spin" />}
-                  {isPending ? "Guardando..." : "Guardar"}
+                  {isPending ? "Guardando..." : "Registrar"}
                 </button>
               </div>
             </form>
