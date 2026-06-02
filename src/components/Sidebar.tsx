@@ -59,7 +59,7 @@ const sidebarContent = (pathname: string, onNavClick?: () => void) => {
           alt="REMAX Tradición"
           width={160}
           height={60}
-          style={{ objectFit: "contain", maxWidth: "160px", width: "auto" }}
+          style={{ objectFit: "contain", maxWidth: "160px", height: "auto" }}
           priority
         />
       </div>

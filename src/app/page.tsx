@@ -198,7 +198,7 @@ export default async function DashboardPage() {
           alt="REMAX Tradición"
           width={280}
           height={88}
-          style={{ objectFit: "contain", maxWidth: "280px", width: "auto", display: "block" }}
+          style={{ objectFit: "contain", maxWidth: "280px", height: "auto", display: "block" }}
           priority
         />
 
