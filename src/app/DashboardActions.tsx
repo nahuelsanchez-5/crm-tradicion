@@ -6,7 +6,7 @@ import { crearPago } from "@/app/pagos/actions"
 import { guardarEncuesta } from "@/app/encuestas/actions"
 import { crearOperacion } from "@/app/operaciones/actions"
 import { crearCartel } from "@/app/carteleria/actions"
-import { X, Loader2 } from "lucide-react"
+import { X, Loader2, DollarSign, MapPin, ClipboardList, Building2, LucideIcon } from "lucide-react"
 
 // ── Types ────────────────────────────────────────────
 interface AgenteSimple {
@@ -271,29 +271,29 @@ export default function DashboardActions({ agentes }: Props) {
   }
 
   const QUICK_BTNS: Array<{
-    emoji: string; label: string; sublabel: string; m: ModalT
+    icon: LucideIcon; label: string; sublabel: string; m: ModalT
     bg: string; bgHover: string; color: string; border: string; shadow: string; shadowHover: string
   }> = [
     {
-      emoji: "💰", label: "Registrar", sublabel: "Pago", m: "pago",
+      icon: DollarSign, label: "Registrar", sublabel: "Pago", m: "pago",
       bg: "#ECFDF5", bgHover: "#D1FAE5", color: "#059669",
       border: "#6EE7B7", shadow: "0 2px 8px rgba(5,150,105,0.12)",
       shadowHover: "0 8px 24px rgba(5,150,105,0.22)",
     },
     {
-      emoji: "🪧", label: "Devolución", sublabel: "Cartelería", m: "carteleria",
+      icon: MapPin, label: "Devolución", sublabel: "Cartelería", m: "carteleria",
       bg: "#FFFBEB", bgHover: "#FEF3C7", color: "#D97706",
       border: "#FCD34D", shadow: "0 2px 8px rgba(217,119,6,0.12)",
       shadowHover: "0 8px 24px rgba(217,119,6,0.22)",
     },
     {
-      emoji: "📋", label: "Registrar", sublabel: "Encuesta", m: "encuesta",
+      icon: ClipboardList, label: "Registrar", sublabel: "Encuesta", m: "encuesta",
       bg: "#EFF6FF", bgHover: "#DBEAFE", color: "#2563EB",
       border: "#93C5FD", shadow: "0 2px 8px rgba(37,99,235,0.12)",
       shadowHover: "0 8px 24px rgba(37,99,235,0.22)",
     },
     {
-      emoji: "🏠", label: "Registrar", sublabel: "Operación", m: "operacion",
+      icon: Building2, label: "Registrar", sublabel: "Operación", m: "operacion",
       bg: "#FFF7ED", bgHover: "#FFEDD5", color: "#EA580C",
       border: "#FDBA74", shadow: "0 2px 8px rgba(234,88,12,0.12)",
       shadowHover: "0 8px 24px rgba(234,88,12,0.22)",
@@ -317,7 +317,7 @@ export default function DashboardActions({ agentes }: Props) {
         display: "grid", gridTemplateColumns: "repeat(4,1fr)",
         gap: "14px", margin: "4px 0 20px",
       }}>
-        {QUICK_BTNS.map(({ emoji, label, sublabel, m, bg, bgHover, color, border, shadow, shadowHover }) => {
+        {QUICK_BTNS.map(({ icon: Icon, label, sublabel, m, bg, bgHover, color, border, shadow, shadowHover }) => {
           const isHovered = hoveredBtn === m
           return (
             <button
@@ -345,10 +345,9 @@ export default function DashboardActions({ agentes }: Props) {
                 background: "white",
                 boxShadow: `0 2px 8px ${color}30`,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "24px", lineHeight: 1,
                 flexShrink: 0,
               }}>
-                {emoji}
+                <Icon size={24} color={color} strokeWidth={1.75} />
               </div>
               {/* Label */}
               <div style={{ textAlign: "center", lineHeight: 1.25 }}>
