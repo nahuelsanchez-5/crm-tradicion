@@ -1,14 +1,21 @@
 import { createServerClient } from "@/lib/supabase"
 import AgentesClient from "./AgentesClient"
 
-const MES  = 5
-const ANIO = 2026
-
 export default async function AgentesPage() {
   const supabase = createServerClient()
+  const now  = new Date()
+  const mes  = now.getMonth() + 1
+  const anio = now.getFullYear()
+  const mesStr  = `${anio}-${String(mes).padStart(2, "0")}`
+  const anioStr = String(anio)
 
-  // Fetch agentes y planes del mes actual en paralelo
-  const [{ data: agentes }, { data: planes }] = await Promise.all([
+  const [
+    { data: agentes },
+    { data: planes },
+    { data: operaciones },
+    { data: pagosMesRaw },
+    { data: ofertasRaw },
+  ] = await Promise.all([
     supabase
       .from("agentes")
       .select("id, nombre, email, telefono, fecha_alta, fecha_baja, activo, paga_fee")
@@ -17,21 +24,67 @@ export default async function AgentesPage() {
     supabase
       .from("planes_crm")
       .select("agente_id, tipo_plan, pagado")
-      .eq("mes", MES)
-      .eq("anio", ANIO),
+      .eq("mes", mes)
+      .eq("anio", anio),
+
+    supabase
+      .from("operaciones")
+      .select("agente_vendedor, comision_bruta")
+      .gte("fecha", `${anioStr}-01-01`)
+      .lte("fecha", `${anioStr}-12-31`),
+
+    supabase
+      .from("pagos")
+      .select("agente_id, concepto, monto_debe, monto_pagado, estado")
+      .gte("fecha", `${mesStr}-01`)
+      .lte("fecha", `${mesStr}-31`),
+
+    supabase
+      .from("ofertas")
+      .select("agente_vendedor")
+      .neq("estado", "Cerradas")
+      .neq("estado", "Caídas"),
   ])
 
-  // Merge: agregar plan del mes a cada agente
   const agentesConPlan = (agentes ?? []).map(a => ({
     ...a,
     plan: (planes ?? []).find(p => p.agente_id === a.id) ?? null,
   }))
 
+  // Facturación del año por nombre de agente (vendedor)
+  const facturacionPorNombre: Record<string, number> = {}
+  for (const op of (operaciones ?? [])) {
+    if (op.agente_vendedor) {
+      const k = (op.agente_vendedor as string).toLowerCase().trim()
+      facturacionPorNombre[k] = (facturacionPorNombre[k] ?? 0) + Number(op.comision_bruta ?? 0)
+    }
+  }
+
+  // Ofertas activas por nombre de agente
+  const ofertasActivasNombre: Record<string, number> = {}
+  for (const o of (ofertasRaw ?? [])) {
+    if (o.agente_vendedor) {
+      const k = (o.agente_vendedor as string).toLowerCase().trim()
+      ofertasActivasNombre[k] = (ofertasActivasNombre[k] ?? 0) + 1
+    }
+  }
+
+  const pagosMes = (pagosMesRaw ?? []) as Array<{
+    agente_id: string
+    concepto: string
+    monto_debe: number
+    monto_pagado: number
+    estado: string
+  }>
+
   return (
     <AgentesClient
       agentes={agentesConPlan}
-      mes={MES}
-      anio={ANIO}
+      mes={mes}
+      anio={anio}
+      facturacionPorNombre={facturacionPorNombre}
+      pagosMes={pagosMes}
+      ofertasActivasNombre={ofertasActivasNombre}
     />
   )
 }
