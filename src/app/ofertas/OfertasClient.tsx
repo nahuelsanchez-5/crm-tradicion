@@ -500,8 +500,14 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={10} style={{ padding: "48px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
-                      No hay ofertas para los filtros seleccionados.
+                    <td colSpan={10} style={{ padding: "48px 40px", textAlign: "center" }}>
+                      <div style={{ fontSize: "28px", marginBottom: "10px", opacity: 0.4 }}>🤝</div>
+                      <div style={{ fontWeight: 600, fontSize: "14px", color: "#64748B", marginBottom: "4px" }}>
+                        No hay ofertas con estos filtros
+                      </div>
+                      <div style={{ fontSize: "12px", color: "#94A3B8" }}>
+                        Ajustá los filtros o creá una nueva oferta con el botón &quot;+ Nueva Oferta&quot;.
+                      </div>
                     </td>
                   </tr>
                 ) : (

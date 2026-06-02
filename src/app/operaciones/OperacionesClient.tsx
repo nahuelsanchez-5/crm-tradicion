@@ -425,8 +425,14 @@ export default function OperacionesClient({ operaciones }: Props) {
               <tbody>
                 {filteredOps.length === 0 ? (
                   <tr>
-                    <td colSpan={8} style={{ padding: "40px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
-                      No hay operaciones para el período seleccionado.
+                    <td colSpan={8} style={{ padding: "48px 40px", textAlign: "center" }}>
+                      <div style={{ fontSize: "28px", marginBottom: "10px", opacity: 0.4 }}>🏠</div>
+                      <div style={{ fontWeight: 600, fontSize: "14px", color: "#64748B", marginBottom: "4px" }}>
+                        Sin operaciones en este período
+                      </div>
+                      <div style={{ fontSize: "12px", color: "#94A3B8" }}>
+                        Cambiá el mes o registrá la primera operación con el botón &quot;+ Nueva Operación&quot;.
+                      </div>
                     </td>
                   </tr>
                 ) : (
