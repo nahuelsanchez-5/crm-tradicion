@@ -7,11 +7,12 @@ import { Settings, Save, Loader2, Check } from "lucide-react"
 
 // ── Default config (seeds empty tables) ──────────────
 const DEFAULT_CONFIG: ConfigEntry[] = [
-  // Planes
-  { clave: "nombre_plan_pro",      valor: "PRO",    etiqueta: "Nombre Plan PRO",     grupo: "planes" },
-  { clave: "nombre_plan_pro_plus", valor: "PRO+",   etiqueta: "Nombre Plan PRO+",    grupo: "planes" },
-  { clave: "nombre_plan_b_qr",     valor: "B_QR",   etiqueta: "Nombre Plan B_QR",    grupo: "planes" },
-  { clave: "nombre_plan_b_ofi",    valor: "B_OFI",  etiqueta: "Nombre Plan B_OFI",   grupo: "planes" },
+  // Licencias CRM
+  { clave: "nombre_plan_pro",      valor: "PRO",    etiqueta: "Licencia CRM PRO",        grupo: "planes" },
+  { clave: "nombre_plan_pro_plus", valor: "PRO+",   etiqueta: "Licencia CRM PRO+",       grupo: "planes" },
+  { clave: "nombre_plan_b_qr",     valor: "B_QR",   etiqueta: "Licencia CRM B_QR",       grupo: "planes" },
+  { clave: "nombre_plan_b_ofi",    valor: "B_OFI",  etiqueta: "Licencia CRM B_OFI",      grupo: "planes" },
+  { clave: "nombre_plan_ninguno",  valor: "---",    etiqueta: "SIN LICENCIA",            grupo: "planes" },
   // Bonos
   { clave: "bono_pro",             valor: "500",    etiqueta: "Bono PRO (USD)",       grupo: "bonos" },
   { clave: "bono_pro_plus",        valor: "800",    etiqueta: "Bono PRO+ (USD)",      grupo: "bonos" },
@@ -31,7 +32,7 @@ const DEFAULT_CONFIG: ConfigEntry[] = [
 ]
 
 const GRUPO_LABELS: Record<string, string> = {
-  planes:       "Nombres de planes",
+  planes:       "Licencias CRM",
   bonos:        "Montos de bonos",
   kpis:         "Objetivos de KPIs",
   comunicacion: "Comunicación",
