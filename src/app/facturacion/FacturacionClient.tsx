@@ -13,7 +13,16 @@ const MONTH_NAMES = [
   "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
 ]
 
-const ANIO = 2026
+const ANIO = new Date().getFullYear()
+
+const OBJETIVO_ANUAL_USD = 710_000
+
+// Estacionalidad (índice 0 = Enero … 11 = Diciembre), suma = 100%
+const ESTACIONALIDAD_PCT = [4.72, 5.41, 7.12, 6.82, 8.41, 9.15, 8.66, 9.64, 9.42, 9.65, 9.78, 11.22]
+
+function calcObjetivoMes(mes: number): number {
+  return Math.round(OBJETIVO_ANUAL_USD * ESTACIONALIDAD_PCT[mes - 1] / 100)
+}
 
 // ── Types ────────────────────────────────────────────
 export interface FacturacionRow {
@@ -34,8 +43,7 @@ interface MesData {
 }
 
 interface FormData {
-  objetivo_usd: string
-  real_usd:     string
+  real_usd: string
 }
 
 // ── Helpers ──────────────────────────────────────────
@@ -168,9 +176,9 @@ export default function FacturacionClient({ rows }: Props) {
       return {
         mes,
         nombre,
-        objetivo_usd: row?.objetivo_usd ?? 0,
-        real_usd:     row?.real_usd     ?? 0,
-        id:           row?.id           ?? null,
+        objetivo_usd: calcObjetivoMes(mes),
+        real_usd:     row?.real_usd ?? 0,
+        id:           row?.id       ?? null,
         isFuture:     mes > currentMonth,
       }
     })
@@ -193,7 +201,7 @@ export default function FacturacionClient({ rows }: Props) {
 
   // ── Modal ──────────────────────────────────────────
   const [modalMes, setModalMes] = useState<MesData | null>(null)
-  const [form,     setForm]     = useState<FormData>({ objetivo_usd: "", real_usd: "" })
+  const [form,     setForm]     = useState<FormData>({ real_usd: "" })
   const [error,    setError]    = useState("")
 
   const closeModal = useCallback(() => { setModalMes(null); setError("") }, [])
@@ -206,8 +214,7 @@ export default function FacturacionClient({ rows }: Props) {
 
   function openModal(m: MesData) {
     setForm({
-      objetivo_usd: m.objetivo_usd > 0 ? String(m.objetivo_usd) : "",
-      real_usd:     m.real_usd     > 0 ? String(m.real_usd)     : "",
+      real_usd: m.real_usd > 0 ? String(m.real_usd) : "",
     })
     setError("")
     setModalMes(m)
@@ -218,9 +225,8 @@ export default function FacturacionClient({ rows }: Props) {
     setError("")
     if (!modalMes) return
 
-    const obj  = parseFloat(form.objetivo_usd) || 0
-    const real = parseFloat(form.real_usd)     || 0
-    if (obj <= 0) { setError("El objetivo debe ser mayor a 0"); return }
+    const real = parseFloat(form.real_usd) || 0
+    const obj  = calcObjetivoMes(modalMes.mes)
 
     const payload: FacturacionFormData = {
       mes:          modalMes.mes,
@@ -491,19 +497,26 @@ export default function FacturacionClient({ rows }: Props) {
             </div>
 
             <form onSubmit={handleSubmit} style={{ padding: "20px" }}>
-              <Field label="Objetivo (USD) *">
-                <input
-                  type="number"
-                  min="0"
-                  step="500"
-                  value={form.objetivo_usd}
-                  onChange={e => setForm(f => ({ ...f, objetivo_usd: e.target.value }))}
-                  placeholder="28000"
-                  style={inp}
-                  required
-                  autoFocus
-                />
-              </Field>
+              {/* Objetivo auto-calculado (read-only) */}
+              {modalMes && (
+                <Field label="Objetivo mensual (calculado automáticamente)">
+                  <div style={{
+                    ...inp, background: "#F8F9FC", color: "#64748B",
+                    border: "1.5px solid #F1F5F9", cursor: "default",
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                  }}>
+                    <span style={{ fontWeight: 700, color: "#0F172A" }}>
+                      {fmtUSD(calcObjetivoMes(modalMes.mes))}
+                    </span>
+                    <span style={{
+                      fontSize: "11px", background: "#EFF6FF", color: "#2563EB",
+                      padding: "2px 8px", borderRadius: "6px", fontWeight: 600,
+                    }}>
+                      {ESTACIONALIDAD_PCT[modalMes.mes - 1]}% × {fmtUSD(OBJETIVO_ANUAL_USD)}
+                    </span>
+                  </div>
+                </Field>
+              )}
 
               <Field label="Facturación real (USD)">
                 <input
@@ -514,11 +527,12 @@ export default function FacturacionClient({ rows }: Props) {
                   onChange={e => setForm(f => ({ ...f, real_usd: e.target.value }))}
                   placeholder="0"
                   style={inp}
+                  autoFocus
                 />
               </Field>
 
-              {/* Preview estado */}
-              {form.objetivo_usd && (
+              {/* Preview cumplimiento */}
+              {modalMes && (
                 <div style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
                   padding: "10px 12px", borderRadius: "8px",
@@ -531,11 +545,11 @@ export default function FacturacionClient({ rows }: Props) {
                   <span style={{
                     fontWeight: 800, fontSize: "16px",
                     color: (() => {
-                      const p = pct(parseFloat(form.real_usd) || 0, parseFloat(form.objetivo_usd) || 1)
+                      const p = pct(parseFloat(form.real_usd) || 0, calcObjetivoMes(modalMes.mes))
                       return p >= 100 ? "#059669" : p >= 80 ? "#0D9488" : "#E11D48"
                     })(),
                   }}>
-                    {pct(parseFloat(form.real_usd) || 0, parseFloat(form.objetivo_usd) || 1)}%
+                    {pct(parseFloat(form.real_usd) || 0, calcObjetivoMes(modalMes.mes))}%
                   </span>
                 </div>
               )}
