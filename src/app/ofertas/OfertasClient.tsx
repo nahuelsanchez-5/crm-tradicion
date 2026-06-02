@@ -35,6 +35,7 @@ export interface OfertaRow {
   fecha_oferta:             string | null
   es_bis:                   boolean
   numero_padre:             number | null
+  updated_at:               string | null
 }
 
 interface FormData {
@@ -50,6 +51,8 @@ interface FormData {
   tipo_operacion:           string
   tiene_reserva:            boolean
   monto_reserva_usd:        string
+  moneda:                   "USD" | "ARS"
+  tipo_cambio:              string
   monto_ofertado_usd:       string
   precio_publicacion_usd:   string
   fecha_oferta:             string
@@ -243,6 +246,9 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
     return Math.max(...ofertas.map(o => o.numero)) + 1
   }, [ofertas])
 
+  // ── View mode ──────────────────────────────────────
+  const [viewMode, setViewMode] = useState<"kanban" | "lista">("kanban")
+
   // ── Filters ────────────────────────────────────────
   const [filterEstado,     setFilterEstado]     = useState("todos")
   const [filterAgente,     setFilterAgente]     = useState("todos")
@@ -283,6 +289,8 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
     tipo_operacion:           "Venta",
     tiene_reserva:            false,
     monto_reserva_usd:        "",
+    moneda:                   "USD",
+    tipo_cambio:              "",
     monto_ofertado_usd:       "",
     precio_publicacion_usd:   "",
     fecha_oferta:             todayStr,
@@ -316,6 +324,14 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
 
     if (!form.direccion.trim()) { setFormError("La dirección es obligatoria"); return }
     if (!form.monto_ofertado_usd)  { setFormError("El monto ofertado es obligatorio"); return }
+    if (form.moneda === "ARS" && !form.tipo_cambio) { setFormError("Ingresá el tipo de cambio para convertir a USD"); return }
+
+    const montoRaw = parseFloat(form.monto_ofertado_usd) || null
+    const tc       = parseFloat(form.tipo_cambio) || 1
+    const montoUSD = form.moneda === "ARS" && montoRaw ? Math.round(montoRaw / tc) : montoRaw
+
+    const pubRaw   = form.precio_publicacion_usd ? parseFloat(form.precio_publicacion_usd) : null
+    const pubUSD   = form.moneda === "ARS" && pubRaw ? Math.round(pubRaw / tc) : pubRaw
 
     const payload: OfertaFormData = {
       numero:                   parseInt(form.numero) || nextNumero,
@@ -328,8 +344,8 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
       tipo_operacion:           form.tipo_operacion,
       tiene_reserva:            form.tiene_reserva,
       monto_reserva_usd:        form.tiene_reserva && form.monto_reserva_usd ? parseFloat(form.monto_reserva_usd) : null,
-      monto_ofertado_usd:       parseFloat(form.monto_ofertado_usd) || null,
-      precio_publicacion_usd:   form.precio_publicacion_usd ? parseFloat(form.precio_publicacion_usd) : null,
+      monto_ofertado_usd:       montoUSD,
+      precio_publicacion_usd:   pubUSD,
       fecha_oferta:             form.fecha_oferta,
       es_bis:                   form.es_bis,
       numero_padre:             form.es_bis && form.numero_padre ? parseInt(form.numero_padre) : null,
@@ -373,23 +389,38 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
           <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0 }}>
             Ofertas
           </h1>
-          <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "1px" }}>
-            Seguimiento de ofertas inmobiliarias — reemplaza Notion
-          </p>
         </div>
-        <button
-          onClick={openNueva}
-          style={{
-            background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
-            color: "white", border: "none",
-            padding: "8px 18px", borderRadius: "9px",
-            fontSize: "13px", fontWeight: 700, cursor: "pointer",
-            boxShadow: "0 2px 10px rgba(227,24,55,0.35)",
-            fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
-          }}
-        >
-          <span style={{ fontSize: "16px", lineHeight: 1 }}>+</span> Nueva Oferta
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          {/* Kanban / Lista toggle */}
+          <div style={{ display: "flex", background: "#F1F5F9", borderRadius: "8px", padding: "3px", gap: "2px" }}>
+            {(["kanban", "lista"] as const).map(mode => (
+              <button key={mode} onClick={() => setViewMode(mode)} style={{
+                padding: "5px 12px", borderRadius: "6px", border: "none",
+                background: viewMode === mode ? "white" : "transparent",
+                boxShadow: viewMode === mode ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
+                fontSize: "12px", fontWeight: 600,
+                color: viewMode === mode ? "#0F172A" : "#94A3B8",
+                cursor: "pointer", fontFamily: "inherit",
+                textTransform: "capitalize" as const,
+              }}>
+                {mode === "kanban" ? "Kanban" : "Lista"}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={openNueva}
+            style={{
+              background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+              color: "white", border: "none",
+              padding: "8px 18px", borderRadius: "9px",
+              fontSize: "13px", fontWeight: 700, cursor: "pointer",
+              boxShadow: "0 2px 10px rgba(227,24,55,0.35)",
+              fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
+            }}
+          >
+            <span style={{ fontSize: "16px", lineHeight: 1 }}>+</span> Nueva Oferta
+          </button>
+        </div>
       </div>
 
       {/* ── Content ─────────────────────────────────── */}
@@ -468,116 +499,178 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
           </span>
         </div>
 
-        {/* Tabla */}
-        <div style={cardStyle}>
-          <div style={{
-            display: "flex", alignItems: "center", gap: "8px",
-            padding: "14px 20px", borderBottom: "1px solid #EAECF2",
-          }}>
-            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-            <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
-              Ofertas en curso
-            </span>
-          </div>
-
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
-                  {["N°","Dirección","Vendedor / Comprador","Tipología","Ofertado","% Neg.","Reserva","Estado","Fecha",""].map(h => (
-                    <th key={h} style={{
-                      padding: "10px 14px", textAlign: "left",
-                      fontSize: "10.5px", fontWeight: 700,
-                      textTransform: "uppercase" as const,
-                      letterSpacing: "0.8px", color: "#94A3B8",
-                      whiteSpace: "nowrap",
+        {/* ── KANBAN VIEW ─────────────────────────── */}
+        {viewMode === "kanban" && (
+          <div style={{ overflowX: "auto", paddingBottom: "8px" }}>
+            <div style={{ display: "flex", gap: "14px", minWidth: "fit-content" }}>
+              {ESTADOS.map(estado => {
+                const colOfertas = filtered.filter(o => o.estado === estado)
+                const colStyle   = ESTADO_STYLE[estado] ?? { bg: "#F1F5F9", color: "#64748B" }
+                return (
+                  <div key={estado} style={{ width: "240px", flexShrink: 0 }}>
+                    {/* Column header */}
+                    <div style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      marginBottom: "10px", padding: "0 2px",
                     }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={10} style={{ padding: "48px 40px", textAlign: "center" }}>
-                      <div style={{ fontSize: "28px", marginBottom: "10px", opacity: 0.4 }}>🤝</div>
-                      <div style={{ fontWeight: 600, fontSize: "14px", color: "#64748B", marginBottom: "4px" }}>
-                        No hay ofertas con estos filtros
-                      </div>
-                      <div style={{ fontSize: "12px", color: "#94A3B8" }}>
-                        Ajustá los filtros o creá una nueva oferta con el botón &quot;+ Nueva Oferta&quot;.
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filtered.map((o, i) => {
-                    const isLast = i === filtered.length - 1
-                    const vendedor  = agenteName(o.agente_vendedor_id, o.agente_vendedor_externo)
-                    const comprador = agenteName(o.agente_comprador_id, o.agente_comprador_externo)
-                    return (
-                      <tr
-                        key={o.id}
-                        style={{ borderBottom: isLast ? "none" : "1px solid #F3F4F6" }}
-                        className="hover:bg-[#FAFBFF]"
-                      >
-                        <td style={{ padding: "12px 14px", fontSize: "13px", fontWeight: 700, color: "#0F172A" }}>
-                          {o.numero}
-                        </td>
-                        <td style={{ padding: "12px 14px", fontSize: "13px", color: "#0F172A", maxWidth: "180px" }}>
-                          <span title={o.direccion} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {o.direccion}
-                          </span>
-                        </td>
-                        <td style={{ padding: "12px 14px", maxWidth: "160px" }}>
-                          <div style={{ fontSize: "12px", color: "#0F172A", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={vendedor}>
-                            {vendedor}
-                          </div>
-                          <div style={{ fontSize: "11px", color: "#94A3B8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={comprador}>
-                            {comprador}
-                          </div>
-                        </td>
-                        <td style={{ padding: "12px 14px" }}>
-                          <TipologiaBadge tipo={o.tipologia} />
-                        </td>
-                        <td style={{ padding: "12px 14px", fontSize: "13px", fontWeight: 600, color: "#0F172A", whiteSpace: "nowrap" }}>
-                          {fmtUSD(o.monto_ofertado_usd)}
-                        </td>
-                        <td style={{ padding: "12px 14px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>
-                          {pctNeg(o.monto_ofertado_usd, o.precio_publicacion_usd)}
-                        </td>
-                        <td style={{ padding: "12px 14px" }}>
-                          <ReservaBadge tiene={o.tiene_reserva} />
-                        </td>
-                        <td style={{ padding: "12px 14px" }}>
-                          <EstadoBadge estado={o.estado} />
-                        </td>
-                        <td style={{ padding: "12px 14px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>
-                          {fmtFecha(o.fecha_oferta)}
-                        </td>
-                        <td style={{ padding: "12px 14px" }}>
-                          <Link
-                            href={`/ofertas/${o.id}`}
-                            style={{
-                              display: "inline-flex", alignItems: "center", gap: "4px",
-                              padding: "5px 12px", borderRadius: "7px",
-                              border: "1.5px solid #EAECF2", background: "white",
-                              fontSize: "12px", fontWeight: 600, color: "#0F172A",
-                              textDecoration: "none", whiteSpace: "nowrap",
-                            }}
-                            className="hover:bg-[#F8F9FC]"
-                          >
-                            Ver detalle <ChevronRight size={12} />
-                          </Link>
-                        </td>
-                      </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
+                      <span style={{ fontSize: "12px", fontWeight: 700, color: "#0F172A" }}>{estado}</span>
+                      <span style={{
+                        ...colStyle, padding: "2px 8px", borderRadius: "20px",
+                        fontSize: "11px", fontWeight: 700,
+                      }}>
+                        {colOfertas.length}
+                      </span>
+                    </div>
+                    {/* Cards */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      {colOfertas.length === 0 ? (
+                        <div style={{
+                          padding: "20px 14px", borderRadius: "10px",
+                          border: "1.5px dashed #EAECF2", background: "#F8F9FC",
+                          textAlign: "center", fontSize: "12px", color: "#CBD5E1",
+                        }}>
+                          Sin ofertas
+                        </div>
+                      ) : (
+                        colOfertas.map(o => {
+                          const vendedor = agenteName(o.agente_vendedor_id, o.agente_vendedor_externo)
+                          const diasAct  = o.updated_at
+                            ? Math.floor((Date.now() - new Date(o.updated_at).getTime()) / (1000 * 60 * 60 * 24))
+                            : null
+                          return (
+                            <Link
+                              key={o.id}
+                              href={`/ofertas/${o.id}`}
+                              style={{ textDecoration: "none" }}
+                            >
+                              <div style={{
+                                background: "white", borderRadius: "10px",
+                                border: "1.5px solid #EAECF2", padding: "12px 14px",
+                                cursor: "pointer",
+                                transition: "box-shadow 0.15s",
+                              }}
+                              className="hover:shadow-md"
+                              >
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
+                                  <span style={{
+                                    background: "#F1F5F9", color: "#64748B",
+                                    padding: "1px 6px", borderRadius: "4px",
+                                    fontSize: "10px", fontWeight: 700,
+                                  }}>
+                                    #{o.numero}
+                                  </span>
+                                  <TipologiaBadge tipo={o.tipologia} />
+                                </div>
+                                <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#0F172A", lineHeight: 1.3, marginBottom: "6px" }}>
+                                  {o.direccion}
+                                </div>
+                                <div style={{ fontSize: "11px", color: "#64748B", marginBottom: "8px" }}>
+                                  {vendedor}
+                                </div>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                  <span style={{ fontSize: "12px", fontWeight: 700, color: "#0F172A" }}>
+                                    {fmtUSD(o.monto_ofertado_usd)}
+                                  </span>
+                                  {diasAct !== null && (
+                                    <span style={{
+                                      fontSize: "10px", color: diasAct >= 5 ? "#E11D48" : "#94A3B8",
+                                      fontWeight: diasAct >= 5 ? 700 : 400,
+                                    }}>
+                                      {diasAct === 0 ? "Hoy" : `${diasAct}d`}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </Link>
+                          )
+                        })
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* ── LISTA VIEW ───────────────────────────── */}
+        {viewMode === "lista" && (
+          <div style={cardStyle}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: "8px",
+              padding: "14px 20px", borderBottom: "1px solid #EAECF2",
+            }}>
+              <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
+              <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
+                Ofertas en curso
+              </span>
+            </div>
+
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
+                    {["N°","Dirección","Vendedor / Comprador","Tipología","Ofertado","% Neg.","Reserva","Estado","Fecha",""].map(h => (
+                      <th key={h} style={{
+                        padding: "10px 14px", textAlign: "left",
+                        fontSize: "10.5px", fontWeight: 700,
+                        textTransform: "uppercase" as const,
+                        letterSpacing: "0.8px", color: "#94A3B8",
+                        whiteSpace: "nowrap",
+                      }}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={10} style={{ padding: "48px 40px", textAlign: "center" }}>
+                        <div style={{ fontSize: "28px", marginBottom: "10px", opacity: 0.4 }}>🤝</div>
+                        <div style={{ fontWeight: 600, fontSize: "14px", color: "#64748B", marginBottom: "4px" }}>
+                          No hay ofertas con estos filtros
+                        </div>
+                        <div style={{ fontSize: "12px", color: "#94A3B8" }}>
+                          Ajustá los filtros o creá una nueva oferta con el botón &quot;+ Nueva Oferta&quot;.
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filtered.map((o, i) => {
+                      const isLast    = i === filtered.length - 1
+                      const vendedor  = agenteName(o.agente_vendedor_id, o.agente_vendedor_externo)
+                      const comprador = agenteName(o.agente_comprador_id, o.agente_comprador_externo)
+                      return (
+                        <tr key={o.id} style={{ borderBottom: isLast ? "none" : "1px solid #F3F4F6" }} className="hover:bg-[#FAFBFF]">
+                          <td style={{ padding: "12px 14px", fontSize: "13px", fontWeight: 700, color: "#0F172A" }}>{o.numero}</td>
+                          <td style={{ padding: "12px 14px", fontSize: "13px", color: "#0F172A", maxWidth: "180px" }}>
+                            <span title={o.direccion} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.direccion}</span>
+                          </td>
+                          <td style={{ padding: "12px 14px", maxWidth: "160px" }}>
+                            <div style={{ fontSize: "12px", color: "#0F172A", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={vendedor}>{vendedor}</div>
+                            <div style={{ fontSize: "11px", color: "#94A3B8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={comprador}>{comprador}</div>
+                          </td>
+                          <td style={{ padding: "12px 14px" }}><TipologiaBadge tipo={o.tipologia} /></td>
+                          <td style={{ padding: "12px 14px", fontSize: "13px", fontWeight: 600, color: "#0F172A", whiteSpace: "nowrap" }}>{fmtUSD(o.monto_ofertado_usd)}</td>
+                          <td style={{ padding: "12px 14px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>{pctNeg(o.monto_ofertado_usd, o.precio_publicacion_usd)}</td>
+                          <td style={{ padding: "12px 14px" }}><ReservaBadge tiene={o.tiene_reserva} /></td>
+                          <td style={{ padding: "12px 14px" }}><EstadoBadge estado={o.estado} /></td>
+                          <td style={{ padding: "12px 14px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>{fmtFecha(o.fecha_oferta)}</td>
+                          <td style={{ padding: "12px 14px" }}>
+                            <Link href={`/ofertas/${o.id}`} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "5px 12px", borderRadius: "7px", border: "1.5px solid #EAECF2", background: "white", fontSize: "12px", fontWeight: 600, color: "#0F172A", textDecoration: "none", whiteSpace: "nowrap" }} className="hover:bg-[#F8F9FC]">
+                              Ver detalle <ChevronRight size={12} />
+                            </Link>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ══════════════════════════════════════════════
@@ -702,17 +795,44 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                 </Field>
               </div>
 
+              {/* Moneda + Tipo de cambio */}
+              <Field label="Moneda del monto">
+                <div style={{ display: "flex", gap: "8px" }}>
+                  {(["USD", "ARS"] as const).map(m => (
+                    <button key={m} type="button" onClick={() => setF("moneda", m)} style={{
+                      padding: "7px 20px", borderRadius: "8px", border: "1.5px solid",
+                      borderColor: form.moneda === m ? "#E31837" : "#EAECF2",
+                      background: form.moneda === m ? "#FFF1F2" : "white",
+                      color: form.moneda === m ? "#E11D48" : "#64748B",
+                      fontWeight: 700, fontSize: "13px", cursor: "pointer", fontFamily: "inherit",
+                    }}>{m}</button>
+                  ))}
+                </div>
+              </Field>
+              {form.moneda === "ARS" && (
+                <Field label="Tipo de cambio (ARS/USD) *">
+                  <input type="number" value={form.tipo_cambio} min="1" step="1"
+                    onChange={e => setF("tipo_cambio", e.target.value)}
+                    placeholder="1200" style={inp} required />
+                </Field>
+              )}
+
               {/* Montos */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <Field label="Monto ofertado (USD) *">
+                <Field label={`Monto ofertado (${form.moneda}) *`}>
                   <input type="number" value={form.monto_ofertado_usd} min="0" step="100"
                     onChange={e => setF("monto_ofertado_usd", e.target.value)}
-                    placeholder="150000" style={inp} required />
+                    placeholder={form.moneda === "ARS" ? "180000000" : "150000"} style={inp} required />
+                  {form.moneda === "ARS" && form.tipo_cambio && form.monto_ofertado_usd && (
+                    <div style={{ fontSize: "11px", color: "#0D9488", marginTop: "4px", fontWeight: 600 }}>
+                      ≈ USD {Math.round(parseFloat(form.monto_ofertado_usd) / parseFloat(form.tipo_cambio)).toLocaleString("es-AR")}
+                    </div>
+                  )}
                 </Field>
-                <Field label="Precio publicación (USD)">
+                <Field label={`Precio publicación (${form.moneda})`}>
                   <input type="number" value={form.precio_publicacion_usd} min="0" step="100"
                     onChange={e => setF("precio_publicacion_usd", e.target.value)}
-                    placeholder="165000" style={inp} />
+                    placeholder={form.moneda === "ARS" ? "200000000" : "165000"} style={inp} />
                 </Field>
               </div>
 

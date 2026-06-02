@@ -9,7 +9,7 @@ export default async function OfertasPage() {
     supabase
       .from("ofertas")
       .select(
-        "id, numero, agente_vendedor_id, agente_comprador_id, agente_vendedor_externo, agente_comprador_externo, direccion, tipologia, tipo_operacion, tiene_reserva, monto_reserva_usd, monto_ofertado_usd, precio_publicacion_usd, estado, fecha_oferta, es_bis, numero_padre",
+        "id, numero, agente_vendedor_id, agente_comprador_id, agente_vendedor_externo, agente_comprador_externo, direccion, tipologia, tipo_operacion, tiene_reserva, monto_reserva_usd, monto_ofertado_usd, precio_publicacion_usd, estado, fecha_oferta, es_bis, numero_padre, updated_at",
       )
       .order("numero", { ascending: false }),
 
