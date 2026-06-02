@@ -268,9 +268,9 @@ export default async function DashboardPage() {
               <div style={cardHeaderStyle}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   {colorDot("#E11D48")}
-                  <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
+                  <h2 style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A", margin: 0 }}>
                     Pagos pendientes — {MES_LABEL}
-                  </span>
+                  </h2>
                 </div>
                 <span style={{ fontSize: "12px", color: "#64748B", fontWeight: 500, cursor: "pointer" }}>
                   Ver todos →
@@ -325,9 +325,9 @@ export default async function DashboardPage() {
               <div style={cardHeaderStyle}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   {colorDot("#2563EB")}
-                  <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
+                  <h2 style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A", margin: 0 }}>
                     Resumen rápido — {MES_LABEL}
-                  </span>
+                  </h2>
                 </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", padding: "16px" }}>
@@ -351,9 +351,9 @@ export default async function DashboardPage() {
             <div style={cardHeaderStyle}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 {colorDot("#0D9488")}
-                <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
+                <h2 style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A", margin: 0 }}>
                   Últimas operaciones
-                </span>
+                </h2>
               </div>
               <span style={{ fontSize: "12px", color: "#64748B", fontWeight: 500, cursor: "pointer" }}>
                 Ver todas
