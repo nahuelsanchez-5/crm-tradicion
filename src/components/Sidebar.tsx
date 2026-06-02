@@ -178,7 +178,7 @@ function NavItemLink({
         display: "flex",
         alignItems: "center",
         gap: "9px",
-        padding: "8px 10px",
+        padding: "12px 10px",
         borderRadius: "8px",
         fontSize: "13px",
         fontWeight: isActive ? 600 : 500,
