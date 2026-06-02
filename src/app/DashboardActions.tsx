@@ -6,7 +6,13 @@ import { crearPago } from "@/app/pagos/actions"
 import { guardarEncuesta } from "@/app/encuestas/actions"
 import { crearOperacion } from "@/app/operaciones/actions"
 import { crearCartel } from "@/app/carteleria/actions"
-import { X, Loader2, DollarSign, MapPin, ClipboardList, Building2, LucideIcon } from "lucide-react"
+import { crearOferta } from "@/app/ofertas/actions"
+import { agregarMovimiento } from "@/app/ofertas/actions"
+import type { OfertaActiva } from "@/app/page"
+import {
+  X, Loader2, DollarSign, MapPin, ClipboardList,
+  Building2, Handshake, RefreshCw, LucideIcon,
+} from "lucide-react"
 
 // ── Types ────────────────────────────────────────────
 interface AgenteSimple {
@@ -16,14 +22,18 @@ interface AgenteSimple {
 
 interface Props {
   agentes: AgenteSimple[]
+  ofertasActivas: OfertaActiva[]
 }
 
-type ModalT = "none" | "pago" | "carteleria" | "encuesta" | "operacion"
+type ModalT = "none" | "pago" | "carteleria" | "encuesta" | "operacion" | "oferta" | "actualizar_oferta"
 
 // ── Constants ────────────────────────────────────────
 const CONCEPTOS_PAGO = ["FEE mensual", "Licencias CRM", "Mainstreet", "Otros"]
 const TIPOS_OP       = ["Venta", "Alquiler", "Alquiler Temporal", "Referido", "Otro"]
 const TIPOS_CARTEL   = ["Casa", "Terreno", "Local", "Departamento", "Campo", "Galpón"]
+const TIPOLOGIAS_OFERTA = ["Casa", "Departamento", "Terreno", "Local Comercial", "Oficina", "PH", "Campo", "Galpón", "Edificio", "Otro"]
+const TIPOS_OP_OFERTA   = ["Venta", "Alquiler", "Alquiler Temporal"]
+const TIPOS_MOVIMIENTO  = ["Seguimiento", "Llamada", "Reunión", "Nota", "Documentación", "Otro"]
 
 // ── Styles ────────────────────────────────────────────
 const inp: React.CSSProperties = {
@@ -49,9 +59,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-function ModalShell({
-  title, subtitle, onClose, children,
-}: {
+function ModalShell({ title, subtitle, onClose, children }: {
   title: string; subtitle: string; onClose: () => void; children: React.ReactNode
 }) {
   return (
@@ -78,12 +86,8 @@ function ModalShell({
           padding: "18px 20px", borderBottom: "1px solid #EAECF2", flexShrink: 0,
         }}>
           <div>
-            <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
-              {title}
-            </h2>
-            <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
-              {subtitle}
-            </p>
+            <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>{title}</h2>
+            <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>{subtitle}</p>
           </div>
           <button onClick={onClose} style={{
             background: "#F8F9FC", border: "none", borderRadius: "8px",
@@ -102,30 +106,26 @@ function ModalShell({
   )
 }
 
-function SubmitRow({
-  isPending, onCancel, label,
-}: { isPending: boolean; onCancel: () => void; label: string }) {
+function SubmitRow({ isPending, onCancel, label }: { isPending: boolean; onCancel: () => void; label: string }) {
   return (
     <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-      <button type="button" onClick={onCancel} disabled={isPending}
-        style={{
-          padding: "9px 20px", borderRadius: "8px",
-          border: "1.5px solid #EAECF2", background: "white",
-          fontSize: "13px", fontWeight: 600, color: "#64748B",
-          cursor: "pointer", fontFamily: "inherit",
-        }}>
+      <button type="button" onClick={onCancel} disabled={isPending} style={{
+        padding: "9px 20px", borderRadius: "8px",
+        border: "1.5px solid #EAECF2", background: "white",
+        fontSize: "13px", fontWeight: 600, color: "#64748B",
+        cursor: "pointer", fontFamily: "inherit",
+      }}>
         Cancelar
       </button>
-      <button type="submit" disabled={isPending}
-        style={{
-          padding: "9px 24px", borderRadius: "8px", border: "none",
-          background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
-          color: "white", fontSize: "13px", fontWeight: 700,
-          cursor: isPending ? "not-allowed" : "pointer",
-          fontFamily: "inherit",
-          display: "flex", alignItems: "center", gap: "6px",
-          boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
-        }}>
+      <button type="submit" disabled={isPending} style={{
+        padding: "9px 24px", borderRadius: "8px", border: "none",
+        background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+        color: "white", fontSize: "13px", fontWeight: 700,
+        cursor: isPending ? "not-allowed" : "pointer",
+        fontFamily: "inherit",
+        display: "flex", alignItems: "center", gap: "6px",
+        boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
+      }}>
         {isPending && <Loader2 size={14} className="animate-spin" />}
         {isPending ? "Guardando..." : label}
       </button>
@@ -136,7 +136,7 @@ function SubmitRow({
 // ═══════════════════════════════════════════════════════
 //  MAIN COMPONENT
 // ═══════════════════════════════════════════════════════
-export default function DashboardActions({ agentes }: Props) {
+export default function DashboardActions({ agentes, ofertasActivas }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [modal,      setModal]      = useState<ModalT>("none")
@@ -145,46 +145,49 @@ export default function DashboardActions({ agentes }: Props) {
 
   const todayStr = new Date().toISOString().split("T")[0]
 
-  // ── Pago form ──────────────────────────────────────
+  // ── Form states ────────────────────────────────────
   const [pagoForm, setPagoForm] = useState({
     agente_id: agentes[0]?.id ?? "",
     concepto:  CONCEPTOS_PAGO[0],
-    monto_debe:   "",
-    monto_pagado: "0",
-    fecha: todayStr,
+    monto_debe: "", monto_pagado: "0", fecha: todayStr,
   })
 
-  // ── Encuesta form ──────────────────────────────────
-  const mesActual = new Date().getMonth() + 1
+  const mesActual  = new Date().getMonth() + 1
   const anioActual = new Date().getFullYear()
   const [encForm, setEncForm] = useState({
-    mes:          mesActual,
-    anio:         anioActual,
-    enviadas:     "",
-    respondidas:  "",
-    nps_promedio: "",
+    mes: mesActual, anio: anioActual,
+    enviadas: "", respondidas: "", nps_promedio: "",
   })
 
-  // ── Operación form ─────────────────────────────────
   const [opForm, setOpForm] = useState({
-    fecha:              todayStr,
-    direccion:          "",
-    agentes:            "",
-    tipo:               TIPOS_OP[0],
-    comision_bruta:     "",
-    comision_neta:      "",
-    encuesta_comprador: false,
-    encuesta_vendedor:  false,
+    fecha: todayStr, direccion: "", agentes: "",
+    tipo: TIPOS_OP[0], comision_bruta: "", comision_neta: "",
+    encuesta_comprador: false, encuesta_vendedor: false,
   })
 
-  // ── Cartelería form ────────────────────────────────
   const [cartelForm, setCartelForm] = useState({
-    numero:      "",
-    direccion:   "",
-    mlsId:       "",
-    vencimiento: todayStr,
-    tipo:        TIPOS_CARTEL[0],
-    agente:      "",
+    numero: "", direccion: "", mlsId: "",
+    vencimiento: todayStr, tipo: TIPOS_CARTEL[0], agente: "",
+  })
+
+  const [ofertaForm, setOfertaForm] = useState({
+    numero: "",
+    direccion: "",
+    tipologia: TIPOLOGIAS_OFERTA[0],
+    tipo_operacion: TIPOS_OP_OFERTA[0],
+    agente_vendedor_id: agentes[0]?.id ?? "",
+    agente_comprador_id: "",
+    monto_ofertado_usd: "",
+    precio_publicacion_usd: "",
+    fecha_oferta: todayStr,
+    notas: "",
+  })
+
+  const [actualizarForm, setActualizarForm] = useState({
+    oferta_id: ofertasActivas[0]?.id ?? "",
+    tipo: TIPOS_MOVIMIENTO[0],
+    descripcion: "",
+    monto_usd: "",
   })
 
   const closeModal = useCallback(() => { setModal("none"); setError("") }, [])
@@ -200,10 +203,12 @@ export default function DashboardActions({ agentes }: Props) {
     setPagoForm({ agente_id: agentes[0]?.id ?? "", concepto: CONCEPTOS_PAGO[0], monto_debe: "", monto_pagado: "0", fecha: todayStr })
     setOpForm({ fecha: todayStr, direccion: "", agentes: "", tipo: TIPOS_OP[0], comision_bruta: "", comision_neta: "", encuesta_comprador: false, encuesta_vendedor: false })
     setCartelForm({ numero: "", direccion: "", mlsId: "", vencimiento: todayStr, tipo: TIPOS_CARTEL[0], agente: "" })
+    setOfertaForm({ numero: "", direccion: "", tipologia: TIPOLOGIAS_OFERTA[0], tipo_operacion: TIPOS_OP_OFERTA[0], agente_vendedor_id: agentes[0]?.id ?? "", agente_comprador_id: "", monto_ofertado_usd: "", precio_publicacion_usd: "", fecha_oferta: todayStr, notas: "" })
+    setActualizarForm({ oferta_id: ofertasActivas[0]?.id ?? "", tipo: TIPOS_MOVIMIENTO[0], descripcion: "", monto_usd: "" })
     setModal(m)
   }
 
-  // ── Submit: Pago ───────────────────────────────────
+  // ── Submit handlers ────────────────────────────────
   function handlePago(e: React.FormEvent) {
     e.preventDefault()
     const debe   = parseFloat(pagoForm.monto_debe)   || 0
@@ -216,15 +221,13 @@ export default function DashboardActions({ agentes }: Props) {
     })
   }
 
-  // ── Submit: Encuesta ───────────────────────────────
   function handleEncuesta(e: React.FormEvent) {
     e.preventDefault()
     startTransition(async () => {
       const r = await guardarEncuesta({
-        mes:          encForm.mes,
-        anio:         encForm.anio,
-        enviadas:     parseInt(encForm.enviadas)    || 0,
-        respondidas:  parseInt(encForm.respondidas) || 0,
+        mes: encForm.mes, anio: encForm.anio,
+        enviadas: parseInt(encForm.enviadas) || 0,
+        respondidas: parseInt(encForm.respondidas) || 0,
         nps_promedio: encForm.nps_promedio ? parseFloat(encForm.nps_promedio) : null,
       })
       if (r.error) setError(r.error)
@@ -232,18 +235,15 @@ export default function DashboardActions({ agentes }: Props) {
     })
   }
 
-  // ── Submit: Operación ──────────────────────────────
   function handleOperacion(e: React.FormEvent) {
     e.preventDefault()
     if (!opForm.direccion) { setError("La dirección es obligatoria"); return }
     startTransition(async () => {
       const r = await crearOperacion({
-        fecha:              opForm.fecha,
-        direccion:          opForm.direccion,
-        agentes:            opForm.agentes,
-        tipo:               opForm.tipo,
-        comision_bruta:     parseFloat(opForm.comision_bruta) || 0,
-        comision_neta:      parseFloat(opForm.comision_neta)  || 0,
+        fecha: opForm.fecha, direccion: opForm.direccion,
+        agentes: opForm.agentes, tipo: opForm.tipo,
+        comision_bruta: parseFloat(opForm.comision_bruta) || 0,
+        comision_neta:  parseFloat(opForm.comision_neta)  || 0,
         encuesta_comprador: opForm.encuesta_comprador,
         encuesta_vendedor:  opForm.encuesta_vendedor,
       })
@@ -252,24 +252,70 @@ export default function DashboardActions({ agentes }: Props) {
     })
   }
 
-  // ── Submit: Cartelería ─────────────────────────────
   function handleCarteleria(e: React.FormEvent) {
     e.preventDefault()
     if (!cartelForm.numero || !cartelForm.agente) { setError("Número y agente son obligatorios"); return }
     startTransition(async () => {
       const r = await crearCartel({
-        numero:      parseInt(cartelForm.numero) || 0,
-        direccion:   cartelForm.direccion,
-        mlsId:       cartelForm.mlsId,
-        vencimiento: cartelForm.vencimiento,
-        tipo:        cartelForm.tipo,
-        agente:      cartelForm.agente,
+        numero: parseInt(cartelForm.numero) || 0,
+        direccion: cartelForm.direccion, mlsId: cartelForm.mlsId,
+        vencimiento: cartelForm.vencimiento, tipo: cartelForm.tipo,
+        agente: cartelForm.agente,
       })
       if (r.error) setError(r.error)
       else { closeModal(); router.refresh() }
     })
   }
 
+  function handleOferta(e: React.FormEvent) {
+    e.preventDefault()
+    if (!ofertaForm.numero || !ofertaForm.direccion) {
+      setError("Número y dirección son obligatorios")
+      return
+    }
+    startTransition(async () => {
+      const r = await crearOferta({
+        numero: parseInt(ofertaForm.numero),
+        direccion: ofertaForm.direccion,
+        tipologia: ofertaForm.tipologia,
+        tipo_operacion: ofertaForm.tipo_operacion,
+        agente_vendedor_id: ofertaForm.agente_vendedor_id || null,
+        agente_comprador_id: ofertaForm.agente_comprador_id || null,
+        agente_vendedor_externo: null,
+        agente_comprador_externo: null,
+        tiene_reserva: false,
+        monto_reserva_usd: null,
+        monto_ofertado_usd: ofertaForm.monto_ofertado_usd ? parseFloat(ofertaForm.monto_ofertado_usd) : null,
+        precio_publicacion_usd: ofertaForm.precio_publicacion_usd ? parseFloat(ofertaForm.precio_publicacion_usd) : null,
+        fecha_oferta: ofertaForm.fecha_oferta,
+        es_bis: false,
+        numero_padre: null,
+        notas: ofertaForm.notas || null,
+      })
+      if (r.error) setError(r.error)
+      else { closeModal(); router.refresh() }
+    })
+  }
+
+  function handleActualizar(e: React.FormEvent) {
+    e.preventDefault()
+    if (!actualizarForm.oferta_id || !actualizarForm.descripcion) {
+      setError("Seleccioná una oferta y agregá una descripción")
+      return
+    }
+    startTransition(async () => {
+      const r = await agregarMovimiento(
+        actualizarForm.oferta_id,
+        actualizarForm.tipo,
+        actualizarForm.descripcion,
+        actualizarForm.monto_usd ? parseFloat(actualizarForm.monto_usd) : null,
+      )
+      if (r.error) setError(r.error)
+      else { closeModal(); router.refresh() }
+    })
+  }
+
+  // ── Quick action buttons config ────────────────────
   const QUICK_BTNS: Array<{
     icon: LucideIcon; label: string; sublabel: string; m: ModalT
     bg: string; bgHover: string; color: string; border: string; shadow: string; shadowHover: string
@@ -298,6 +344,18 @@ export default function DashboardActions({ agentes }: Props) {
       border: "#FDBA74", shadow: "0 2px 8px rgba(234,88,12,0.12)",
       shadowHover: "0 8px 24px rgba(234,88,12,0.22)",
     },
+    {
+      icon: Handshake, label: "Registrar", sublabel: "Oferta", m: "oferta",
+      bg: "#F5F3FF", bgHover: "#EDE9FE", color: "#7C3AED",
+      border: "#C4B5FD", shadow: "0 2px 8px rgba(124,58,237,0.12)",
+      shadowHover: "0 8px 24px rgba(124,58,237,0.22)",
+    },
+    {
+      icon: RefreshCw, label: "Actualizar", sublabel: "Oferta", m: "actualizar_oferta",
+      bg: "#F0F9FF", bgHover: "#E0F2FE", color: "#0284C7",
+      border: "#7DD3FC", shadow: "0 2px 8px rgba(2,132,199,0.12)",
+      shadowHover: "0 8px 24px rgba(2,132,199,0.22)",
+    },
   ]
 
   const ErrorBox = () => error ? (
@@ -314,7 +372,7 @@ export default function DashboardActions({ agentes }: Props) {
     <>
       {/* ── Quick action buttons ─────────────────────── */}
       <div style={{
-        display: "grid", gridTemplateColumns: "repeat(4,1fr)",
+        display: "grid", gridTemplateColumns: "repeat(6,1fr)",
         gap: "14px", margin: "4px 0 20px",
       }}>
         {QUICK_BTNS.map(({ icon: Icon, label, sublabel, m, bg, bgHover, color, border, shadow, shadowHover }) => {
@@ -339,7 +397,6 @@ export default function DashboardActions({ agentes }: Props) {
                 minHeight: "110px",
               }}
             >
-              {/* Icon bubble */}
               <div style={{
                 width: "48px", height: "48px", borderRadius: "14px",
                 background: "white",
@@ -349,14 +406,9 @@ export default function DashboardActions({ agentes }: Props) {
               }}>
                 <Icon size={24} color={color} strokeWidth={1.75} />
               </div>
-              {/* Label */}
               <div style={{ textAlign: "center", lineHeight: 1.25 }}>
-                <div style={{ fontSize: "11px", fontWeight: 500, color, opacity: 0.7, letterSpacing: "0.2px" }}>
-                  {label}
-                </div>
-                <div style={{ fontSize: "13px", fontWeight: 800, color, marginTop: "1px" }}>
-                  {sublabel}
-                </div>
+                <div style={{ fontSize: "11px", fontWeight: 500, color, opacity: 0.7, letterSpacing: "0.2px" }}>{label}</div>
+                <div style={{ fontSize: "13px", fontWeight: 800, color, marginTop: "1px" }}>{sublabel}</div>
               </div>
             </button>
           )
@@ -422,15 +474,7 @@ export default function DashboardActions({ agentes }: Props) {
               </Field>
             </div>
             <Field label="Agente *">
-              <input
-                type="text"
-                placeholder="Nombre del agente"
-                value={cartelForm.agente}
-                onChange={e => setCartelForm(f => ({ ...f, agente: e.target.value }))}
-                list="agentes-cartel-list"
-                style={inp}
-                required
-              />
+              <input type="text" placeholder="Nombre del agente" value={cartelForm.agente} onChange={e => setCartelForm(f => ({ ...f, agente: e.target.value }))} list="agentes-cartel-list" style={inp} required />
               <datalist id="agentes-cartel-list">
                 {agentes.map(a => <option key={a.id} value={a.nombre} />)}
               </datalist>
@@ -496,18 +540,109 @@ export default function DashboardActions({ agentes }: Props) {
                 { key: "encuesta_vendedor"  as const, label: "Encuesta vendedor"  },
               ].map(({ key, label }) => (
                 <label key={key} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", cursor: "pointer", color: "#0F172A" }}>
-                  <input
-                    type="checkbox"
-                    checked={opForm[key]}
-                    onChange={e => setOpForm(f => ({ ...f, [key]: e.target.checked }))}
-                    style={{ width: "16px", height: "16px", accentColor: "#E31837" }}
-                  />
+                  <input type="checkbox" checked={opForm[key]} onChange={e => setOpForm(f => ({ ...f, [key]: e.target.checked }))} style={{ width: "16px", height: "16px", accentColor: "#E31837" }} />
                   {label}
                 </label>
               ))}
             </div>
             <ErrorBox />
             <SubmitRow isPending={isPending} onCancel={closeModal} label="Guardar" />
+          </form>
+        </ModalShell>
+      )}
+
+      {/* ════════════ MODAL REGISTRAR OFERTA ════════════ */}
+      {modal === "oferta" && (
+        <ModalShell title="Registrar Oferta" subtitle="Nueva oferta inmobiliaria" onClose={closeModal}>
+          <form onSubmit={handleOferta} style={{ padding: "20px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <Field label="N° de oferta *">
+                <input type="number" min="1" placeholder="42" value={ofertaForm.numero} onChange={e => setOfertaForm(f => ({ ...f, numero: e.target.value }))} style={inp} required />
+              </Field>
+              <Field label="Fecha *">
+                <input type="date" value={ofertaForm.fecha_oferta} onChange={e => setOfertaForm(f => ({ ...f, fecha_oferta: e.target.value }))} style={inp} required />
+              </Field>
+            </div>
+            <Field label="Dirección *">
+              <input type="text" placeholder="Av. San Martín 456" value={ofertaForm.direccion} onChange={e => setOfertaForm(f => ({ ...f, direccion: e.target.value }))} style={inp} required />
+            </Field>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <Field label="Tipología *">
+                <select value={ofertaForm.tipologia} onChange={e => setOfertaForm(f => ({ ...f, tipologia: e.target.value }))} style={inp} required>
+                  {TIPOLOGIAS_OFERTA.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </Field>
+              <Field label="Tipo operación *">
+                <select value={ofertaForm.tipo_operacion} onChange={e => setOfertaForm(f => ({ ...f, tipo_operacion: e.target.value }))} style={inp} required>
+                  {TIPOS_OP_OFERTA.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </Field>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <Field label="Agente vendedor">
+                <select value={ofertaForm.agente_vendedor_id} onChange={e => setOfertaForm(f => ({ ...f, agente_vendedor_id: e.target.value }))} style={inp}>
+                  <option value="">— Externo —</option>
+                  {agentes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                </select>
+              </Field>
+              <Field label="Agente comprador">
+                <select value={ofertaForm.agente_comprador_id} onChange={e => setOfertaForm(f => ({ ...f, agente_comprador_id: e.target.value }))} style={inp}>
+                  <option value="">— Externo —</option>
+                  {agentes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                </select>
+              </Field>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <Field label="Monto ofertado (USD)">
+                <input type="number" min="0" step="1" placeholder="150000" value={ofertaForm.monto_ofertado_usd} onChange={e => setOfertaForm(f => ({ ...f, monto_ofertado_usd: e.target.value }))} style={inp} />
+              </Field>
+              <Field label="Precio publicación (USD)">
+                <input type="number" min="0" step="1" placeholder="165000" value={ofertaForm.precio_publicacion_usd} onChange={e => setOfertaForm(f => ({ ...f, precio_publicacion_usd: e.target.value }))} style={inp} />
+              </Field>
+            </div>
+            <Field label="Notas">
+              <textarea value={ofertaForm.notas} onChange={e => setOfertaForm(f => ({ ...f, notas: e.target.value }))} rows={2} style={{ ...inp, resize: "vertical" }} placeholder="Observaciones iniciales..." />
+            </Field>
+            <ErrorBox />
+            <SubmitRow isPending={isPending} onCancel={closeModal} label="Registrar oferta" />
+          </form>
+        </ModalShell>
+      )}
+
+      {/* ════════════ MODAL ACTUALIZAR OFERTA ════════════ */}
+      {modal === "actualizar_oferta" && (
+        <ModalShell title="Actualizar Oferta" subtitle="Agregar movimiento a una oferta activa" onClose={closeModal}>
+          <form onSubmit={handleActualizar} style={{ padding: "20px" }}>
+            {ofertasActivas.length === 0 ? (
+              <div style={{ padding: "20px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
+                No hay ofertas activas en este momento
+              </div>
+            ) : (
+              <>
+                <Field label="Oferta *">
+                  <select value={actualizarForm.oferta_id} onChange={e => setActualizarForm(f => ({ ...f, oferta_id: e.target.value }))} style={inp} required>
+                    {ofertasActivas.map(o => (
+                      <option key={o.id} value={o.id}>
+                        #{o.numero} — {o.direccion} ({o.estado})
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Tipo de movimiento *">
+                  <select value={actualizarForm.tipo} onChange={e => setActualizarForm(f => ({ ...f, tipo: e.target.value }))} style={inp} required>
+                    {TIPOS_MOVIMIENTO.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </Field>
+                <Field label="Descripción *">
+                  <textarea value={actualizarForm.descripcion} onChange={e => setActualizarForm(f => ({ ...f, descripcion: e.target.value }))} rows={3} style={{ ...inp, resize: "vertical" }} placeholder="Descripción del movimiento..." required />
+                </Field>
+                <Field label="Monto (USD, opcional)">
+                  <input type="number" min="0" step="0.01" placeholder="0" value={actualizarForm.monto_usd} onChange={e => setActualizarForm(f => ({ ...f, monto_usd: e.target.value }))} style={inp} />
+                </Field>
+                <ErrorBox />
+                <SubmitRow isPending={isPending} onCancel={closeModal} label="Guardar movimiento" />
+              </>
+            )}
           </form>
         </ModalShell>
       )}

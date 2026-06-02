@@ -3,14 +3,18 @@ import KpiCard from "@/components/KpiCard"
 import DashboardActions from "./DashboardActions"
 import DashboardClock from "./DashboardClock"
 import Image from "next/image"
-import { Users, Building2, DollarSign, CreditCard } from "lucide-react"
+import Link from "next/link"
+import { Users, Building2, DollarSign, Handshake, Clock } from "lucide-react"
 
-// ── Constantes del mes actual ──────────────────────────
-const MES       = 5
-const ANIO      = 2026
-const MES_LABEL = "Mayo 2026"
+// ── Mes actual dinámico ────────────────────────────────
+const _now     = new Date()
+const MES      = _now.getMonth() + 1
+const ANIO     = _now.getFullYear()
+const MES_NAMES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
+                   "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
+const MES_LABEL = `${MES_NAMES[MES - 1]} ${ANIO}`
 
-// ── Helpers de formato ────────────────────────────────
+// ── Helpers ───────────────────────────────────────────
 function fmtUSD(n: number): string {
   const rounded = Math.round(n * 100) / 100
   if (rounded === Math.floor(rounded)) {
@@ -25,9 +29,12 @@ function fmtFecha(fechaStr: string) {
   return `${parseInt(d)} ${meses[parseInt(m) - 1]}`
 }
 
-function extractPlan(concepto: string) {
-  const match = concepto.match(/Plan\s+(PRO\+|PRO|B_QR|B_OFI)/)
-  return match ? match[1] : "—"
+function fmtFechaRelativa(isoStr: string): string {
+  const diff = Date.now() - new Date(isoStr).getTime()
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  if (days === 0) return "Hoy"
+  if (days === 1) return "Ayer"
+  return `Hace ${days} días`
 }
 
 function tipoColor(tipo: string) {
@@ -36,7 +43,12 @@ function tipoColor(tipo: string) {
   return "#64748B"
 }
 
-// ── Tipos locales ─────────────────────────────────────
+function extractPlan(concepto: string) {
+  const match = concepto.match(/Plan\s+(PRO\+|PRO|B_QR|B_OFI)/)
+  return match ? match[1] : "—"
+}
+
+// ── Tipos ─────────────────────────────────────────────
 interface PagoRow {
   concepto: string
   monto_debe: number
@@ -53,26 +65,34 @@ interface OperacionRow {
   comision_neta: number
 }
 
-// ── Estilos reutilizables ─────────────────────────────
+export interface OfertaSinActividad {
+  id: string
+  numero: number
+  direccion: string
+  estado: string
+  updated_at: string
+}
+
+export interface OfertaActiva {
+  id: string
+  numero: number
+  direccion: string
+  estado: string
+}
+
+// ── Estilos ───────────────────────────────────────────
 const cardStyle: React.CSSProperties = {
-  background: "white",
-  borderRadius: "14px",
-  border: "1.5px solid #EAECF2",
-  overflow: "hidden",
+  background: "white", borderRadius: "14px",
+  border: "1.5px solid #EAECF2", overflow: "hidden",
 }
 
 const cardHeaderStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  padding: "14px 18px",
-  borderBottom: "1px solid #EAECF2",
+  display: "flex", alignItems: "center", justifyContent: "space-between",
+  padding: "14px 18px", borderBottom: "1px solid #EAECF2",
 }
 
 function colorDot(color: string) {
-  return (
-    <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: color, flexShrink: 0 }} />
-  )
+  return <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: color, flexShrink: 0 }} />
 }
 
 function Tag({ estado }: { estado: string }) {
@@ -96,18 +116,24 @@ function Tag({ estado }: { estado: string }) {
 }
 
 // ═══════════════════════════════════════════════════════
-//  PAGE COMPONENT
+//  PAGE
 // ═══════════════════════════════════════════════════════
 export default async function DashboardPage() {
   const supabase = createServerClient()
 
-  // ── Fetch all data in parallel ──────────────────────
+  const mesStr     = String(MES).padStart(2, "0")
+  const mesSiguiente = String(MES === 12 ? 1 : MES + 1).padStart(2, "0")
+  const anioSig    = MES === 12 ? ANIO + 1 : ANIO
+  const cutoff5d   = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+
   const [
     { data: agentesData },
     { data: agentesListData },
     { data: opsMesData },
     { data: facturacionData },
-    { data: planesData },
+    { count: ofertasEnCursoCount },
+    { data: ofertasSinActividadRaw },
+    { data: ofertasActivasRaw },
     { data: opsFeedRaw },
     { data: cartelesData },
     { data: encuestasData },
@@ -119,17 +145,33 @@ export default async function DashboardPage() {
     supabase.from("agentes").select("id, nombre").eq("activo", true).order("nombre"),
 
     supabase.from("operaciones").select("id")
-      .gte("fecha", `${ANIO}-${String(MES).padStart(2, "0")}-01`)
-      .lt("fecha",  `${ANIO}-${String(MES + 1).padStart(2, "0")}-01`),
+      .gte("fecha", `${ANIO}-${mesStr}-01`)
+      .lt("fecha",  `${anioSig}-${mesSiguiente}-01`),
 
     supabase.from("facturacion")
       .select("objetivo_usd, real_usd")
       .eq("mes", MES).eq("anio", ANIO)
       .maybeSingle(),
 
-    supabase.from("planes_crm")
-      .select("pagado")
-      .eq("mes", MES).eq("anio", ANIO),
+    supabase.from("ofertas")
+      .select("id", { count: "exact", head: true })
+      .neq("estado", "Cerradas")
+      .neq("estado", "Caídas"),
+
+    supabase.from("ofertas")
+      .select("id, numero, direccion, estado, updated_at")
+      .neq("estado", "Cerradas")
+      .neq("estado", "Caídas")
+      .lt("updated_at", cutoff5d)
+      .order("updated_at", { ascending: true })
+      .limit(10),
+
+    supabase.from("ofertas")
+      .select("id, numero, direccion, estado")
+      .neq("estado", "Cerradas")
+      .neq("estado", "Caídas")
+      .order("numero", { ascending: false })
+      .limit(50),
 
     supabase.from("operaciones")
       .select("fecha, direccion, agentes, tipo, comision_neta")
@@ -153,56 +195,40 @@ export default async function DashboardPage() {
       .limit(5),
   ])
 
-  // ── Derived values ──────────────────────────────────
-  const agentesCount  = agentesData?.length ?? 0
-  const opsMesCount   = opsMesData?.length  ?? 0
-  const planes        = planesData ?? []
-  const planesPagados = planes.filter(p => p.pagado).length
-  const planesTotal   = planes.length
-  const pendientes    = planesTotal - planesPagados
+  // ── Derived ───────────────────────────────────────────
+  const agentesCount        = agentesData?.length ?? 0
+  const opsMesCount         = opsMesData?.length  ?? 0
+  const ofertasEnCurso      = ofertasEnCursoCount ?? 0
+  const ofertasSinActividad = (ofertasSinActividadRaw ?? []) as OfertaSinActividad[]
+  const ofertasActivas      = (ofertasActivasRaw ?? []) as OfertaActiva[]
 
-  const factReal  = Number(facturacionData?.real_usd ?? 0)
+  const factReal  = Number(facturacionData?.real_usd  ?? 0)
   const factObj   = Number(facturacionData?.objetivo_usd ?? 1)
   const factLabel = fmtUSD(factReal)
   const factBadge = facturacionData
     ? `${Math.round((factReal / factObj) * 100)}% obj.`
     : "—"
 
-  const opsFeed            = (opsFeedRaw    ?? []) as OperacionRow[]
-  const pagos              = ((pagosRaw     ?? []) as unknown) as PagoRow[]
-  const agentesForActions  = (agentesListData ?? []) as { id: string; nombre: string }[]
+  const opsFeed   = (opsFeedRaw  ?? []) as OperacionRow[]
+  const pagos     = ((pagosRaw   ?? []) as unknown) as PagoRow[]
+  const agentesForActions = (agentesListData ?? []) as { id: string; nombre: string }[]
 
-  // ═══════════════════════════════════════════════════
-  //  RENDER
-  // ═══════════════════════════════════════════════════
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
       {/* ── Header ─────────────────────────────────── */}
       <div style={{
-        display: "grid",
-        gridTemplateColumns: "1fr auto 1fr",
-        alignItems: "center",
-        minHeight: "62px",
-        padding: "0 24px",
-        background: "white",
-        borderBottom: "1px solid #EAECF2",
-        flexShrink: 0,
+        display: "grid", gridTemplateColumns: "1fr auto 1fr",
+        alignItems: "center", minHeight: "62px", padding: "0 24px",
+        background: "white", borderBottom: "1px solid #EAECF2", flexShrink: 0,
       }}>
-        {/* Izquierda — reloj en tiempo real */}
         <DashboardClock />
-
-        {/* Centro — logo */}
         <Image
-          src="/logo.png"
-          alt="REMAX Tradición"
-          width={280}
-          height={88}
+          src="/logo.png" alt="REMAX Tradición"
+          width={280} height={88}
           style={{ objectFit: "contain", maxWidth: "280px", height: "auto", display: "block" }}
           priority
         />
-
-        {/* Derecha */}
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <div style={{
             display: "flex", alignItems: "center", gap: "6px",
@@ -215,7 +241,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* ── Scrollable content ─────────────────────── */}
+      {/* ── Content ──────────────────────────────────── */}
       <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
 
         {/* ── KPI Grid ─────────────────────────────── */}
@@ -227,6 +253,14 @@ export default async function DashboardPage() {
             gradient="linear-gradient(135deg, #E31837 0%, #9B0F26 100%)"
             shadowColor="rgba(227,24,55,0.35)"
             icon={<Users size={20} color="white" />}
+          />
+          <KpiCard
+            title="Ofertas en curso"
+            value={ofertasEnCurso}
+            badge="Activas"
+            gradient="linear-gradient(135deg, #D97706 0%, #B45309 100%)"
+            shadowColor="rgba(217,119,6,0.3)"
+            icon={<Handshake size={20} color="white" />}
           />
           <KpiCard
             title="Operaciones del mes"
@@ -244,23 +278,78 @@ export default async function DashboardPage() {
             shadowColor="rgba(13,148,136,0.3)"
             icon={<DollarSign size={20} color="white" />}
           />
-          <KpiCard
-            title="Planes cobrados"
-            value={`${planesPagados}/${planesTotal}`}
-            badge={pendientes > 0 ? `${pendientes} pend.` : "✓ Todos"}
-            gradient="linear-gradient(135deg, #D97706 0%, #B45309 100%)"
-            shadowColor="rgba(217,119,6,0.3)"
-            icon={<CreditCard size={20} color="white" />}
-          />
         </div>
 
         {/* ── Accesos rápidos ──────────────────────── */}
-        <DashboardActions agentes={agentesForActions} />
+        <DashboardActions
+          agentes={agentesForActions}
+          ofertasActivas={ofertasActivas}
+        />
+
+        {/* ── Ofertas sin actividad +5 días ────────── */}
+        {ofertasSinActividad.length > 0 && (
+          <div style={{ ...cardStyle, marginBottom: "20px" }}>
+            <div style={{ ...cardHeaderStyle }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Clock size={14} color="#D97706" />
+                <h2 style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A", margin: 0 }}>
+                  Ofertas sin actividad +5 días
+                </h2>
+                <span style={{
+                  background: "#FEF3C7", color: "#D97706",
+                  padding: "2px 8px", borderRadius: "20px",
+                  fontSize: "11px", fontWeight: 700,
+                }}>
+                  {ofertasSinActividad.length}
+                </span>
+              </div>
+            </div>
+            <div>
+              {ofertasSinActividad.map((o, i) => (
+                <div
+                  key={o.id}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "12px 18px",
+                    borderBottom: i < ofertasSinActividad.length - 1 ? "1px solid #F3F4F6" : "none",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <span style={{
+                      background: "#F8F9FC", border: "1.5px solid #EAECF2",
+                      borderRadius: "6px", padding: "2px 8px",
+                      fontSize: "11px", fontWeight: 700, color: "#64748B",
+                    }}>
+                      #{o.numero}
+                    </span>
+                    <div>
+                      <div style={{ fontSize: "13px", fontWeight: 600, color: "#0F172A" }}>{o.direccion}</div>
+                      <div style={{ fontSize: "11px", color: "#94A3B8", marginTop: "1px" }}>
+                        {o.estado} · Última act. {fmtFechaRelativa(o.updated_at)}
+                      </div>
+                    </div>
+                  </div>
+                  <Link
+                    href={`/ofertas/${o.id}`}
+                    style={{
+                      padding: "6px 14px", borderRadius: "8px",
+                      background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                      color: "white", fontSize: "12px", fontWeight: 700,
+                      textDecoration: "none",
+                    }}
+                  >
+                    Actualizar →
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Bottom 2-col ─────────────────────────── */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "16px" }}>
 
-          {/* Left column */}
+          {/* Left */}
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 
             {/* Pagos pendientes */}
@@ -276,7 +365,6 @@ export default async function DashboardPage() {
                   Ver todos →
                 </span>
               </div>
-
               {pagos.length === 0 ? (
                 <div style={{ padding: "28px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
                   ✓ No hay pagos pendientes este mes
@@ -295,9 +383,9 @@ export default async function DashboardPage() {
                   <tbody>
                     {pagos.map((p, i) => {
                       const agentesField = p.agentes as { nombre: string } | null
-                      const nombre  = agentesField?.nombre ?? "—"
-                      const plan    = extractPlan(p.concepto)
-                      const isLast  = i === pagos.length - 1
+                      const nombre = agentesField?.nombre ?? "—"
+                      const plan   = extractPlan(p.concepto)
+                      const isLast = i === pagos.length - 1
                       return (
                         <tr key={i} style={{ borderBottom: isLast ? "none" : "1px solid #F3F4F6" }}>
                           <td style={{ padding: "12px 18px" }}>
@@ -305,12 +393,8 @@ export default async function DashboardPage() {
                             <div style={{ fontSize: "11px", color: "#64748B", marginTop: "1px" }}>{MES_LABEL}</div>
                           </td>
                           <td style={{ padding: "12px 18px" }}><Tag estado={plan} /></td>
-                          <td style={{ padding: "12px 18px", fontWeight: 700, fontSize: "13px", color: "#0F172A" }}>
-                            {fmtUSD(p.monto_debe)}
-                          </td>
-                          <td style={{ padding: "12px 18px", fontSize: "13px", color: "#64748B" }}>
-                            {fmtUSD(p.monto_pagado)}
-                          </td>
+                          <td style={{ padding: "12px 18px", fontWeight: 700, fontSize: "13px", color: "#0F172A" }}>{fmtUSD(p.monto_debe)}</td>
+                          <td style={{ padding: "12px 18px", fontSize: "13px", color: "#64748B" }}>{fmtUSD(p.monto_pagado)}</td>
                           <td style={{ padding: "12px 18px" }}><Tag estado={p.estado} /></td>
                         </tr>
                       )
@@ -320,7 +404,7 @@ export default async function DashboardPage() {
               )}
             </div>
 
-            {/* Mini stats — carteles + encuestas */}
+            {/* Mini stats */}
             <div style={cardStyle}>
               <div style={cardHeaderStyle}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -332,10 +416,10 @@ export default async function DashboardPage() {
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", padding: "16px" }}>
                 {[
-                  { n: cartelesData?.total_entregados  ?? 0, label: "Carteles entregados",   bg: "#FFF1F2", color: "#E11D48" },
-                  { n: cartelesData?.total_recuperados ?? 0, label: "Carteles recuperados",  bg: "#F0FDF4", color: "#059669" },
-                  { n: encuestasData?.total_enviadas   ?? 0, label: "Encuestas enviadas",    bg: "#EFF6FF", color: "#2563EB" },
-                  { n: encuestasData?.total_respondidas ?? 0, label: "Encuestas resp.",      bg: "#FFFBEB", color: "#D97706" },
+                  { n: cartelesData?.total_entregados  ?? 0, label: "Carteles entregados",  bg: "#FFF1F2", color: "#E11D48" },
+                  { n: cartelesData?.total_recuperados ?? 0, label: "Carteles recuperados", bg: "#F0FDF4", color: "#059669" },
+                  { n: encuestasData?.total_enviadas   ?? 0, label: "Encuestas enviadas",   bg: "#EFF6FF", color: "#2563EB" },
+                  { n: encuestasData?.total_respondidas ?? 0, label: "Encuestas resp.",     bg: "#FFFBEB", color: "#D97706" },
                 ].map(({ n, label, bg, color }) => (
                   <div key={label} style={{ background: bg, borderRadius: "12px", padding: "14px", textAlign: "center" }}>
                     <div style={{ fontSize: "22px", fontWeight: 800, color, letterSpacing: "-0.5px" }}>{n}</div>
@@ -346,7 +430,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* Right column — Operaciones feed */}
+          {/* Right — Operaciones feed */}
           <div style={{ ...cardStyle, display: "flex", flexDirection: "column" }}>
             <div style={cardHeaderStyle}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -355,11 +439,8 @@ export default async function DashboardPage() {
                   Últimas operaciones
                 </h2>
               </div>
-              <span style={{ fontSize: "12px", color: "#64748B", fontWeight: 500, cursor: "pointer" }}>
-                Ver todas
-              </span>
+              <span style={{ fontSize: "12px", color: "#64748B", fontWeight: 500, cursor: "pointer" }}>Ver todas</span>
             </div>
-
             <div style={{ flex: 1 }}>
               {opsFeed.length === 0 ? (
                 <div style={{ padding: "28px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
@@ -370,27 +451,16 @@ export default async function DashboardPage() {
                   const isLast = i === opsFeed.length - 1
                   const color  = tipoColor(op.tipo)
                   return (
-                    <div
-                      key={i}
-                      style={{ display: "flex", gap: "12px", padding: "12px 18px", borderBottom: isLast ? "none" : "1px solid #F3F4F6" }}
-                    >
-                      {/* Dot + line */}
+                    <div key={i} style={{ display: "flex", gap: "12px", padding: "12px 18px", borderBottom: isLast ? "none" : "1px solid #F3F4F6" }}>
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "3px" }}>
                         <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: color, flexShrink: 0 }} />
                         {!isLast && <div style={{ width: "1.5px", flex: 1, background: "#EAECF2", marginTop: "4px" }} />}
                       </div>
-
-                      {/* Content */}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#0F172A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {op.direccion}
-                        </div>
-                        <div style={{ fontSize: "11px", color: "#64748B", marginTop: "1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {op.tipo} · {op.agentes}
-                        </div>
+                        <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#0F172A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{op.direccion}</div>
+                        <div style={{ fontSize: "11px", color: "#64748B", marginTop: "1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{op.tipo} · {op.agentes}</div>
                         <div style={{ fontSize: "10.5px", color: "#94A3B8", marginTop: "2px" }}>
-                          {fmtFecha(op.fecha)} ·{" "}
-                          <strong style={{ color }}>{fmtUSD(op.comision_neta)}</strong>
+                          {fmtFecha(op.fecha)} · <strong style={{ color }}>{fmtUSD(op.comision_neta)}</strong>
                         </div>
                       </div>
                     </div>
@@ -399,9 +469,8 @@ export default async function DashboardPage() {
               )}
             </div>
           </div>
-
-        </div>{/* /bottom-grid */}
-      </div>{/* /content */}
+        </div>
+      </div>
     </div>
   )
 }
