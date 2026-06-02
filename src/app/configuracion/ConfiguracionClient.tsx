@@ -22,6 +22,8 @@ const DEFAULT_CONFIG: ConfigEntry[] = [
   { clave: "obj_facturacion_usd",  valor: "28000",  etiqueta: "Objetivo facturación mensual (USD)", grupo: "kpis" },
   { clave: "obj_carteleria_pct",   valor: "95",     etiqueta: "Objetivo recuperación cartelería (%)", grupo: "kpis" },
   { clave: "obj_encuestas_pct",    valor: "60",     etiqueta: "Objetivo respuesta encuestas (%)",   grupo: "kpis" },
+  // Facturación
+  { clave: "obj_anual_usd",        valor: "710000", etiqueta: "Objetivo anual USD",      grupo: "facturacion" },
   // Comunicación
   {
     clave:    "mensaje_whatsapp",
@@ -35,8 +37,16 @@ const GRUPO_LABELS: Record<string, string> = {
   planes:       "Licencias CRM",
   bonos:        "Montos de licencias CRM",
   kpis:         "Objetivos de KPIs",
+  facturacion:  "Facturación",
   comunicacion: "Comunicación",
 }
+
+// ── Estacionalidad ────────────────────────────────────
+const MONTH_NAMES = [
+  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
+]
+const ESTACIONALIDAD_PCT = [4.72, 5.41, 7.12, 6.82, 8.41, 9.15, 8.66, 9.64, 9.42, 9.65, 9.78, 11.22]
 
 const TEXTAREA_CLAVES = new Set(["mensaje_whatsapp"])
 
@@ -212,6 +222,68 @@ export default function ConfiguracionClient({ initialEntries }: Props) {
                 </div>
               )
             })}
+
+            {/* ── Estacionalidad (calculada desde obj_anual_usd) ── */}
+            <div style={{
+              background: "white", borderRadius: "14px",
+              border: "1.5px solid #EAECF2", overflow: "hidden",
+            }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: "8px",
+                padding: "14px 20px", borderBottom: "1px solid #EAECF2",
+                background: "#F8F9FC",
+              }}>
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "#0F172A" }}>
+                  Estacionalidad — Objetivos mensuales calculados
+                </span>
+              </div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
+                      {["Mes", "% Estacional", "Objetivo USD"].map(h => (
+                        <th key={h} style={{
+                          padding: "8px 20px", textAlign: "left",
+                          fontSize: "10.5px", fontWeight: 700,
+                          textTransform: "uppercase" as const,
+                          letterSpacing: "0.8px", color: "#94A3B8",
+                        }}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {MONTH_NAMES.map((nombre, idx) => {
+                      const pct    = ESTACIONALIDAD_PCT[idx]
+                      const anual  = parseFloat(values["obj_anual_usd"] || "710000") || 710000
+                      const obj    = Math.round(anual * pct / 100)
+                      const isLast = idx === 11
+                      return (
+                        <tr key={nombre} style={{ borderBottom: isLast ? "none" : "1px solid #F3F4F6" }}>
+                          <td style={{ padding: "10px 20px", fontSize: "13px", fontWeight: 600, color: "#0F172A" }}>
+                            {nombre}
+                          </td>
+                          <td style={{ padding: "10px 20px" }}>
+                            <span style={{
+                              background: "#EFF6FF", color: "#2563EB",
+                              padding: "2px 10px", borderRadius: "20px",
+                              fontSize: "12px", fontWeight: 700,
+                            }}>
+                              {pct}%
+                            </span>
+                          </td>
+                          <td style={{ padding: "10px 20px", fontSize: "13px", fontWeight: 600, color: "#0F172A" }}>
+                            USD {obj.toLocaleString("es-AR")}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
             {/* Error */}
             {error && (
