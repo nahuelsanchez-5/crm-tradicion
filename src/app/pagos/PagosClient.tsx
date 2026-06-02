@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
-import { crearPago, actualizarPago } from "./actions"
-import { DollarSign, BarChart2, X, Loader2, MessageCircle } from "lucide-react"
+import { crearPago, actualizarPago, crearGasto, crearGastoRecurrente } from "./actions"
+import { DollarSign, X, Loader2, MessageCircle, TrendingDown, Repeat } from "lucide-react"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -26,12 +26,15 @@ const MONTHS_OPTIONS: Array<{ label: string; value: string }> = (() => {
   return opts
 })()
 
-const CONCEPTOS = [
-  "FEE mensual",
-  "Licencias CRM",
-  "Mainstreet",
-  "Otros",
-]
+const CONCEPTOS_PAGO = ["FEE mensual", "Licencias CRM", "Mainstreet", "Otros"]
+
+const CONCEPTOS_RECURRENTE = ["FEE mensual", "Licencia CRM PRO", "Licencia CRM PRO+"]
+
+const CONCEPTO_CONFIG_KEY: Record<string, string> = {
+  "FEE mensual":       "fee_mensual",
+  "Licencia CRM PRO":  "bono_pro",
+  "Licencia CRM PRO+": "bono_pro_plus",
+}
 
 const ESTADO_STYLES: Record<string, { bg: string; color: string }> = {
   Pagado:    { bg: "#ECFDF5", color: "#059669" },
@@ -57,6 +60,7 @@ export interface AgenteInfo {
   telefono: string | null
   activo: boolean
   paga_fee: boolean | null
+  licencia?: string | null
 }
 
 interface NuevoForm {
@@ -64,6 +68,19 @@ interface NuevoForm {
   concepto: string
   monto_debe: string
   monto_pagado: string
+  fecha: string
+}
+
+interface GastoForm {
+  agente_id: string
+  concepto: string
+  monto_debe: string
+  fecha: string
+  tipo: "Ordinario" | "Extraordinario"
+}
+
+interface GastoRecForm {
+  concepto: string
   fecha: string
 }
 
@@ -79,17 +96,17 @@ function calcEstado(debe: number, pagado: number): string {
 }
 
 function calcEstadoGeneral(totalDebe: number, totalPagado: number): string {
-  if (totalDebe <= 0)          return "Pagado"
-  if (totalPagado <= 0)        return "Pendiente"
+  if (totalDebe <= 0)           return "Pagado"
+  if (totalPagado <= 0)         return "Pendiente"
   if (totalPagado >= totalDebe) return "Pagado"
   return "Parcial"
 }
 
 function getConceptGroup(concepto: string): "FEE" | "CRM" | "Mainstreet" | "Otros" {
   const c = concepto.toLowerCase()
-  if (c.includes("fee"))                                        return "FEE"
+  if (c.includes("fee"))                                                          return "FEE"
   if (c.includes("pro") || c.includes("crm") || c.includes("plan") || c.includes("licencia")) return "CRM"
-  if (c.includes("mainstreet"))                                 return "Mainstreet"
+  if (c.includes("mainstreet"))                                                   return "Mainstreet"
   return "Otros"
 }
 
@@ -221,16 +238,56 @@ function KpiConcepto({
   )
 }
 
+// ── Modal backdrop ───────────────────────────────────
+function Backdrop({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed", inset: 0,
+        background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        zIndex: 1000, padding: "20px",
+      }}
+    >
+      <div onClick={e => e.stopPropagation()}>{children}</div>
+    </div>
+  )
+}
+
+// ── Modal header ─────────────────────────────────────
+function ModalHeader({ title, subtitle, onClose }: { title: string; subtitle?: string; onClose: () => void }) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "18px 20px", borderBottom: "1px solid #EAECF2",
+    }}>
+      <div>
+        <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>{title}</h2>
+        {subtitle && <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>{subtitle}</p>}
+      </div>
+      <button onClick={onClose} style={{
+        background: "#F8F9FC", border: "none", borderRadius: "8px",
+        width: "32px", height: "32px", display: "flex",
+        alignItems: "center", justifyContent: "center",
+        cursor: "pointer", color: "#64748B",
+      }}>
+        <X size={16} />
+      </button>
+    </div>
+  )
+}
+
 // ═══════════════════════════════════════════════════════
 //  MAIN COMPONENT
 // ═══════════════════════════════════════════════════════
 interface Props {
   pagos: PagoRow[]
   agentes: AgenteInfo[]
-  mensajeWhatsapp: string
+  configBonos: Record<string, number>
 }
 
-export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) {
+export default function PagosClient({ pagos, agentes, configBonos }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -245,7 +302,7 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null)
 
   // ── Modal ──────────────────────────────────────────
-  type ModalT = "none" | "nuevo" | "editar"
+  type ModalT = "none" | "nuevo" | "editar" | "gasto" | "gasto_rec"
   const [modal,        setModal]        = useState<ModalT>("none")
   const [selectedPago, setSelectedPago] = useState<PagoRow | null>(null)
   const [error,        setError]        = useState("")
@@ -254,11 +311,25 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
 
   const [nuevoForm, setNuevoForm] = useState<NuevoForm>({
     agente_id:    agentes[0]?.id ?? "",
-    concepto:     CONCEPTOS[0],
+    concepto:     CONCEPTOS_PAGO[0],
     monto_debe:   "",
     monto_pagado: "0",
     fecha:        todayStr,
   })
+
+  const [gastoForm, setGastoForm] = useState<GastoForm>({
+    agente_id: agentes[0]?.id ?? "",
+    concepto:  "",
+    monto_debe: "",
+    fecha:     todayStr,
+    tipo:      "Ordinario",
+  })
+
+  const [gastoRec, setGastoRec] = useState<GastoRecForm>({
+    concepto: CONCEPTOS_RECURRENTE[0],
+    fecha:    todayStr,
+  })
+  const [selectedAgentesRec, setSelectedAgentesRec] = useState<Set<string>>(new Set())
 
   const [editForm, setEditForm] = useState<EditForm>({ monto_pagado: "0" })
 
@@ -268,19 +339,24 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
       selectedMonth === "todos" || p.fecha.startsWith(selectedMonth)
     )
 
-    const agentesActivos    = agentes.filter(a => a.activo)
+    const agentesActivos      = agentes.filter(a => a.activo)
     const agentesActivosCount = agentesActivos.length
-    const agentesFeeCount   = agentes.filter(a => a.paga_fee === true).length
+    const agentesFeeCount     = agentes.filter(a => a.paga_fee === true).length
+    const agentesCrmCount     = agentes.filter(a =>
+      a.activo && a.paga_fee === true &&
+      a.licencia && a.licencia !== "---"
+    ).length
 
     // FEE
     const feePagos  = monthPagos.filter(p => getConceptGroup(p.concepto) === "FEE")
     const feeCobrX  = new Set(feePagos.filter(p => p.estado === "Pagado").map(p => p.agente_id)).size
     const feePct    = agentesFeeCount > 0 ? Math.round((feeCobrX / agentesFeeCount) * 100) : 0
 
-    // CRM
+    // CRM — denominator: only agents with active license
     const crmPagos  = monthPagos.filter(p => getConceptGroup(p.concepto) === "CRM")
     const crmCobrX  = new Set(crmPagos.filter(p => p.estado === "Pagado").map(p => p.agente_id)).size
-    const crmPct    = agentesActivosCount > 0 ? Math.round((crmCobrX / agentesActivosCount) * 100) : 0
+    const crmTotal  = agentesCrmCount > 0 ? agentesCrmCount : agentesActivosCount
+    const crmPct    = crmTotal > 0 ? Math.round((crmCobrX / crmTotal) * 100) : 0
 
     // Mainstreet
     const mainPagos = monthPagos.filter(p => getConceptGroup(p.concepto) === "Mainstreet")
@@ -288,18 +364,32 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
     const mainPct   = agentesActivosCount > 0 ? Math.round((mainCobrX / agentesActivosCount) * 100) : 0
 
     // Otros
-    const otrosPagos  = monthPagos.filter(p => getConceptGroup(p.concepto) === "Otros")
-    const otrosCobrX  = otrosPagos.filter(p => p.estado === "Pagado").length
+    const otrosPagos = monthPagos.filter(p => getConceptGroup(p.concepto) === "Otros")
+    const otrosCobrX = otrosPagos.filter(p => p.estado === "Pagado").length
 
-    const pctGeneral  = Math.round((feePct + crmPct + mainPct) / 3)
+    const pctGeneral = Math.round((feePct + crmPct + mainPct) / 3)
 
     return {
       feeCobrX, feeTotal: agentesFeeCount, feePct,
-      crmCobrX, crmTotal: agentesActivosCount, crmPct,
+      crmCobrX, crmTotal, crmPct,
       mainCobrX, mainTotal: agentesActivosCount, mainPct,
       otrosCobrX, pctGeneral,
     }
   }, [pagos, agentes, selectedMonth])
+
+  // ── En mora: agentes con deuda pendiente > 15 días ─
+  const enMoraAgentes = useMemo(() => {
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() - 15)
+    const cutoffStr = cutoff.toISOString().split("T")[0]
+    const set = new Set<string>()
+    for (const p of pagos) {
+      if ((p.estado === "Pendiente" || p.estado === "Parcial") && p.fecha < cutoffStr) {
+        set.add(p.agente_id)
+      }
+    }
+    return set
+  }, [pagos])
 
   // ── Computed: agentes view ─────────────────────────
   const agentesPagos = useMemo(() => {
@@ -340,6 +430,12 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
     return calcEstado(Number(selectedPago.monto_debe), parseFloat(editForm.monto_pagado) || 0)
   }, [selectedPago, editForm.monto_pagado])
 
+  // ── Auto-fill monto for gasto recurrente ──────────
+  const gastoRecMonto = useMemo(() => {
+    const key = CONCEPTO_CONFIG_KEY[gastoRec.concepto]
+    return key ? (configBonos[key] ?? 0) : 0
+  }, [gastoRec.concepto, configBonos])
+
   // ── Keyboard ───────────────────────────────────────
   const closeModal = useCallback(() => { setModal("none"); setError("") }, [])
 
@@ -353,13 +449,32 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
   function openNuevo(preAgente?: string) {
     setNuevoForm({
       agente_id:    preAgente ?? agentes[0]?.id ?? "",
-      concepto:     CONCEPTOS[0],
+      concepto:     CONCEPTOS_PAGO[0],
       monto_debe:   "",
       monto_pagado: "0",
       fecha:        todayStr,
     })
     setError("")
     setModal("nuevo")
+  }
+
+  function openGasto(preAgente?: string) {
+    setGastoForm({
+      agente_id: preAgente ?? agentes[0]?.id ?? "",
+      concepto:  "",
+      monto_debe: "",
+      fecha:     todayStr,
+      tipo:      "Ordinario",
+    })
+    setError("")
+    setModal("gasto")
+  }
+
+  function openGastoRec() {
+    setGastoRec({ concepto: CONCEPTOS_RECURRENTE[0], fecha: todayStr })
+    setSelectedAgentesRec(new Set())
+    setError("")
+    setModal("gasto_rec")
   }
 
   function openEditar(p: PagoRow) {
@@ -369,15 +484,47 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
     setModal("editar")
   }
 
-  // ── WhatsApp ───────────────────────────────────────
-  function openWhatsApp(nombre: string, telefono: string | null, saldo: number) {
+  // ── WhatsApp — mensaje detallado ───────────────────
+  function openWhatsApp(nombre: string, telefono: string | null, agentePagos: PagoRow[], saldo: number) {
     if (!telefono) return
-    const mes  = mesLabel(selectedMonth)
-    const msg  = mensajeWhatsapp
-      .replace(/\[nombre\]/g, nombre)
-      .replace(/\[monto\]/g,  fmtUSD(saldo).replace("USD ", ""))
-      .replace(/\[mes\]/g,    mes)
-    const num  = telefono.replace(/\D/g, "")
+
+    const pendientes = agentePagos.filter(p => p.estado === "Pendiente" || p.estado === "Parcial")
+    const pagados    = agentePagos.filter(p => Number(p.monto_pagado) > 0)
+
+    let msg = `Hola ${nombre}! 👋\n\n`
+
+    if (pendientes.length > 0) {
+      msg += `*Cargos pendientes:*\n`
+      for (const p of pendientes) {
+        const pendiente = Number(p.monto_debe) - Number(p.monto_pagado)
+        msg += `• ${p.concepto} (${fmtFecha(p.fecha)}): ${fmtUSD(Number(p.monto_debe))}`
+        if (Number(p.monto_pagado) > 0) msg += ` — pagaste ${fmtUSD(Number(p.monto_pagado))}`
+        else msg += ` — pendiente ${fmtUSD(pendiente)}`
+        msg += `\n`
+      }
+      msg += `\n`
+    }
+
+    if (pagados.length > 0 && pendientes.length > 0) {
+      // partial payment lines already noted above
+    } else if (pagados.length > 0 && pendientes.length === 0) {
+      msg += `*Pagos registrados:*\n`
+      for (const p of pagados) {
+        msg += `• ${p.concepto} (${fmtFecha(p.fecha)}): ${fmtUSD(Number(p.monto_pagado))}\n`
+      }
+      msg += `\n`
+    }
+
+    if (saldo > 0) {
+      msg += `*Saldo pendiente: ${fmtUSD(saldo)}*\n\n`
+      msg += `Te pedimos que regularices tu situación a la brevedad.`
+    } else {
+      msg += `✅ *Estás al día con tus pagos!*`
+    }
+
+    msg += `\n\nCualquier consulta, estamos a disposición.\n_REMAX Tradición_`
+
+    const num = telefono.replace(/\D/g, "")
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, "_blank")
   }
 
@@ -396,6 +543,43 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
         concepto:     nuevoForm.concepto,
         monto_debe:   debe,
         monto_pagado: pagado,
+      })
+      if (result.error) setError(result.error)
+      else { closeModal(); router.refresh() }
+    })
+  }
+
+  function handleGasto(e: React.FormEvent) {
+    e.preventDefault()
+    setError("")
+    const debe = parseFloat(gastoForm.monto_debe) || 0
+    if (debe <= 0) { setError("El monto debe ser mayor a 0"); return }
+    if (!gastoForm.concepto.trim()) { setError("Ingresá un concepto"); return }
+
+    startTransition(async () => {
+      const result = await crearGasto({
+        agente_id:  gastoForm.agente_id,
+        fecha:      gastoForm.fecha,
+        concepto:   `${gastoForm.tipo === "Extraordinario" ? "[Ext] " : ""}${gastoForm.concepto}`,
+        monto_debe: debe,
+      })
+      if (result.error) setError(result.error)
+      else { closeModal(); router.refresh() }
+    })
+  }
+
+  function handleGastoRec(e: React.FormEvent) {
+    e.preventDefault()
+    setError("")
+    if (selectedAgentesRec.size === 0) { setError("Seleccioná al menos un agente"); return }
+    if (gastoRecMonto <= 0) { setError("El monto del concepto no está configurado"); return }
+
+    startTransition(async () => {
+      const result = await crearGastoRecurrente({
+        agente_ids: Array.from(selectedAgentesRec),
+        fecha:      gastoRec.fecha,
+        concepto:   gastoRec.concepto,
+        monto_debe: gastoRecMonto,
       })
       if (result.error) setError(result.error)
       else { closeModal(); router.refresh() }
@@ -423,6 +607,36 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
     border: "1.5px solid #EAECF2", overflow: "hidden",
   }
 
+  const btnSave: React.CSSProperties = {
+    padding: "9px 24px", borderRadius: "8px", border: "none",
+    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+    color: "white", fontSize: "13px", fontWeight: 700,
+    cursor: isPending ? "not-allowed" : "pointer",
+    fontFamily: "inherit",
+    display: "flex", alignItems: "center", gap: "6px",
+    boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
+  }
+
+  const btnCancel: React.CSSProperties = {
+    padding: "9px 20px", borderRadius: "8px",
+    border: "1.5px solid #EAECF2", background: "white",
+    fontSize: "13px", fontWeight: 600, color: "#64748B",
+    cursor: "pointer", fontFamily: "inherit",
+  }
+
+  function ErrorBox() {
+    if (!error) return null
+    return (
+      <div style={{
+        background: "#FFF1F2", border: "1px solid #FECDD3",
+        borderRadius: "8px", padding: "10px 12px",
+        fontSize: "12.5px", color: "#E11D48", marginBottom: "14px",
+      }}>
+        ⚠️ {error}
+      </div>
+    )
+  }
+
   // ═══════════════════════════════════════════════════
   //  RENDER
   // ═══════════════════════════════════════════════════
@@ -443,19 +657,33 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
             Control de cobros por concepto — REMAX Tradición
           </p>
         </div>
-        <button
-          onClick={() => openNuevo()}
-          style={{
-            background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
-            color: "white", border: "none",
-            padding: "8px 18px", borderRadius: "9px",
-            fontSize: "13px", fontWeight: 700, cursor: "pointer",
-            boxShadow: "0 2px 10px rgba(227,24,55,0.35)",
-            fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
-          }}
-        >
-          <span style={{ fontSize: "16px", lineHeight: 1 }}>+</span> Registrar Pago
-        </button>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button
+            onClick={() => openGasto()}
+            style={{
+              background: "white", color: "#0F172A",
+              border: "1.5px solid #EAECF2",
+              padding: "8px 16px", borderRadius: "9px",
+              fontSize: "13px", fontWeight: 700, cursor: "pointer",
+              fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
+            }}
+          >
+            <TrendingDown size={14} color="#E11D48" /> Registrar gasto
+          </button>
+          <button
+            onClick={() => openNuevo()}
+            style={{
+              background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+              color: "white", border: "none",
+              padding: "8px 18px", borderRadius: "9px",
+              fontSize: "13px", fontWeight: 700, cursor: "pointer",
+              boxShadow: "0 2px 10px rgba(227,24,55,0.35)",
+              fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
+            }}
+          >
+            <span style={{ fontSize: "16px", lineHeight: 1 }}>+</span> Registrar Pago
+          </button>
+        </div>
       </div>
 
       {/* ── Scrollable content ────────────────────── */}
@@ -603,7 +831,8 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
                 ) : (
                   agentesPagos.map((ag, i) => {
                     const isExpanded = expandedAgent === ag.agente_id
-                    const isLast     = i === agentesPagos.length - 1 && !isExpanded
+                    const isLast     = i === agentesPagos.length - 1
+                    const enMora     = enMoraAgentes.has(ag.agente_id)
                     return (
                       <Fragment key={ag.agente_id}>
                         {/* ── Main row ── */}
@@ -624,6 +853,16 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
                                 display: "inline-block", transition: "transform 0.15s",
                               }}>▶</span>
                               {ag.nombre}
+                              {enMora && (
+                                <span style={{
+                                  background: "#FFF1F2", color: "#E11D48",
+                                  border: "1px solid #FECDD3",
+                                  padding: "1px 7px", borderRadius: "12px",
+                                  fontSize: "10px", fontWeight: 700, marginLeft: "4px",
+                                }}>
+                                  EN MORA
+                                </span>
+                              )}
                             </div>
                           </td>
                           <td style={{ padding: "12px 16px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>
@@ -641,7 +880,7 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
                           <td style={{ padding: "12px 16px" }}>
                             {ag.telefono ? (
                               <button
-                                onClick={e => { e.stopPropagation(); openWhatsApp(ag.nombre, ag.telefono, ag.saldo) }}
+                                onClick={e => { e.stopPropagation(); openWhatsApp(ag.nombre, ag.telefono, ag.pagos, ag.saldo) }}
                                 title="Enviar WhatsApp"
                                 style={{
                                   background: "#25D366", border: "none", borderRadius: "8px",
@@ -704,7 +943,7 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
                                 <table style={{ width: "100%", borderCollapse: "collapse", background: "white", borderRadius: "10px", overflow: "hidden", border: "1px solid #EAECF2" }}>
                                   <thead>
                                     <tr style={{ background: "#F1F5F9" }}>
-                                      {["Fecha", "Concepto", "Debe", "Pagado", "Estado", ""].map(h => (
+                                      {["Fecha", "Concepto", "Cargo", "Pagado", "Estado", ""].map(h => (
                                         <th key={h} style={{
                                           padding: "8px 14px", textAlign: "left",
                                           fontSize: "10px", fontWeight: 700,
@@ -717,40 +956,47 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {ag.pagos.map((p, pi) => (
-                                      <tr key={p.id} style={{ borderTop: pi > 0 ? "1px solid #F3F4F6" : "none" }}>
-                                        <td style={{ padding: "10px 14px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>
-                                          {fmtFecha(p.fecha)}
-                                        </td>
-                                        <td style={{ padding: "10px 14px", fontSize: "12px", color: "#0F172A" }}>
-                                          {p.concepto}
-                                        </td>
-                                        <td style={{ padding: "10px 14px", fontSize: "12px", fontWeight: 600, color: "#0F172A", whiteSpace: "nowrap" }}>
-                                          {fmtUSD(Number(p.monto_debe))}
-                                        </td>
-                                        <td style={{ padding: "10px 14px", fontSize: "12px", color: "#059669", fontWeight: 600, whiteSpace: "nowrap" }}>
-                                          {fmtUSD(Number(p.monto_pagado))}
-                                        </td>
-                                        <td style={{ padding: "10px 14px" }}>
-                                          <EstadoBadge estado={p.estado} />
-                                        </td>
-                                        <td style={{ padding: "10px 14px" }}>
-                                          {p.estado !== "Pagado" && (
-                                            <button
-                                              onClick={() => openEditar(p)}
-                                              style={{
-                                                padding: "3px 10px", borderRadius: "6px",
-                                                border: "1.5px solid #EAECF2", background: "white",
-                                                fontSize: "11px", fontWeight: 600, color: "#0F172A",
-                                                cursor: "pointer", fontFamily: "inherit",
-                                              }}
-                                            >
-                                              Editar
-                                            </button>
-                                          )}
-                                        </td>
-                                      </tr>
-                                    ))}
+                                    {ag.pagos.map((p, pi) => {
+                                      const rowBg = p.estado === "Pagado"
+                                        ? "#F0FDF4"
+                                        : p.estado === "Parcial"
+                                          ? "#FFFBEB"
+                                          : "#FFF8F8"
+                                      return (
+                                        <tr key={p.id} style={{ borderTop: pi > 0 ? "1px solid #F3F4F6" : "none", background: rowBg }}>
+                                          <td style={{ padding: "10px 14px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>
+                                            {fmtFecha(p.fecha)}
+                                          </td>
+                                          <td style={{ padding: "10px 14px", fontSize: "12px", color: "#0F172A" }}>
+                                            {p.concepto}
+                                          </td>
+                                          <td style={{ padding: "10px 14px", fontSize: "12px", fontWeight: 600, color: "#E11D48", whiteSpace: "nowrap" }}>
+                                            {fmtUSD(Number(p.monto_debe))}
+                                          </td>
+                                          <td style={{ padding: "10px 14px", fontSize: "12px", color: "#059669", fontWeight: 600, whiteSpace: "nowrap" }}>
+                                            {Number(p.monto_pagado) > 0 ? fmtUSD(Number(p.monto_pagado)) : "—"}
+                                          </td>
+                                          <td style={{ padding: "10px 14px" }}>
+                                            <EstadoBadge estado={p.estado} />
+                                          </td>
+                                          <td style={{ padding: "10px 14px" }}>
+                                            {p.estado !== "Pagado" && (
+                                              <button
+                                                onClick={() => openEditar(p)}
+                                                style={{
+                                                  padding: "3px 10px", borderRadius: "6px",
+                                                  border: "1.5px solid #EAECF2", background: "white",
+                                                  fontSize: "11px", fontWeight: 600, color: "#0F172A",
+                                                  cursor: "pointer", fontFamily: "inherit",
+                                                }}
+                                              >
+                                                Registrar pago
+                                              </button>
+                                            )}
+                                          </td>
+                                        </tr>
+                                      )
+                                    })}
                                   </tbody>
                                 </table>
 
@@ -784,45 +1030,17 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
           MODAL — NUEVO PAGO
       ════════════════════════════════════════════ */}
       {modal === "nuevo" && (
-        <div
-          onClick={closeModal}
-          style={{
-            position: "fixed", inset: 0,
-            background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            zIndex: 1000, padding: "20px",
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: "white", borderRadius: "16px",
-              width: "100%", maxWidth: "500px",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
-            }}
-          >
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "18px 20px", borderBottom: "1px solid #EAECF2",
-            }}>
-              <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
-                  Registrar Pago
-                </h2>
-                <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
-                  Nuevo registro en el historial de pagos
-                </p>
-              </div>
-              <button onClick={closeModal} style={{
-                background: "#F8F9FC", border: "none", borderRadius: "8px",
-                width: "32px", height: "32px", display: "flex",
-                alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "#64748B",
-              }}>
-                <X size={16} />
-              </button>
-            </div>
-
+        <Backdrop onClose={closeModal}>
+          <div style={{
+            background: "white", borderRadius: "16px",
+            width: "100%", maxWidth: "500px",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
+          }}>
+            <ModalHeader
+              title="Registrar Pago"
+              subtitle="Nuevo registro en el historial de pagos"
+              onClose={closeModal}
+            />
             <form onSubmit={handleNuevo} style={{ padding: "20px" }}>
               <Field label="Agente *">
                 <select
@@ -836,7 +1054,6 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
                   ))}
                 </select>
               </Field>
-
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <Field label="Concepto *">
                   <select
@@ -845,134 +1062,311 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
                     style={inp}
                     required
                   >
-                    {CONCEPTOS.map(c => <option key={c} value={c}>{c}</option>)}
+                    {CONCEPTOS_PAGO.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </Field>
                 <Field label="Fecha *">
-                  <input
-                    type="date"
-                    value={nuevoForm.fecha}
+                  <input type="date" value={nuevoForm.fecha}
                     onChange={e => setNuevoForm(f => ({ ...f, fecha: e.target.value }))}
-                    style={inp}
-                    required
-                  />
+                    style={inp} required />
                 </Field>
               </div>
-
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <Field label="Monto que debe (USD) *">
-                  <input
-                    type="number" min="0" step="0.01" placeholder="95.25"
+                  <input type="number" min="0" step="0.01" placeholder="95.25"
                     value={nuevoForm.monto_debe}
                     onChange={e => setNuevoForm(f => ({ ...f, monto_debe: e.target.value }))}
-                    style={inp}
-                    required
-                  />
+                    style={inp} required />
                 </Field>
                 <Field label="Monto pagado (USD)">
-                  <input
-                    type="number" min="0" step="0.01" placeholder="0"
+                  <input type="number" min="0" step="0.01" placeholder="0"
                     value={nuevoForm.monto_pagado}
                     onChange={e => setNuevoForm(f => ({ ...f, monto_pagado: e.target.value }))}
-                    style={inp}
-                  />
+                    style={inp} />
                 </Field>
               </div>
-
               <div style={{
                 display: "flex", alignItems: "center", gap: "8px",
                 padding: "10px 12px", borderRadius: "8px",
                 background: "#F8F9FC", border: "1px solid #EAECF2",
                 marginBottom: "14px",
               }}>
-                <span style={{ fontSize: "12px", color: "#64748B", fontWeight: 500 }}>
-                  Estado calculado:
-                </span>
+                <span style={{ fontSize: "12px", color: "#64748B", fontWeight: 500 }}>Estado calculado:</span>
                 <EstadoBadge estado={nuevoEstado} />
               </div>
-
-              {error && (
-                <div style={{
-                  background: "#FFF1F2", border: "1px solid #FECDD3",
-                  borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#E11D48", marginBottom: "14px",
-                }}>
-                  ⚠️ {error}
-                </div>
-              )}
-
+              <ErrorBox />
               <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                <button type="button" onClick={closeModal} disabled={isPending}
-                  style={{
-                    padding: "9px 20px", borderRadius: "8px",
-                    border: "1.5px solid #EAECF2", background: "white",
-                    fontSize: "13px", fontWeight: 600, color: "#64748B",
-                    cursor: "pointer", fontFamily: "inherit",
-                  }}>
-                  Cancelar
-                </button>
-                <button type="submit" disabled={isPending}
-                  style={{
-                    padding: "9px 24px", borderRadius: "8px", border: "none",
-                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
-                    color: "white", fontSize: "13px", fontWeight: 700,
-                    cursor: isPending ? "not-allowed" : "pointer",
-                    fontFamily: "inherit",
-                    display: "flex", alignItems: "center", gap: "6px",
-                    boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
-                  }}>
+                <button type="button" onClick={closeModal} disabled={isPending} style={btnCancel}>Cancelar</button>
+                <button type="submit" disabled={isPending} style={btnSave}>
                   {isPending && <Loader2 size={14} className="animate-spin" />}
                   {isPending ? "Guardando..." : "Guardar"}
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </Backdrop>
+      )}
+
+      {/* ════════════════════════════════════════════
+          MODAL — REGISTRAR GASTO
+      ════════════════════════════════════════════ */}
+      {modal === "gasto" && (
+        <Backdrop onClose={closeModal}>
+          <div style={{
+            background: "white", borderRadius: "16px",
+            width: "100%", maxWidth: "520px",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
+          }}>
+            <ModalHeader
+              title="Registrar Gasto"
+              subtitle="Nuevo cargo pendiente para el agente"
+              onClose={closeModal}
+            />
+            <form onSubmit={handleGasto} style={{ padding: "20px" }}>
+              <Field label="Agente *">
+                <select
+                  value={gastoForm.agente_id}
+                  onChange={e => setGastoForm(f => ({ ...f, agente_id: e.target.value }))}
+                  style={inp} required
+                >
+                  {agentes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                </select>
+              </Field>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <Field label="Concepto *">
+                  <input
+                    type="text" placeholder="Ej: FEE mensual"
+                    value={gastoForm.concepto}
+                    onChange={e => setGastoForm(f => ({ ...f, concepto: e.target.value }))}
+                    style={inp} required
+                  />
+                </Field>
+                <Field label="Tipo">
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    {(["Ordinario", "Extraordinario"] as const).map(t => (
+                      <button
+                        key={t} type="button"
+                        onClick={() => setGastoForm(f => ({ ...f, tipo: t }))}
+                        style={{
+                          flex: 1, padding: "9px 0", borderRadius: "8px", fontSize: "12px",
+                          fontWeight: gastoForm.tipo === t ? 700 : 500,
+                          cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
+                          border: gastoForm.tipo === t ? "1.5px solid #E31837" : "1.5px solid #EAECF2",
+                          background: gastoForm.tipo === t ? "#FFF1F2" : "white",
+                          color: gastoForm.tipo === t ? "#E11D48" : "#64748B",
+                        }}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <Field label="Monto (USD) *">
+                  <input type="number" min="0" step="0.01" placeholder="0"
+                    value={gastoForm.monto_debe}
+                    onChange={e => setGastoForm(f => ({ ...f, monto_debe: e.target.value }))}
+                    style={inp} required />
+                </Field>
+                <Field label="Fecha *">
+                  <input type="date" value={gastoForm.fecha}
+                    onChange={e => setGastoForm(f => ({ ...f, fecha: e.target.value }))}
+                    style={inp} required />
+                </Field>
+              </div>
+
+              {/* Gasto recurrente CTA */}
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "10px 14px", borderRadius: "10px",
+                background: "#F8F9FC", border: "1.5px dashed #CBD5E1",
+                marginBottom: "14px",
+              }}>
+                <div>
+                  <div style={{ fontSize: "12.5px", fontWeight: 700, color: "#0F172A" }}>
+                    ¿Aplicar a múltiples agentes?
+                  </div>
+                  <div style={{ fontSize: "11px", color: "#64748B", marginTop: "2px" }}>
+                    FEE mensual, CRM PRO o PRO+ — monto desde config
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { closeModal(); setTimeout(() => openGastoRec(), 50) }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "6px",
+                    padding: "7px 14px", borderRadius: "8px",
+                    border: "1.5px solid #7C3AED", background: "#F5F3FF",
+                    fontSize: "12px", fontWeight: 700, color: "#7C3AED",
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}
+                >
+                  <Repeat size={13} /> Gasto recurrente
+                </button>
+              </div>
+
+              <ErrorBox />
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button type="button" onClick={closeModal} disabled={isPending} style={btnCancel}>Cancelar</button>
+                <button type="submit" disabled={isPending} style={btnSave}>
+                  {isPending && <Loader2 size={14} className="animate-spin" />}
+                  {isPending ? "Guardando..." : "Registrar gasto"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </Backdrop>
+      )}
+
+      {/* ════════════════════════════════════════════
+          MODAL — GASTO RECURRENTE
+      ════════════════════════════════════════════ */}
+      {modal === "gasto_rec" && (
+        <Backdrop onClose={closeModal}>
+          <div style={{
+            background: "white", borderRadius: "16px",
+            width: "100%", maxWidth: "560px",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
+            maxHeight: "90vh", display: "flex", flexDirection: "column",
+          }}>
+            <ModalHeader
+              title="Gasto Recurrente"
+              subtitle="Aplicar cargo a múltiples agentes a la vez"
+              onClose={closeModal}
+            />
+            <form onSubmit={handleGastoRec} style={{ padding: "20px", overflow: "auto", flex: 1, display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <Field label="Concepto *">
+                  <select
+                    value={gastoRec.concepto}
+                    onChange={e => setGastoRec(f => ({ ...f, concepto: e.target.value }))}
+                    style={inp} required
+                  >
+                    {CONCEPTOS_RECURRENTE.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </Field>
+                <Field label="Fecha *">
+                  <input type="date" value={gastoRec.fecha}
+                    onChange={e => setGastoRec(f => ({ ...f, fecha: e.target.value }))}
+                    style={inp} required />
+                </Field>
+              </div>
+
+              {/* Auto monto */}
+              <div style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "10px 14px", borderRadius: "8px",
+                background: "#F0FDF4", border: "1px solid #6EE7B7",
+                marginBottom: "14px",
+              }}>
+                <span style={{ fontSize: "12px", color: "#065F46", fontWeight: 600 }}>
+                  Monto por agente (desde config):
+                </span>
+                <span style={{ fontSize: "16px", fontWeight: 800, color: "#059669" }}>
+                  {fmtUSD(gastoRecMonto)}
+                </span>
+              </div>
+
+              {/* Multi-select agentes */}
+              <Field label={`Agentes (${selectedAgentesRec.size} seleccionados) *`}>
+                <div style={{
+                  border: "1.5px solid #EAECF2", borderRadius: "8px",
+                  overflow: "auto", maxHeight: "200px",
+                }}>
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: "8px",
+                    padding: "8px 12px", borderBottom: "1px solid #F1F5F9",
+                  }}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedAgentesRec(new Set(agentes.filter(a => a.activo).map(a => a.id)))}
+                      style={{ fontSize: "11px", color: "#7C3AED", fontWeight: 700, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", padding: 0 }}
+                    >
+                      Todos activos
+                    </button>
+                    <span style={{ color: "#CBD5E1" }}>|</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedAgentesRec(new Set())}
+                      style={{ fontSize: "11px", color: "#64748B", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", padding: 0 }}
+                    >
+                      Limpiar
+                    </button>
+                  </div>
+                  {agentes.filter(a => a.activo).map(a => (
+                    <label
+                      key={a.id}
+                      style={{
+                        display: "flex", alignItems: "center", gap: "10px",
+                        padding: "8px 12px",
+                        borderBottom: "1px solid #F8F9FC",
+                        cursor: "pointer",
+                        background: selectedAgentesRec.has(a.id) ? "#F5F3FF" : "white",
+                        transition: "background 0.1s",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedAgentesRec.has(a.id)}
+                        onChange={ev => {
+                          const next = new Set(selectedAgentesRec)
+                          if (ev.target.checked) next.add(a.id)
+                          else next.delete(a.id)
+                          setSelectedAgentesRec(next)
+                        }}
+                        style={{ accentColor: "#7C3AED", width: "14px", height: "14px" }}
+                      />
+                      <span style={{ fontSize: "13px", fontWeight: 500, color: "#0F172A" }}>{a.nombre}</span>
+                      {a.licencia && a.licencia !== "---" && (
+                        <span style={{
+                          fontSize: "10px", fontWeight: 700, color: "#7C3AED",
+                          background: "#F5F3FF", padding: "1px 6px", borderRadius: "10px",
+                          marginLeft: "auto",
+                        }}>
+                          {a.licencia}
+                        </span>
+                      )}
+                    </label>
+                  ))}
+                </div>
+              </Field>
+
+              <ErrorBox />
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "auto" }}>
+                <button type="button" onClick={closeModal} disabled={isPending} style={btnCancel}>Cancelar</button>
+                <button
+                  type="submit" disabled={isPending}
+                  style={{
+                    ...btnSave,
+                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#7C3AED 0%,#5B21B6 100%)",
+                    boxShadow: isPending ? "none" : "0 2px 8px rgba(124,58,237,0.3)",
+                  }}
+                >
+                  {isPending && <Loader2 size={14} className="animate-spin" />}
+                  {isPending ? "Aplicando..." : `Aplicar a ${selectedAgentesRec.size} agente${selectedAgentesRec.size !== 1 ? "s" : ""}`}
+                </button>
+              </div>
+            </form>
+          </div>
+        </Backdrop>
       )}
 
       {/* ════════════════════════════════════════════
           MODAL — EDITAR PAGO
       ════════════════════════════════════════════ */}
       {modal === "editar" && selectedPago && (
-        <div
-          onClick={closeModal}
-          style={{
-            position: "fixed", inset: 0,
-            background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            zIndex: 1000, padding: "20px",
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: "white", borderRadius: "16px",
-              width: "100%", maxWidth: "440px",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
-            }}
-          >
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "18px 20px", borderBottom: "1px solid #EAECF2",
-            }}>
-              <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
-                  Registrar Pago Parcial
-                </h2>
-                <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
-                  Actualizá el monto abonado
-                </p>
-              </div>
-              <button onClick={closeModal} style={{
-                background: "#F8F9FC", border: "none", borderRadius: "8px",
-                width: "32px", height: "32px", display: "flex",
-                alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "#64748B",
-              }}>
-                <X size={16} />
-              </button>
-            </div>
-
+        <Backdrop onClose={closeModal}>
+          <div style={{
+            background: "white", borderRadius: "16px",
+            width: "100%", maxWidth: "440px",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
+          }}>
+            <ModalHeader
+              title="Registrar Pago Parcial"
+              subtitle="Actualizá el monto abonado"
+              onClose={closeModal}
+            />
             <form onSubmit={handleEditar} style={{ padding: "20px" }}>
               <ReadOnlyField
                 label="Agente"
@@ -982,27 +1376,21 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
                 <ReadOnlyField label="Concepto" value={selectedPago.concepto} />
                 <ReadOnlyField label="Monto que debe" value={fmtUSD(Number(selectedPago.monto_debe))} />
               </div>
-
               <Field label="Nuevo monto pagado total (USD) *">
                 <input
                   type="number" min="0" max={Number(selectedPago.monto_debe)} step="0.01"
                   value={editForm.monto_pagado}
                   onChange={e => setEditForm({ monto_pagado: e.target.value })}
-                  style={inp}
-                  required
-                  autoFocus
+                  style={inp} required autoFocus
                 />
               </Field>
-
               <div style={{
                 display: "flex", alignItems: "center", gap: "8px",
                 padding: "10px 12px", borderRadius: "8px",
                 background: "#F8F9FC", border: "1px solid #EAECF2",
                 marginBottom: "14px",
               }}>
-                <span style={{ fontSize: "12px", color: "#64748B", fontWeight: 500 }}>
-                  Nuevo estado:
-                </span>
+                <span style={{ fontSize: "12px", color: "#64748B", fontWeight: 500 }}>Nuevo estado:</span>
                 <EstadoBadge estado={editEstado} />
                 <span style={{ marginLeft: "auto", fontSize: "12px", color: "#64748B" }}>
                   Saldo: <strong style={{ color: editEstado === "Pagado" ? "#059669" : "#E11D48" }}>
@@ -1010,44 +1398,17 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
                   </strong>
                 </span>
               </div>
-
-              {error && (
-                <div style={{
-                  background: "#FFF1F2", border: "1px solid #FECDD3",
-                  borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#E11D48", marginBottom: "14px",
-                }}>
-                  ⚠️ {error}
-                </div>
-              )}
-
+              <ErrorBox />
               <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                <button type="button" onClick={closeModal} disabled={isPending}
-                  style={{
-                    padding: "9px 20px", borderRadius: "8px",
-                    border: "1.5px solid #EAECF2", background: "white",
-                    fontSize: "13px", fontWeight: 600, color: "#64748B",
-                    cursor: "pointer", fontFamily: "inherit",
-                  }}>
-                  Cancelar
-                </button>
-                <button type="submit" disabled={isPending}
-                  style={{
-                    padding: "9px 24px", borderRadius: "8px", border: "none",
-                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
-                    color: "white", fontSize: "13px", fontWeight: 700,
-                    cursor: isPending ? "not-allowed" : "pointer",
-                    fontFamily: "inherit",
-                    display: "flex", alignItems: "center", gap: "6px",
-                    boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
-                  }}>
+                <button type="button" onClick={closeModal} disabled={isPending} style={btnCancel}>Cancelar</button>
+                <button type="submit" disabled={isPending} style={btnSave}>
                   {isPending && <Loader2 size={14} className="animate-spin" />}
                   {isPending ? "Guardando..." : "Actualizar pago"}
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </Backdrop>
       )}
     </div>
   )

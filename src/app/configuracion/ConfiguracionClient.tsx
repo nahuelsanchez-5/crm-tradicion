@@ -14,6 +14,7 @@ const DEFAULT_CONFIG: ConfigEntry[] = [
   { clave: "nombre_plan_b_ofi",    valor: "B_OFI",  etiqueta: "Licencia CRM B_OFI",      grupo: "planes" },
   { clave: "nombre_plan_ninguno",  valor: "---",    etiqueta: "SIN LICENCIA",            grupo: "planes" },
   // Bonos
+  { clave: "fee_mensual",          valor: "100",    etiqueta: "FEE mensual (USD)",              grupo: "bonos" },
   { clave: "bono_pro",             valor: "500",    etiqueta: "Monto CRM PRO (USD)",           grupo: "bonos" },
   { clave: "bono_pro_plus",        valor: "800",    etiqueta: "Monto CRM PRO+ (USD)",          grupo: "bonos" },
   { clave: "bono_b_qr",            valor: "300",    etiqueta: "Monto Bonificación QR (USD)",   grupo: "bonos" },
