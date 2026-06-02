@@ -36,7 +36,7 @@ export async function getConfig(): Promise<ConfigEntry[]> {
 
   const { data } = await supabase
     .from("config")
-    .select("clave, valor, etiqueta, grupo")
+    .select("*")
     .order("grupo")
     .order("clave")
 
