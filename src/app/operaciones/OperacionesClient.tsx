@@ -56,6 +56,8 @@ interface FormData {
   direccion:          string
   agentes:            string
   tipo:               string
+  moneda:             "USD" | "ARS"
+  tipo_cambio:        string
   comision_bruta:     string
   comision_neta:      string
   encuesta_comprador: boolean
@@ -187,6 +189,8 @@ const EMPTY_FORM: FormData = {
   direccion:          "",
   agentes:            "",
   tipo:               "Venta",
+  moneda:             "USD",
+  tipo_cambio:        "",
   comision_bruta:     "",
   comision_neta:      "",
   encuesta_comprador: false,
@@ -246,6 +250,8 @@ export default function OperacionesClient({ operaciones }: Props) {
       direccion:          o.direccion,
       agentes:            o.agentes,
       tipo:               o.tipo,
+      moneda:             "USD",
+      tipo_cambio:        "",
       comision_bruta:     String(Number(o.comision_bruta)),
       comision_neta:      String(Number(o.comision_neta)),
       encuesta_comprador: o.encuesta_comprador ?? false,
@@ -267,14 +273,21 @@ export default function OperacionesClient({ operaciones }: Props) {
 
     if (!form.direccion.trim()) { setError("La dirección es obligatoria"); return }
     if (!form.agentes.trim())   { setError("El/los agente(s) son obligatorios"); return }
+    if (form.moneda === "ARS" && !form.tipo_cambio) { setError("Ingresá el tipo de cambio para convertir a USD"); return }
+
+    const tc = parseFloat(form.tipo_cambio) || 1
+    const brutoRaw = parseFloat(form.comision_bruta) || 0
+    const netoRaw  = parseFloat(form.comision_neta)  || 0
+    const brutoUSD = form.moneda === "ARS" ? Math.round(brutoRaw / tc * 100) / 100 : brutoRaw
+    const netoUSD  = form.moneda === "ARS" ? Math.round(netoRaw  / tc * 100) / 100 : netoRaw
 
     const payload: OperacionFormData = {
       fecha:              form.fecha,
       direccion:          form.direccion.trim(),
       agentes:            form.agentes.trim(),
       tipo:               form.tipo,
-      comision_bruta:     parseFloat(form.comision_bruta) || 0,
-      comision_neta:      parseFloat(form.comision_neta)  || 0,
+      comision_bruta:     brutoUSD,
+      comision_neta:      netoUSD,
       encuesta_comprador: form.encuesta_comprador,
       encuesta_vendedor:  form.encuesta_vendedor,
     }
@@ -334,7 +347,7 @@ export default function OperacionesClient({ operaciones }: Props) {
       <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
 
         {/* ── KPI Cards ─────────────────────────── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px", marginBottom: "20px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: "14px", marginBottom: "20px" }}>
           <KpiCard
             title="Operaciones del período"
             value={String(stats.total)}
@@ -350,18 +363,6 @@ export default function OperacionesClient({ operaciones }: Props) {
             gradient="linear-gradient(135deg,#0D9488 0%,#0F766E 100%)"
             shadowColor="rgba(13,148,136,0.3)"
             icon={<DollarSign size={20} color="white" />}
-          />
-          <KpiCard
-            title="% Encuestas completadas"
-            value={`${stats.pctEncuestas}%`}
-            badge={`${stats.withBoth} de ${stats.total} operaciones`}
-            gradient={
-              stats.pctEncuestas >= 70
-                ? "linear-gradient(135deg,#7C3AED 0%,#5B21B6 100%)"
-                : "linear-gradient(135deg,#D97706 0%,#B45309 100%)"
-            }
-            shadowColor={stats.pctEncuestas >= 70 ? "rgba(124,58,237,0.3)" : "rgba(217,119,6,0.3)"}
-            icon={<BarChart2 size={20} color="white" />}
           />
         </div>
 
@@ -409,7 +410,7 @@ export default function OperacionesClient({ operaciones }: Props) {
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
-                  {["Fecha","Dirección","Agente(s)","Tipo","Comisión Bruta","Enc. Comprador","Enc. Vendedor",""].map(h => (
+                  {["Fecha","Dirección","Agente(s)","Tipo","Comisión Bruta",""].map(h => (
                     <th key={h} style={{
                       padding: "10px 16px", textAlign: "left",
                       fontSize: "10.5px", fontWeight: 700,
@@ -425,7 +426,7 @@ export default function OperacionesClient({ operaciones }: Props) {
               <tbody>
                 {filteredOps.length === 0 ? (
                   <tr>
-                    <td colSpan={8} style={{ padding: "48px 40px", textAlign: "center" }}>
+                    <td colSpan={6} style={{ padding: "48px 40px", textAlign: "center" }}>
                       <div style={{ fontSize: "28px", marginBottom: "10px", opacity: 0.4 }}>🏠</div>
                       <div style={{ fontWeight: 600, fontSize: "14px", color: "#64748B", marginBottom: "4px" }}>
                         Sin operaciones en este período
@@ -462,12 +463,6 @@ export default function OperacionesClient({ operaciones }: Props) {
                         </td>
                         <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: 600, color: "#0F172A", whiteSpace: "nowrap" }}>
                           {fmtUSD(Number(o.comision_bruta))}
-                        </td>
-                        <td style={{ padding: "12px 16px", textAlign: "center" as const }}>
-                          <EncuestaIndicator value={o.encuesta_comprador} />
-                        </td>
-                        <td style={{ padding: "12px 16px", textAlign: "center" as const }}>
-                          <EncuestaIndicator value={o.encuesta_vendedor} />
                         </td>
                         <td style={{ padding: "12px 16px" }}>
                           <button
@@ -590,27 +585,54 @@ export default function OperacionesClient({ operaciones }: Props) {
                 />
               </Field>
 
+              {/* Moneda */}
+              <Field label="Moneda de comisiones">
+                <div style={{ display: "flex", gap: "8px" }}>
+                  {(["USD", "ARS"] as const).map(m => (
+                    <button key={m} type="button" onClick={() => setF("moneda", m)} style={{
+                      padding: "7px 20px", borderRadius: "8px", border: "1.5px solid",
+                      borderColor: form.moneda === m ? "#E31837" : "#EAECF2",
+                      background: form.moneda === m ? "#FFF1F2" : "white",
+                      color: form.moneda === m ? "#E11D48" : "#64748B",
+                      fontWeight: 700, fontSize: "13px", cursor: "pointer", fontFamily: "inherit",
+                    }}>{m}</button>
+                  ))}
+                </div>
+              </Field>
+              {form.moneda === "ARS" && (
+                <Field label="Tipo de cambio (ARS/USD) *">
+                  <input type="number" value={form.tipo_cambio} min="1" step="1"
+                    onChange={e => setF("tipo_cambio", e.target.value)}
+                    placeholder="1200" style={inp} required />
+                </Field>
+              )}
+
               {/* Comisiones */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <Field label="Comisión bruta (USD)">
+                <Field label={`Comisión bruta (${form.moneda})`}>
                   <input
                     type="number"
                     min="0"
                     step="50"
                     value={form.comision_bruta}
                     onChange={e => setF("comision_bruta", e.target.value)}
-                    placeholder="5000"
+                    placeholder={form.moneda === "ARS" ? "6000000" : "5000"}
                     style={inp}
                   />
+                  {form.moneda === "ARS" && form.tipo_cambio && form.comision_bruta && (
+                    <div style={{ fontSize: "11px", color: "#0D9488", marginTop: "4px", fontWeight: 600 }}>
+                      ≈ USD {Math.round(parseFloat(form.comision_bruta) / parseFloat(form.tipo_cambio)).toLocaleString("es-AR")}
+                    </div>
+                  )}
                 </Field>
-                <Field label="Comisión neta (USD)">
+                <Field label={`Comisión neta (${form.moneda})`}>
                   <input
                     type="number"
                     min="0"
                     step="50"
                     value={form.comision_neta}
                     onChange={e => setF("comision_neta", e.target.value)}
-                    placeholder="4250"
+                    placeholder={form.moneda === "ARS" ? "5100000" : "4250"}
                     style={inp}
                   />
                 </Field>
