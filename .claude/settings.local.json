@@ -8,7 +8,25 @@
       "PowerShell(Out-Null *)",
       "PowerShell(netstat *)",
       "PowerShell(Get-Process *)",
-      "PowerShell(Stop-Process *)"
+      "PowerShell(Stop-Process *)",
+      "PowerShell(git clone --single-branch --depth 1 https://github.com/garrytan/gstack.git \"$env:USERPROFILE\\\\.claude\\\\skills\\\\gstack\")",
+      "PowerShell(cd \"$env:USERPROFILE\\\\.claude\\\\skills\\\\gstack\"; if \\(Test-Path \".\\\\setup\"\\) { bash ./setup } elseif \\(Test-Path \".\\\\setup.sh\"\\) { bash ./setup.sh } else { Get-ChildItem -Name | Select-Object -First 20 })",
+      "PowerShell(cd \"$env:USERPROFILE\\\\.claude\\\\skills\\\\gstack\"; Get-ChildItem -Name | Select-Object -First 30)",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Get-Command *)",
+      "PowerShell(wsl --list --running 2>&1)",
+      "PowerShell(New-Item *)",
+      "PowerShell(powershell -c \"irm bun.sh/install.ps1|iex\")",
+      "PowerShell(bun *)",
+      "PowerShell(bun install *)",
+      "PowerShell(bun run *)",
+      "PowerShell($env:PATH = \"$env:USERPROFILE\\\\.bun\\\\bin;$env:PATH\"; cd \"$env:USERPROFILE\\\\.claude\\\\skills\\\\gstack\"; bunx playwright install chromium-headless-shell 2>&1)",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Test-Path \"C:\\\\Users\\\\Usuario\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--App-CRM-Tradici-n-crm-tradicion\\\\e30ee764-e925-4ee1-a349-999e581cafda\\\\tasks\\\\b0man39bn.output\"; \\(Get-Item \"C:\\\\Users\\\\Usuario\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--App-CRM-Tradici-n-crm-tradicion\\\\e30ee764-e925-4ee1-a349-999e581cafda\\\\tasks\\\\b0man39bn.output\"\\).Length)",
+      "PowerShell($env:PATH = \"$env:USERPROFILE\\\\.bun\\\\bin;$env:PATH\"; cd \"$env:USERPROFILE\\\\.claude\\\\skills\\\\gstack\"; & \"$env:USERPROFILE\\\\.bun\\\\bin\\\\bunx.exe\" playwright install chromium-headless-shell 2>&1 | Select-Object -First 20)",
+      "PowerShell(Start-Sleep -Seconds 30; \\(Get-Item \"C:\\\\Users\\\\Usuario\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--App-CRM-Tradici-n-crm-tradicion\\\\e30ee764-e925-4ee1-a349-999e581cafda\\\\tasks\\\\b12s3prhg.output\"\\).Length)",
+      "PowerShell(Get-Item *)",
+      "PowerShell(git *)"
     ]
   }
 }
