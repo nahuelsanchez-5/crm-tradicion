@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
@@ -13,6 +14,8 @@ import {
   FileText,
   Settings,
   Handshake,
+  Menu,
+  X,
   LucideIcon,
 } from "lucide-react"
 
@@ -37,23 +40,11 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/configuracion", label: "Configuración", icon: Settings,  group: "modulos" },
 ]
 
-export default function Sidebar() {
-  const pathname = usePathname()
+const sidebarContent = (pathname: string, onNavClick?: () => void) => {
   const inicio  = NAV_ITEMS.filter(i => i.group === "inicio")
   const modulos = NAV_ITEMS.filter(i => i.group === "modulos")
-
   return (
-    <aside
-      style={{
-        width: "224px",
-        minWidth: "224px",
-        background: "#0F172A",
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        flexShrink: 0,
-      }}
-    >
+    <>
       {/* ── Logo ─────────────────────────────────── */}
       <div
         style={{
@@ -75,8 +66,8 @@ export default function Sidebar() {
 
       {/* ── Navigation ───────────────────────────── */}
       <nav style={{ flex: 1, padding: "12px 10px", overflowY: "auto" }}>
-        <NavGroup label="Inicio" items={inicio} pathname={pathname} />
-        <NavGroup label="Módulos" items={modulos} pathname={pathname} />
+        <NavGroup label="Inicio" items={inicio} pathname={pathname} onNavClick={onNavClick} />
+        <NavGroup label="Módulos" items={modulos} pathname={pathname} onNavClick={onNavClick} />
       </nav>
 
       {/* ── User footer ──────────────────────────── */}
@@ -130,7 +121,112 @@ export default function Sidebar() {
           </div>
         </div>
       </div>
-    </aside>
+    </>
+  )
+}
+
+export default function Sidebar() {
+  const pathname = usePathname()
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  return (
+    <>
+      {/* ── Mobile hamburger button ───────────────── */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="md:hidden"
+        style={{
+          position: "fixed",
+          top: "13px",
+          left: "14px",
+          zIndex: 50,
+          width: "40px",
+          height: "40px",
+          borderRadius: "10px",
+          background: "#0F172A",
+          border: "none",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "white",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
+        }}
+        aria-label="Abrir menú"
+      >
+        <Menu size={18} />
+      </button>
+
+      {/* ── Mobile backdrop ───────────────────────── */}
+      {mobileOpen && (
+        <div
+          className="md:hidden"
+          onClick={() => setMobileOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            zIndex: 40,
+          }}
+        />
+      )}
+
+      {/* ── Mobile sidebar (overlay) ─────────────── */}
+      <aside
+        className="md:hidden"
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          width: "224px",
+          background: "#0F172A",
+          display: "flex",
+          flexDirection: "column",
+          zIndex: 45,
+          transform: mobileOpen ? "translateX(0)" : "translateX(-100%)",
+          transition: "transform 0.25s ease",
+        }}
+      >
+        <button
+          onClick={() => setMobileOpen(false)}
+          style={{
+            position: "absolute",
+            top: "14px",
+            right: "14px",
+            background: "rgba(255,255,255,0.1)",
+            border: "none",
+            borderRadius: "8px",
+            width: "32px",
+            height: "32px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            color: "white",
+          }}
+          aria-label="Cerrar menú"
+        >
+          <X size={16} />
+        </button>
+        {sidebarContent(pathname, () => setMobileOpen(false))}
+      </aside>
+
+      {/* ── Desktop sidebar (in flow) ─────────────── */}
+      <aside
+        className="hidden md:flex"
+        style={{
+          width: "224px",
+          minWidth: "224px",
+          background: "#0F172A",
+          flexDirection: "column",
+          height: "100%",
+          flexShrink: 0,
+        }}
+      >
+        {sidebarContent(pathname)}
+      </aside>
+    </>
   )
 }
 
@@ -138,10 +234,12 @@ function NavGroup({
   label,
   items,
   pathname,
+  onNavClick,
 }: {
   label: string
   items: NavItem[]
   pathname: string
+  onNavClick?: () => void
 }) {
   return (
     <div style={{ marginBottom: "6px" }}>
@@ -158,7 +256,7 @@ function NavGroup({
         {label}
       </div>
       {items.map(item => (
-        <NavItemLink key={item.href} item={item} isActive={pathname === item.href} />
+        <NavItemLink key={item.href} item={item} isActive={pathname === item.href} onNavClick={onNavClick} />
       ))}
     </div>
   )
@@ -167,13 +265,16 @@ function NavGroup({
 function NavItemLink({
   item,
   isActive,
+  onNavClick,
 }: {
   item: NavItem
   isActive: boolean
+  onNavClick?: () => void
 }) {
   return (
     <Link
       href={item.href}
+      onClick={onNavClick}
       style={{
         display: "flex",
         alignItems: "center",
