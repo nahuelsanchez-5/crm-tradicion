@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Plus_Jakarta_Sans } from "next/font/google"
 import "./globals.css"
 import Sidebar from "@/components/Sidebar"
+import { createServerClient } from "@/lib/supabase"
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -14,14 +15,20 @@ export const metadata: Metadata = {
   description: "Panel de gestión para REMAX Tradición",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const supabase = createServerClient()
+  const { count } = await supabase
+    .from("agentes")
+    .select("*", { count: "exact", head: true })
+    .eq("activo", true)
+
   return (
     <html lang="es" className={`${jakarta.variable} h-full antialiased`}>
       <body className="h-full overflow-hidden" style={{ background: "#F8F9FC" }}>
         <div style={{ display: "flex", height: "100%" }}>
-          <Sidebar />
+          <Sidebar agenteCount={count ?? 0} />
           <main style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
             {children}
           </main>

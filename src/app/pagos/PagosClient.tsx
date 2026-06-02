@@ -437,7 +437,7 @@ export default function PagosClient({ pagos, agentes, mensajeWhatsapp }: Props) 
       }}>
         <div>
           <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0 }}>
-            Pagos
+            Cuentas
           </h1>
           <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "1px" }}>
             Control de cobros por concepto — REMAX Tradición
