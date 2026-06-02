@@ -288,6 +288,52 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
           />
         </div>
 
+        {/* ── Alerta de vencimiento próximo ────────── */}
+        {carteles.filter(c => c.diasRestantes <= 10).length > 0 && (
+          <div style={{
+            background: "#FFF7ED", border: "1.5px solid #FED7AA",
+            borderRadius: "12px", padding: "14px 18px", marginBottom: "16px",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+              <AlertTriangle size={14} color="#EA580C" />
+              <span style={{ fontSize: "13px", fontWeight: 700, color: "#EA580C" }}>
+                Carteles próximos a vencer (≤10 días)
+              </span>
+              <span style={{
+                background: "#EA580C", color: "white",
+                padding: "1px 8px", borderRadius: "20px",
+                fontSize: "11px", fontWeight: 700,
+              }}>
+                {carteles.filter(c => c.diasRestantes <= 10).length}
+              </span>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+              {carteles.filter(c => c.diasRestantes <= 10).map(c => (
+                <div key={c.id} style={{
+                  background: "white", border: "1.5px solid #FED7AA",
+                  borderRadius: "10px", padding: "8px 12px",
+                  display: "flex", alignItems: "center", gap: "10px",
+                }}>
+                  <span style={{
+                    background: c.diasRestantes <= 0 ? "#FFF1F2" : "#FFFBEB",
+                    color: c.diasRestantes <= 0 ? "#E11D48" : "#D97706",
+                    padding: "2px 8px", borderRadius: "6px",
+                    fontSize: "11px", fontWeight: 700,
+                  }}>
+                    #{c.numero}
+                  </span>
+                  <div>
+                    <div style={{ fontSize: "12px", fontWeight: 600, color: "#0F172A" }}>{c.direccion || "—"}</div>
+                    <div style={{ fontSize: "11px", color: "#64748B" }}>
+                      {c.agente} · {c.diasRestantes <= 0 ? "Vencido" : `${c.diasRestantes}d`}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── Filtros ──────────────────────────────── */}
         <div style={{ display: "flex", gap: "10px", marginBottom: "14px", flexWrap: "wrap", alignItems: "center" }}>
 
