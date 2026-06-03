@@ -3,59 +3,22 @@ import type { ReactNode } from "react"
 interface PageHeaderProps {
   title: string
   description?: string
-  /** Slot for action buttons (right side) */
   children?: ReactNode
 }
 
-export default function PageHeader({
-  title,
-  description,
-  children,
-}: PageHeaderProps) {
+export default function PageHeader({ title, description, children }: PageHeaderProps) {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        minHeight: "62px",
-        padding: "0 24px",
-        background: "white",
-        borderBottom: "1px solid #EAECF2",
-        flexShrink: 0,
-      }}
-    >
+    <div className="flex items-center justify-between min-h-[62px] px-6 bg-white border-b border-slate-200 flex-shrink-0">
       <div>
-        <h1
-          style={{
-            fontSize: "18px",
-            fontWeight: 800,
-            color: "#0F172A",
-            letterSpacing: "-0.3px",
-            margin: 0,
-            lineHeight: 1.3,
-          }}
-        >
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight leading-tight m-0">
           {title}
         </h1>
         {description && (
-          <p
-            style={{
-              fontSize: "12px",
-              color: "#64748B",
-              margin: 0,
-              marginTop: "1px",
-            }}
-          >
-            {description}
-          </p>
+          <p className="text-sm text-slate-500 m-0 mt-0.5">{description}</p>
         )}
       </div>
-
       {children && (
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          {children}
-        </div>
+        <div className="flex items-center gap-2.5">{children}</div>
       )}
     </div>
   )

@@ -431,32 +431,32 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
           <KpiCard
             title="Ofertas activas"
             value={String(kpis.activas)}
-            gradient="linear-gradient(135deg,#2563EB 0%,#1D4ED8 100%)"
-            shadowColor="rgba(37,99,235,0.3)"
-            icon={<Handshake size={20} color="white" />}
+            iconBg="bg-blue-50"
+            iconColor="text-blue-600"
+            icon={<Handshake size={18} />}
           />
           <KpiCard
             title="En negociación"
             value={String(kpis.negociacion)}
             badge="Espera respuesta"
-            gradient="linear-gradient(135deg,#D97706 0%,#B45309 100%)"
-            shadowColor="rgba(217,119,6,0.3)"
-            icon={<TrendingUp size={20} color="white" />}
+            iconBg="bg-amber-50"
+            iconColor="text-amber-600"
+            icon={<TrendingUp size={18} />}
           />
           <KpiCard
             title="Pre cierre"
             value={String(kpis.preCierre)}
             badge="Aceptadas"
-            gradient="linear-gradient(135deg,#EA580C 0%,#C2410C 100%)"
-            shadowColor="rgba(234,88,12,0.3)"
-            icon={<CheckCircle2 size={20} color="white" />}
+            iconBg="bg-orange-50"
+            iconColor="text-orange-600"
+            icon={<CheckCircle2 size={18} />}
           />
           <KpiCard
             title="Cerradas este mes"
             value={String(kpis.cerradasMes)}
-            gradient="linear-gradient(135deg,#0D9488 0%,#0F766E 100%)"
-            shadowColor="rgba(13,148,136,0.3)"
-            icon={<XCircle size={20} color="white" />}
+            iconBg="bg-teal-50"
+            iconColor="text-teal-600"
+            icon={<XCircle size={18} />}
           />
         </div>
 

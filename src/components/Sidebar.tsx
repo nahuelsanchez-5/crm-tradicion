@@ -53,35 +53,23 @@ export default function Sidebar({ agenteCount }: Props) {
 
   const sidebarContent = (onNavClick?: () => void) => (
     <>
-      {/* ── Logo ─────────────────────────────────── */}
-      <div style={{
-        padding: "20px 18px",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
-        display: "flex",
-        justifyContent: "center",
-      }}>
+      {/* Logo */}
+      <div className="px-5 py-5 border-b border-slate-800 flex justify-center">
         <Image
           src="/logo-sidebar-crema.png"
           alt="REMAX Tradición"
-          width={160}
-          height={60}
-          style={{ objectFit: "contain", maxWidth: "160px", height: "auto" }}
+          width={150}
+          height={56}
+          style={{ objectFit: "contain", maxWidth: "150px", height: "auto" }}
           priority
         />
       </div>
 
-      {/* ── Navigation ───────────────────────────── */}
-      <nav style={{ flex: 1, padding: "12px 10px", overflowY: "auto" }}>
-        <div style={{
-          fontSize: "9.5px",
-          fontWeight: 700,
-          letterSpacing: "1.5px",
-          textTransform: "uppercase",
-          color: "rgba(255,255,255,0.25)",
-          padding: "10px 8px 5px",
-        }}>
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-4 overflow-y-auto">
+        <p className="text-[9.5px] font-bold tracking-[1.5px] uppercase text-white/25 px-2 pb-2 pt-1">
           Menú
-        </div>
+        </p>
         {navItems.map(item => (
           <NavItemLink
             key={item.href}
@@ -90,32 +78,26 @@ export default function Sidebar({ agenteCount }: Props) {
             onNavClick={onNavClick}
           />
         ))}
+
+        <p className="text-[9.5px] font-bold tracking-[1.5px] uppercase text-white/25 px-2 pb-2 pt-5">
+          Sistema
+        </p>
+        <NavItemLink
+          item={{ href: "/configuracion", label: "Configuración", icon: Settings }}
+          isActive={pathname === "/configuracion"}
+          onNavClick={onNavClick}
+        />
       </nav>
 
-      {/* ── User footer ──────────────────────────── */}
-      <div style={{ padding: "14px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-        <div
-          style={{
-            display: "flex", alignItems: "center", gap: "9px",
-            padding: "8px", borderRadius: "10px", cursor: "pointer",
-          }}
-          className="hover:bg-white/[0.05]"
-        >
-          <div style={{
-            width: "32px", height: "32px", borderRadius: "9px",
-            background: "linear-gradient(135deg, #7C3AED, #5b21b6)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "12px", fontWeight: 700, color: "white", flexShrink: 0,
-          }}>
+      {/* User footer */}
+      <div className="px-3 pb-4 pt-2 border-t border-slate-800">
+        <div className="flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer hover:bg-white/[0.05] transition-colors duration-150">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-violet-800 flex items-center justify-center text-[12px] font-bold text-white flex-shrink-0">
             N
           </div>
-          <div>
-            <div style={{ fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>
-              Nahuel Sánchez
-            </div>
-            <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.3)" }}>
-              STAFF
-            </div>
+          <div className="min-w-0">
+            <p className="text-[12px] font-600 text-white/80 leading-none">Nahuel Sánchez</p>
+            <p className="text-[10px] text-white/30 mt-0.5 uppercase tracking-wide">Staff</p>
           </div>
         </div>
       </div>
@@ -124,54 +106,34 @@ export default function Sidebar({ agenteCount }: Props) {
 
   return (
     <>
-      {/* ── Mobile hamburger button ───────────────── */}
+      {/* Mobile hamburger */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="md:hidden"
-        style={{
-          position: "fixed", top: "13px", left: "14px", zIndex: 50,
-          width: "40px", height: "40px", borderRadius: "10px",
-          background: "#0F172A", border: "none", cursor: "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          color: "white", boxShadow: "0 2px 8px rgba(0,0,0,0.25)",
-        }}
+        className="md:hidden fixed top-3.5 left-3.5 z-50 w-10 h-10 rounded-xl bg-slate-900 border-none cursor-pointer flex items-center justify-center text-white shadow-lg"
         aria-label="Abrir menú"
       >
         <Menu size={18} />
       </button>
 
-      {/* ── Mobile backdrop ───────────────────────── */}
+      {/* Mobile backdrop */}
       {mobileOpen && (
         <div
-          className="md:hidden"
+          className="md:hidden fixed inset-0 bg-black/50 z-40"
           onClick={() => setMobileOpen(false)}
-          style={{
-            position: "fixed", inset: 0,
-            background: "rgba(0,0,0,0.5)", zIndex: 40,
-          }}
         />
       )}
 
-      {/* ── Mobile sidebar (overlay) ─────────────── */}
+      {/* Mobile sidebar */}
       <aside
-        className="md:hidden"
+        className="md:hidden fixed top-0 left-0 bottom-0 w-[224px] bg-[#0F172A] flex flex-col z-45"
         style={{
-          position: "fixed", top: 0, left: 0, bottom: 0, width: "224px",
-          background: "#0F172A", display: "flex", flexDirection: "column",
-          zIndex: 45,
           transform: mobileOpen ? "translateX(0)" : "translateX(-100%)",
           transition: "transform 0.25s ease",
         }}
       >
         <button
           onClick={() => setMobileOpen(false)}
-          style={{
-            position: "absolute", top: "14px", right: "14px",
-            background: "rgba(255,255,255,0.1)", border: "none",
-            borderRadius: "8px", width: "32px", height: "32px",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", color: "white",
-          }}
+          className="absolute top-3.5 right-3.5 bg-white/10 border-none rounded-lg w-8 h-8 flex items-center justify-center cursor-pointer text-white"
           aria-label="Cerrar menú"
         >
           <X size={16} />
@@ -179,15 +141,8 @@ export default function Sidebar({ agenteCount }: Props) {
         {sidebarContent(() => setMobileOpen(false))}
       </aside>
 
-      {/* ── Desktop sidebar (in flow) ─────────────── */}
-      <aside
-        className="hidden md:flex"
-        style={{
-          width: "224px", minWidth: "224px",
-          background: "#0F172A", flexDirection: "column",
-          height: "100%", flexShrink: 0,
-        }}
-      >
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-[224px] min-w-[224px] bg-[#0F172A] flex-col h-full flex-shrink-0">
         {sidebarContent()}
       </aside>
     </>
@@ -207,31 +162,24 @@ function NavItemLink({
     <Link
       href={item.href}
       onClick={onNavClick}
-      style={{
-        display: "flex", alignItems: "center", gap: "9px",
-        padding: "12px 10px", borderRadius: "8px",
-        fontSize: "13px",
-        fontWeight: isActive ? 600 : 500,
-        color: isActive ? "#FFFFFF" : "rgba(255,255,255,0.45)",
-        background: isActive ? "rgba(255,255,255,0.1)" : "transparent",
-        textDecoration: "none", marginBottom: "1px",
-        transition: "all 0.15s",
-      }}
-      className={!isActive ? "hover:bg-white/[0.06] hover:!text-white/75" : ""}
+      className={[
+        "flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-[13px] mb-0.5 transition-all duration-150 no-underline",
+        isActive
+          ? "bg-slate-800 text-white font-semibold border-l-2 border-blue-500 pl-[9px]"
+          : "text-white/45 font-medium hover:bg-slate-800/50 hover:text-white/75",
+      ].join(" ")}
     >
-      <item.icon size={15} style={{ flexShrink: 0 }} />
-      <span style={{ flex: 1 }}>{item.label}</span>
+      <item.icon size={15} className="flex-shrink-0" />
+      <span className="flex-1">{item.label}</span>
       {item.badge !== undefined && (
-        <span style={{
-          minWidth: "18px", height: "18px", borderRadius: "6px",
-          fontSize: "9px", fontWeight: 700,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          padding: "0 3px",
-          background: item.badgeVariant === "red"
-            ? "rgba(227,24,55,0.25)"
-            : "rgba(37,99,235,0.25)",
-          color: item.badgeVariant === "red" ? "#FF6B7A" : "#93BBFD",
-        }}>
+        <span
+          className={[
+            "min-w-[18px] h-[18px] rounded-md text-[9px] font-bold flex items-center justify-center px-1",
+            item.badgeVariant === "red"
+              ? "bg-red-500/25 text-red-300"
+              : "bg-blue-500/25 text-blue-300",
+          ].join(" ")}
+        >
           {item.badge}
         </span>
       )}

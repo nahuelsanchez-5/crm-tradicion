@@ -6,6 +6,7 @@ import { registrarEncuesta } from "./actions"
 import type { RegistroEncuestaData } from "./actions"
 import type { RegistroRow } from "./page"
 import { ClipboardList, TrendingUp, Star, X, Loader2, ChevronDown, ChevronRight } from "lucide-react"
+import KpiCardGlobal from "@/components/KpiCard"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -284,29 +285,23 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
 
         {/* ── KPI Cards ─────────────────────────── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px", marginBottom: "20px" }}>
-          <KpiCard
+          <KpiCardGlobal
             title={`Encuestas — ${MONTH_NAMES[mesActual - 1]}`}
             value={totalMes}
             badge={`${regMesActual.filter(r => r.tipo === "ESPONTANEA").length} espontáneas + ${regMesActual.filter(r => r.tipo === "MAILING").length} mailing`}
-            gradient="linear-gradient(135deg,#0D9488 0%,#0F766E 100%)"
-            shadowColor="rgba(13,148,136,0.3)"
-            icon={<ClipboardList size={20} color="white" />}
+            iconBg="bg-teal-50"
+            iconColor="text-teal-600"
+            icon={<ClipboardList size={18} />}
           />
-          <KpiCard
+          <KpiCardGlobal
             title="% Con NPS del mes"
             value={`${pctNpsMes}%`}
             badge={pctNpsMes >= objetivoPct ? `✓ Supera objetivo ${objetivoPct}%` : `Meta: ${objetivoPct}%`}
-            gradient={
-              pctNpsMes >= objetivoPct
-                ? "linear-gradient(135deg,#059669 0%,#047857 100%)"
-                : totalMes === 0
-                  ? "linear-gradient(135deg,#64748B 0%,#475569 100%)"
-                  : "linear-gradient(135deg,#E11D48 0%,#BE123C 100%)"
-            }
-            shadowColor={pctNpsMes >= objetivoPct ? "rgba(5,150,105,0.3)" : "rgba(225,29,72,0.3)"}
-            icon={<TrendingUp size={20} color="white" />}
+            iconBg={pctNpsMes >= objetivoPct ? "bg-emerald-50" : totalMes === 0 ? "bg-slate-50" : "bg-rose-50"}
+            iconColor={pctNpsMes >= objetivoPct ? "text-emerald-600" : totalMes === 0 ? "text-slate-500" : "text-rose-600"}
+            icon={<TrendingUp size={18} />}
           />
-          <KpiCard
+          <KpiCardGlobal
             title="NPS promedio del mes"
             value={npsMes !== null ? String(npsMes) : "—"}
             badge={
@@ -315,19 +310,9 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
               : npsMes >= 40  ? "Bueno"
               :                 "Por mejorar"
             }
-            gradient={
-              npsMes === null ? "linear-gradient(135deg,#64748B 0%,#475569 100%)"
-              : npsMes >= 70  ? "linear-gradient(135deg,#059669 0%,#047857 100%)"
-              : npsMes >= 40  ? "linear-gradient(135deg,#D97706 0%,#B45309 100%)"
-              :                  "linear-gradient(135deg,#E31837 0%,#9B0F26 100%)"
-            }
-            shadowColor={
-              npsMes === null ? "rgba(100,116,139,0.3)"
-              : npsMes >= 70  ? "rgba(5,150,105,0.3)"
-              : npsMes >= 40  ? "rgba(217,119,6,0.3)"
-              :                  "rgba(227,24,55,0.3)"
-            }
-            icon={<Star size={20} color="white" />}
+            iconBg={npsMes === null ? "bg-slate-50" : npsMes >= 70 ? "bg-emerald-50" : npsMes >= 40 ? "bg-amber-50" : "bg-rose-50"}
+            iconColor={npsMes === null ? "text-slate-500" : npsMes >= 70 ? "text-emerald-600" : npsMes >= 40 ? "text-amber-600" : "text-rose-600"}
+            icon={<Star size={18} />}
           />
         </div>
 

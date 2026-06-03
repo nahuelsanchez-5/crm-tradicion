@@ -205,34 +205,33 @@ function filterBtnStyle(key: string, selected: boolean): React.CSSProperties {
 
 // ── KPI box component ────────────────────────────────
 function KpiConcepto({
-  label, x, y, pct, color, gradient,
+  label, x, y, pct, color, gradient: _g,
 }: {
   label: string; x: number; y?: number; pct?: number; color: string; gradient: string
 }) {
+  const colorMap: Record<string, { bg: string; text: string; bar: string }> = {
+    "#E31837": { bg: "bg-rose-50",   text: "text-rose-600",   bar: "bg-rose-500" },
+    "#7C3AED": { bg: "bg-violet-50", text: "text-violet-600", bar: "bg-violet-500" },
+    "#0D9488": { bg: "bg-teal-50",   text: "text-teal-600",   bar: "bg-teal-500" },
+    "#D97706": { bg: "bg-amber-50",  text: "text-amber-600",  bar: "bg-amber-500" },
+  }
+  const { bg, text, bar } = colorMap[color] ?? { bg: "bg-slate-50", text: "text-slate-600", bar: "bg-slate-400" }
   return (
-    <div style={{
-      background: gradient, borderRadius: "14px",
-      padding: "16px 18px", color: "white",
-      boxShadow: `0 6px 20px ${color}55`,
-      position: "relative", overflow: "hidden",
-    }}>
-      <div style={{ position: "absolute", top: "-15px", right: "-15px", width: "80px", height: "80px",
-        borderRadius: "50%", background: "rgba(255,255,255,0.08)" }} />
-      <div style={{ fontSize: "11px", fontWeight: 600, opacity: 0.8, marginBottom: "6px",
-        textTransform: "uppercase" as const, letterSpacing: "0.6px" }}>
-        {label}
-      </div>
-      <div style={{ fontSize: "26px", fontWeight: 800, letterSpacing: "-0.5px", lineHeight: 1 }}>
-        {y !== undefined ? `${x}/${y}` : String(x)}
-        <span style={{ fontSize: "14px", fontWeight: 500, opacity: 0.75, marginLeft: "4px" }}>cobrados</span>
+    <div className={`${bg} rounded-2xl border border-slate-200 p-5 flex flex-col gap-2.5 hover:shadow-md transition-shadow duration-200 min-h-[110px]`}>
+      <p className={`text-[10.5px] font-bold uppercase tracking-wider ${text} m-0`}>{label}</p>
+      <div>
+        <p className={`text-3xl font-bold ${text} leading-none tracking-tight m-0`}>
+          {y !== undefined ? `${x}/${y}` : String(x)}
+        </p>
+        <p className={`text-[11px] font-medium ${text} opacity-70 mt-0.5 m-0`}>cobrados</p>
       </div>
       {pct !== undefined && (
-        <>
-          <ProgressBar pct={pct} />
-          <div style={{ fontSize: "12px", fontWeight: 700, marginTop: "4px", opacity: 0.9 }}>
-            {pct}% cobranza
+        <div>
+          <div className="h-1.5 rounded-full bg-white/60 overflow-hidden mt-1">
+            <div className={`h-full rounded-full ${bar}`} style={{ width: `${Math.min(100, pct)}%` }} />
           </div>
-        </>
+          <p className={`text-[11px] font-bold mt-1 m-0 ${text}`}>{pct}% cobranza</p>
+        </div>
       )}
     </div>
   )

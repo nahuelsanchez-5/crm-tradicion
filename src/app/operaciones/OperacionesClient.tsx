@@ -352,17 +352,17 @@ export default function OperacionesClient({ operaciones }: Props) {
             title="Operaciones del período"
             value={String(stats.total)}
             badge={`${stats.ventas} ventas · ${stats.alquileres} alquileres`}
-            gradient="linear-gradient(135deg,#2563EB 0%,#1D4ED8 100%)"
-            shadowColor="rgba(37,99,235,0.3)"
-            icon={<Building2 size={20} color="white" />}
+            iconBg="bg-blue-50"
+            iconColor="text-blue-600"
+            icon={<Building2 size={18} />}
           />
           <KpiCard
             title="Comisiones brutas"
             value={fmtUSD(stats.totalComisiones)}
             badge="total del período"
-            gradient="linear-gradient(135deg,#0D9488 0%,#0F766E 100%)"
-            shadowColor="rgba(13,148,136,0.3)"
-            icon={<DollarSign size={20} color="white" />}
+            iconBg="bg-teal-50"
+            iconColor="text-teal-600"
+            icon={<DollarSign size={18} />}
           />
         </div>
 

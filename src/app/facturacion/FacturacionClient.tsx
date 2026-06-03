@@ -286,31 +286,25 @@ export default function FacturacionClient({ rows }: Props) {
             title="Facturación anual acumulada"
             value={fmtUSD(stats.totalReal)}
             badge={`de ${fmtUSD(stats.totalObj)} objetivo`}
-            gradient="linear-gradient(135deg,#0D9488 0%,#0F766E 100%)"
-            shadowColor="rgba(13,148,136,0.3)"
-            icon={<DollarSign size={20} color="white" />}
+            iconBg="bg-teal-50"
+            iconColor="text-teal-600"
+            icon={<DollarSign size={18} />}
           />
           <KpiCard
             title="% Cumplimiento anual"
             value={`${stats.pctAnual}%`}
             badge={stats.pctAnual >= 100 ? "✓ Objetivo superado" : stats.pctAnual >= 80 ? "Buen ritmo" : "Por mejorar"}
-            gradient={
-              stats.pctAnual >= 100
-                ? "linear-gradient(135deg,#059669 0%,#047857 100%)"
-                : stats.pctAnual >= 80
-                  ? "linear-gradient(135deg,#7C3AED 0%,#5B21B6 100%)"
-                  : "linear-gradient(135deg,#D97706 0%,#B45309 100%)"
-            }
-            shadowColor={stats.pctAnual >= 100 ? "rgba(5,150,105,0.3)" : stats.pctAnual >= 80 ? "rgba(124,58,237,0.3)" : "rgba(217,119,6,0.3)"}
-            icon={<TrendingUp size={20} color="white" />}
+            iconBg={stats.pctAnual >= 100 ? "bg-emerald-50" : stats.pctAnual >= 80 ? "bg-violet-50" : "bg-amber-50"}
+            iconColor={stats.pctAnual >= 100 ? "text-emerald-600" : stats.pctAnual >= 80 ? "text-violet-600" : "text-amber-600"}
+            icon={<TrendingUp size={18} />}
           />
           <KpiCard
             title="Mejor mes"
             value={stats.mejorMes ? stats.mejorMes.nombre : "—"}
             badge={stats.mejorMes ? fmtUSD(stats.mejorMes.real_usd) : "Sin datos"}
-            gradient="linear-gradient(135deg,#E31837 0%,#9B0F26 100%)"
-            shadowColor="rgba(227,24,55,0.3)"
-            icon={<Award size={20} color="white" />}
+            iconBg="bg-rose-50"
+            iconColor="text-rose-600"
+            icon={<Award size={18} />}
           />
         </div>
 

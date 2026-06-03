@@ -262,29 +262,25 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
             title="Total carteles activos"
             value={stats.total}
             badge="En Airtable"
-            gradient="linear-gradient(135deg,#0D9488 0%,#0F766E 100%)"
-            shadowColor="rgba(13,148,136,0.3)"
-            icon={<MapPin size={20} color="white" />}
+            iconBg="bg-teal-50"
+            iconColor="text-teal-600"
+            icon={<MapPin size={18} />}
           />
           <KpiCard
             title="Vencen en menos de 10 días"
             value={stats.urgentes}
             badge={stats.urgentes > 0 ? "Atención requerida" : "Sin urgencias"}
-            gradient={
-              stats.urgentes > 0
-                ? "linear-gradient(135deg,#E11D48 0%,#BE123C 100%)"
-                : "linear-gradient(135deg,#059669 0%,#047857 100%)"
-            }
-            shadowColor={stats.urgentes > 0 ? "rgba(225,29,72,0.3)" : "rgba(5,150,105,0.3)"}
-            icon={<AlertTriangle size={20} color="white" />}
+            iconBg={stats.urgentes > 0 ? "bg-rose-50" : "bg-emerald-50"}
+            iconColor={stats.urgentes > 0 ? "text-rose-600" : "text-emerald-600"}
+            icon={<AlertTriangle size={18} />}
           />
           <KpiCard
             title="Agente con más carteles"
             value={stats.top ? stats.top[0].split(" ")[0] : "—"}
             badge={stats.top ? `${stats.top[1]} cartel${stats.top[1] !== 1 ? "es" : ""}` : "Sin datos"}
-            gradient="linear-gradient(135deg,#E31837 0%,#9B0F26 100%)"
-            shadowColor="rgba(227,24,55,0.3)"
-            icon={<Award size={20} color="white" />}
+            iconBg="bg-rose-50"
+            iconColor="text-rose-600"
+            icon={<Award size={18} />}
           />
         </div>
 

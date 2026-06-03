@@ -6,20 +6,16 @@ import Image from "next/image"
 import Link from "next/link"
 import { Users, Building2, DollarSign, Handshake, Clock } from "lucide-react"
 
-// ── Mes actual dinámico ────────────────────────────────
-const _now     = new Date()
-const MES      = _now.getMonth() + 1
-const ANIO     = _now.getFullYear()
+const _now      = new Date()
+const MES       = _now.getMonth() + 1
+const ANIO      = _now.getFullYear()
 const MES_NAMES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
                    "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
 const MES_LABEL = `${MES_NAMES[MES - 1]} ${ANIO}`
 
-// ── Helpers ───────────────────────────────────────────
 function fmtUSD(n: number): string {
   const rounded = Math.round(n * 100) / 100
-  if (rounded === Math.floor(rounded)) {
-    return `USD ${rounded.toLocaleString("es-AR")}`
-  }
+  if (rounded === Math.floor(rounded)) return `USD ${rounded.toLocaleString("es-AR")}`
   return `USD ${rounded.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
@@ -48,7 +44,6 @@ function extractPlan(concepto: string) {
   return match ? match[1] : "—"
 }
 
-// ── Tipos ─────────────────────────────────────────────
 interface PagoRow {
   concepto: string
   monto_debe: number
@@ -80,51 +75,31 @@ export interface OfertaActiva {
   estado: string
 }
 
-// ── Estilos ───────────────────────────────────────────
-const cardStyle: React.CSSProperties = {
-  background: "white", borderRadius: "14px",
-  border: "1.5px solid #EAECF2", overflow: "hidden",
-}
-
-const cardHeaderStyle: React.CSSProperties = {
-  display: "flex", alignItems: "center", justifyContent: "space-between",
-  padding: "14px 18px", borderBottom: "1px solid #EAECF2",
-}
-
-function colorDot(color: string) {
-  return <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: color, flexShrink: 0 }} />
-}
-
-function Tag({ estado }: { estado: string }) {
-  const styles: Record<string, React.CSSProperties> = {
-    Pendiente: { background: "#FFF1F2", color: "#E11D48" },
-    Parcial:   { background: "#FFFBEB", color: "#D97706" },
-    Pagado:    { background: "#ECFDF5", color: "#059669" },
+function StatusBadge({ estado }: { estado: string }) {
+  const map: Record<string, string> = {
+    Pendiente: "bg-rose-50 text-rose-600 border-rose-200",
+    Parcial:   "bg-amber-50 text-amber-600 border-amber-200",
+    Pagado:    "bg-emerald-50 text-emerald-600 border-emerald-200",
+    "PRO+":    "bg-violet-50 text-violet-600 border-violet-200",
+    PRO:       "bg-cyan-50 text-cyan-600 border-cyan-200",
+    B_QR:      "bg-cyan-50 text-cyan-600 border-cyan-200",
+    B_OFI:     "bg-cyan-50 text-cyan-600 border-cyan-200",
   }
-  const planStyles: Record<string, React.CSSProperties> = {
-    "PRO+":  { background: "#F5F3FF", color: "#7C3AED" },
-    "PRO":   { background: "#ECFEFF", color: "#0891B2" },
-    "B_QR":  { background: "#ECFEFF", color: "#0891B2" },
-    "B_OFI": { background: "#ECFEFF", color: "#0891B2" },
-  }
-  const base = styles[estado] ?? planStyles[estado] ?? { background: "#F1F5F9", color: "#64748B" }
+  const cls = map[estado] ?? "bg-slate-50 text-slate-600 border-slate-200"
   return (
-    <span style={{ ...base, display: "inline-flex", alignItems: "center", padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700 }}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${cls}`}>
       {estado}
     </span>
   )
 }
 
-// ═══════════════════════════════════════════════════════
-//  PAGE
-// ═══════════════════════════════════════════════════════
 export default async function DashboardPage() {
   const supabase = createServerClient()
 
-  const mesStr     = String(MES).padStart(2, "0")
+  const mesStr       = String(MES).padStart(2, "0")
   const mesSiguiente = String(MES === 12 ? 1 : MES + 1).padStart(2, "0")
-  const anioSig    = MES === 12 ? ANIO + 1 : ANIO
-  const cutoff5d   = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+  const anioSig      = MES === 12 ? ANIO + 1 : ANIO
+  const cutoff5d     = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
 
   const [
     { data: agentesData },
@@ -139,25 +114,19 @@ export default async function DashboardPage() {
     { data: encuestasData },
     { data: pagosRaw },
   ] = await Promise.all([
-
     supabase.from("agentes").select("id").eq("activo", true),
-
     supabase.from("agentes").select("id, nombre").eq("activo", true).order("nombre"),
-
     supabase.from("operaciones").select("id")
       .gte("fecha", `${ANIO}-${mesStr}-01`)
       .lt("fecha",  `${anioSig}-${mesSiguiente}-01`),
-
     supabase.from("facturacion")
       .select("objetivo_usd, real_usd")
       .eq("mes", MES).eq("anio", ANIO)
       .maybeSingle(),
-
     supabase.from("ofertas")
       .select("id", { count: "exact", head: true })
       .neq("estado", "Cerradas")
       .neq("estado", "Caídas"),
-
     supabase.from("ofertas")
       .select("id, numero, direccion, estado, updated_at")
       .neq("estado", "Cerradas")
@@ -165,29 +134,24 @@ export default async function DashboardPage() {
       .lt("updated_at", cutoff5d)
       .order("updated_at", { ascending: true })
       .limit(10),
-
     supabase.from("ofertas")
       .select("id, numero, direccion, estado")
       .neq("estado", "Cerradas")
       .neq("estado", "Caídas")
       .order("numero", { ascending: false })
       .limit(50),
-
     supabase.from("operaciones")
       .select("fecha, direccion, agentes, tipo, comision_neta")
       .order("fecha", { ascending: false })
       .limit(5),
-
     supabase.from("carteles")
       .select("total_entregados, total_recuperados")
       .eq("mes", MES).eq("anio", ANIO)
       .maybeSingle(),
-
     supabase.from("encuestas")
       .select("total_enviadas, total_respondidas")
       .eq("mes", MES).eq("anio", ANIO)
       .maybeSingle(),
-
     supabase.from("pagos")
       .select("concepto, monto_debe, monto_pagado, estado, agentes(nombre)")
       .in("estado", ["Pendiente", "Parcial"])
@@ -195,7 +159,6 @@ export default async function DashboardPage() {
       .limit(5),
   ])
 
-  // ── Derived ───────────────────────────────────────────
   const agentesCount        = agentesData?.length ?? 0
   const opsMesCount         = opsMesData?.length  ?? 0
   const ofertasEnCurso      = ofertasEnCursoCount ?? 0
@@ -205,101 +168,89 @@ export default async function DashboardPage() {
   const factReal  = Number(facturacionData?.real_usd  ?? 0)
   const factObj   = Number(facturacionData?.objetivo_usd ?? 1)
   const factLabel = fmtUSD(factReal)
-  const factBadge = facturacionData
-    ? `${Math.round((factReal / factObj) * 100)}% obj.`
-    : "—"
+  const factPct   = facturacionData ? Math.round((factReal / factObj) * 100) : null
 
-  const opsFeed   = (opsFeedRaw  ?? []) as OperacionRow[]
-  const pagos     = ((pagosRaw   ?? []) as unknown) as PagoRow[]
+  const opsFeed   = (opsFeedRaw ?? []) as OperacionRow[]
+  const pagos     = ((pagosRaw  ?? []) as unknown) as PagoRow[]
   const agentesForActions = (agentesListData ?? []) as { id: string; nombre: string }[]
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    <div className="flex flex-col h-full">
 
-      {/* ── Header ─────────────────────────────────── */}
-      <div style={{
-        display: "grid", gridTemplateColumns: "1fr auto 1fr",
-        alignItems: "center", minHeight: "62px", padding: "0 24px",
-        background: "white", borderBottom: "1px solid #EAECF2", flexShrink: 0,
-      }}>
+      {/* Header */}
+      <div className="grid bg-white border-b border-slate-200 flex-shrink-0 px-6"
+        style={{ gridTemplateColumns: "1fr auto 1fr", alignItems: "center", minHeight: "62px" }}
+      >
         <DashboardClock />
         <Image
           src="/logo.png" alt="REMAX Tradición"
-          width={280} height={88}
-          style={{ objectFit: "contain", maxWidth: "280px", height: "auto", display: "block" }}
+          width={240} height={76}
+          style={{ objectFit: "contain", maxWidth: "240px", height: "auto", display: "block" }}
           priority
         />
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <div style={{
-            display: "flex", alignItems: "center", gap: "6px",
-            background: "#F0F2F7", border: "1.5px solid #EAECF2",
-            borderRadius: "8px", padding: "5px 12px",
-            fontSize: "12.5px", fontWeight: 600, color: "#0F172A",
-          }}>
-            📅 {MES_LABEL}
+        <div className="flex justify-end">
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-[12.5px] font-semibold text-slate-700">
+            <span className="text-slate-400">📅</span>
+            {MES_LABEL}
           </div>
         </div>
       </div>
 
-      {/* ── Content ──────────────────────────────────── */}
-      <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
+      {/* Content */}
+      <div className="flex-1 overflow-auto p-6">
 
-        {/* ── KPI Grid ─────────────────────────────── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "14px", marginBottom: "20px" }}>
+        {/* KPI Grid */}
+        <div className="grid grid-cols-4 gap-4 mb-6">
           <KpiCard
             title="Agentes activos"
             value={agentesCount}
-            badge="= Sin cambios"
-            gradient="linear-gradient(135deg, #E31837 0%, #9B0F26 100%)"
-            shadowColor="rgba(227,24,55,0.35)"
-            icon={<Users size={20} color="white" />}
+            iconBg="bg-rose-50"
+            iconColor="text-rose-600"
+            icon={<Users size={18} />}
+            trend="Sin cambios"
           />
           <KpiCard
             title="Ofertas en curso"
             value={ofertasEnCurso}
-            badge="Activas"
-            gradient="linear-gradient(135deg, #D97706 0%, #B45309 100%)"
-            shadowColor="rgba(217,119,6,0.3)"
-            icon={<Handshake size={20} color="white" />}
+            iconBg="bg-amber-50"
+            iconColor="text-amber-600"
+            icon={<Handshake size={18} />}
+            trend="Activas"
           />
           <KpiCard
             title="Operaciones del mes"
             value={opsMesCount}
-            badge={`↑ ${MES_LABEL}`}
-            gradient="linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)"
-            shadowColor="rgba(124,58,237,0.3)"
-            icon={<Building2 size={20} color="white" />}
+            iconBg="bg-violet-50"
+            iconColor="text-violet-600"
+            icon={<Building2 size={18} />}
+            trend={`↑ ${MES_LABEL}`}
+            trendUp
           />
           <KpiCard
             title="Facturación USD"
             value={factLabel}
-            badge={factBadge}
-            gradient="linear-gradient(135deg, #0D9488 0%, #0F766E 100%)"
-            shadowColor="rgba(13,148,136,0.3)"
-            icon={<DollarSign size={20} color="white" />}
+            iconBg="bg-teal-50"
+            iconColor="text-teal-600"
+            icon={<DollarSign size={18} />}
+            badge={factPct !== null ? `${factPct}% obj.` : undefined}
+            trend={factPct !== null ? (factPct >= 100 ? "↑ Objetivo alcanzado" : `${factPct}% del objetivo`) : undefined}
+            trendUp={factPct !== null && factPct >= 100}
           />
         </div>
 
-        {/* ── Accesos rápidos ──────────────────────── */}
-        <DashboardActions
-          agentes={agentesForActions}
-          ofertasActivas={ofertasActivas}
-        />
+        {/* Quick actions */}
+        <DashboardActions agentes={agentesForActions} ofertasActivas={ofertasActivas} />
 
-        {/* ── Ofertas sin actividad +5 días ────────── */}
+        {/* Ofertas sin actividad +5 días */}
         {ofertasSinActividad.length > 0 && (
-          <div style={{ ...cardStyle, marginBottom: "20px" }}>
-            <div style={{ ...cardHeaderStyle }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <Clock size={14} color="#D97706" />
-                <h2 style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A", margin: 0 }}>
-                  Ofertas sin actividad +5 días
-                </h2>
-                <span style={{
-                  background: "#FEF3C7", color: "#D97706",
-                  padding: "2px 8px", borderRadius: "20px",
-                  fontSize: "11px", fontWeight: 700,
-                }}>
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm mb-6 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center">
+                  <Clock size={14} className="text-amber-600" />
+                </div>
+                <h2 className="text-[14px] font-bold text-slate-900 m-0">Ofertas sin actividad +5 días</h2>
+                <span className="bg-amber-100 text-amber-700 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-amber-200">
                   {ofertasSinActividad.length}
                 </span>
               </div>
@@ -308,35 +259,22 @@ export default async function DashboardPage() {
               {ofertasSinActividad.map((o, i) => (
                 <div
                   key={o.id}
-                  style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    padding: "12px 18px",
-                    borderBottom: i < ofertasSinActividad.length - 1 ? "1px solid #F3F4F6" : "none",
-                  }}
+                  className={`flex items-center justify-between px-5 py-3.5 hover:bg-slate-50/80 transition-colors duration-150 ${i < ofertasSinActividad.length - 1 ? "border-b border-slate-100" : ""}`}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <span style={{
-                      background: "#F8F9FC", border: "1.5px solid #EAECF2",
-                      borderRadius: "6px", padding: "2px 8px",
-                      fontSize: "11px", fontWeight: 700, color: "#64748B",
-                    }}>
+                  <div className="flex items-center gap-3">
+                    <span className="bg-slate-50 border border-slate-200 rounded-md px-2 py-0.5 text-[11px] font-bold text-slate-500">
                       #{o.numero}
                     </span>
                     <div>
-                      <div style={{ fontSize: "13px", fontWeight: 600, color: "#0F172A" }}>{o.direccion}</div>
-                      <div style={{ fontSize: "11px", color: "#94A3B8", marginTop: "1px" }}>
+                      <p className="text-[13px] font-semibold text-slate-900 m-0">{o.direccion}</p>
+                      <p className="text-[11px] text-slate-400 mt-0.5 m-0">
                         {o.estado} · Última act. {fmtFechaRelativa(o.updated_at)}
-                      </div>
+                      </p>
                     </div>
                   </div>
                   <Link
                     href={`/ofertas/${o.id}`}
-                    style={{
-                      padding: "6px 14px", borderRadius: "8px",
-                      background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
-                      color: "white", fontSize: "12px", fontWeight: 700,
-                      textDecoration: "none",
-                    }}
+                    className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[12px] font-semibold no-underline transition-colors duration-150"
                   >
                     Actualizar →
                   </Link>
@@ -346,37 +284,33 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* ── Bottom 2-col ─────────────────────────── */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: "16px" }}>
+        {/* Bottom 2-col */}
+        <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 340px" }}>
 
-          {/* Left */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {/* Left column */}
+          <div className="flex flex-col gap-4">
 
             {/* Pagos pendientes */}
-            <div style={cardStyle}>
-              <div style={cardHeaderStyle}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  {colorDot("#E11D48")}
-                  <h2 style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A", margin: 0 }}>
-                    Pagos pendientes — {MES_LABEL}
-                  </h2>
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-2 h-2 rounded-full bg-rose-500" />
+                  <h2 className="text-[14px] font-bold text-slate-900 m-0">Pagos pendientes — {MES_LABEL}</h2>
                 </div>
-                <span style={{ fontSize: "12px", color: "#64748B", fontWeight: 500, cursor: "pointer" }}>
+                <Link href="/pagos" className="text-[12px] text-slate-500 font-medium no-underline hover:text-slate-700 transition-colors">
                   Ver todos →
-                </span>
+                </Link>
               </div>
               {pagos.length === 0 ? (
-                <div style={{ padding: "28px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
+                <div className="px-5 py-8 text-center text-slate-400 text-[13px]">
                   ✓ No hay pagos pendientes este mes
                 </div>
               ) : (
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <table className="w-full border-collapse crm-table">
                   <thead>
-                    <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
+                    <tr>
                       {["Agente", "Plan", "Debe", "Pagado", "Estado"].map(h => (
-                        <th key={h} style={{ padding: "9px 18px", textAlign: "left", fontSize: "10.5px", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.8px", color: "#94A3B8" }}>
-                          {h}
-                        </th>
+                        <th key={h}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -385,17 +319,16 @@ export default async function DashboardPage() {
                       const agentesField = p.agentes as { nombre: string } | null
                       const nombre = agentesField?.nombre ?? "—"
                       const plan   = extractPlan(p.concepto)
-                      const isLast = i === pagos.length - 1
                       return (
-                        <tr key={i} style={{ borderBottom: isLast ? "none" : "1px solid #F3F4F6" }}>
-                          <td style={{ padding: "12px 18px" }}>
-                            <div style={{ fontWeight: 600, fontSize: "13px", color: "#0F172A" }}>{nombre}</div>
-                            <div style={{ fontSize: "11px", color: "#64748B", marginTop: "1px" }}>{MES_LABEL}</div>
+                        <tr key={i}>
+                          <td>
+                            <p className="font-semibold text-slate-900 m-0">{nombre}</p>
+                            <p className="text-[11px] text-slate-400 mt-0.5 m-0">{MES_LABEL}</p>
                           </td>
-                          <td style={{ padding: "12px 18px" }}><Tag estado={plan} /></td>
-                          <td style={{ padding: "12px 18px", fontWeight: 700, fontSize: "13px", color: "#0F172A" }}>{fmtUSD(p.monto_debe)}</td>
-                          <td style={{ padding: "12px 18px", fontSize: "13px", color: "#64748B" }}>{fmtUSD(p.monto_pagado)}</td>
-                          <td style={{ padding: "12px 18px" }}><Tag estado={p.estado} /></td>
+                          <td><StatusBadge estado={plan} /></td>
+                          <td className="font-bold text-slate-900">{fmtUSD(p.monto_debe)}</td>
+                          <td className="text-slate-500">{fmtUSD(p.monto_pagado)}</td>
+                          <td><StatusBadge estado={p.estado} /></td>
                         </tr>
                       )
                     })}
@@ -405,25 +338,21 @@ export default async function DashboardPage() {
             </div>
 
             {/* Mini stats */}
-            <div style={cardStyle}>
-              <div style={cardHeaderStyle}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  {colorDot("#2563EB")}
-                  <h2 style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A", margin: 0 }}>
-                    Resumen rápido — {MES_LABEL}
-                  </h2>
-                </div>
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+              <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100">
+                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                <h2 className="text-[14px] font-bold text-slate-900 m-0">Resumen rápido — {MES_LABEL}</h2>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", padding: "16px" }}>
+              <div className="grid grid-cols-4 gap-3 p-4">
                 {[
-                  { n: cartelesData?.total_entregados  ?? 0, label: "Carteles entregados",  bg: "#FFF1F2", color: "#E11D48" },
-                  { n: cartelesData?.total_recuperados ?? 0, label: "Carteles recuperados", bg: "#F0FDF4", color: "#059669" },
-                  { n: encuestasData?.total_enviadas   ?? 0, label: "Encuestas enviadas",   bg: "#EFF6FF", color: "#2563EB" },
-                  { n: encuestasData?.total_respondidas ?? 0, label: "Encuestas resp.",     bg: "#FFFBEB", color: "#D97706" },
-                ].map(({ n, label, bg, color }) => (
-                  <div key={label} style={{ background: bg, borderRadius: "12px", padding: "14px", textAlign: "center" }}>
-                    <div style={{ fontSize: "22px", fontWeight: 800, color, letterSpacing: "-0.5px" }}>{n}</div>
-                    <div style={{ fontSize: "10.5px", fontWeight: 600, color, opacity: 0.75, marginTop: "2px" }}>{label}</div>
+                  { n: cartelesData?.total_entregados  ?? 0, label: "Carteles entregados",  cls: "bg-rose-50 text-rose-600" },
+                  { n: cartelesData?.total_recuperados ?? 0, label: "Carteles recuperados", cls: "bg-emerald-50 text-emerald-600" },
+                  { n: encuestasData?.total_enviadas   ?? 0, label: "Encuestas enviadas",   cls: "bg-blue-50 text-blue-600" },
+                  { n: encuestasData?.total_respondidas ?? 0, label: "Encuestas resp.",     cls: "bg-amber-50 text-amber-600" },
+                ].map(({ n, label, cls }) => (
+                  <div key={label} className={`${cls} rounded-xl p-4 text-center`}>
+                    <p className="text-[22px] font-bold leading-none m-0">{n}</p>
+                    <p className="text-[10.5px] font-semibold mt-1.5 m-0 opacity-80">{label}</p>
                   </div>
                 ))}
               </div>
@@ -431,19 +360,19 @@ export default async function DashboardPage() {
           </div>
 
           {/* Right — Operaciones feed */}
-          <div style={{ ...cardStyle, display: "flex", flexDirection: "column" }}>
-            <div style={cardHeaderStyle}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                {colorDot("#0D9488")}
-                <h2 style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A", margin: 0 }}>
-                  Últimas operaciones
-                </h2>
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-2 h-2 rounded-full bg-teal-500" />
+                <h2 className="text-[14px] font-bold text-slate-900 m-0">Últimas operaciones</h2>
               </div>
-              <span style={{ fontSize: "12px", color: "#64748B", fontWeight: 500, cursor: "pointer" }}>Ver todas</span>
+              <Link href="/operaciones" className="text-[12px] text-slate-500 font-medium no-underline hover:text-slate-700 transition-colors">
+                Ver todas
+              </Link>
             </div>
-            <div style={{ flex: 1 }}>
+            <div className="flex-1">
               {opsFeed.length === 0 ? (
-                <div style={{ padding: "28px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
+                <div className="px-5 py-8 text-center text-slate-400 text-[13px]">
                   No hay operaciones registradas
                 </div>
               ) : (
@@ -451,17 +380,18 @@ export default async function DashboardPage() {
                   const isLast = i === opsFeed.length - 1
                   const color  = tipoColor(op.tipo)
                   return (
-                    <div key={i} style={{ display: "flex", gap: "12px", padding: "12px 18px", borderBottom: isLast ? "none" : "1px solid #F3F4F6" }}>
-                      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: "3px" }}>
-                        <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: color, flexShrink: 0 }} />
-                        {!isLast && <div style={{ width: "1.5px", flex: 1, background: "#EAECF2", marginTop: "4px" }} />}
+                    <div key={i} className={`flex gap-3 px-5 py-3.5 ${!isLast ? "border-b border-slate-100" : ""} hover:bg-slate-50/60 transition-colors duration-150`}>
+                      <div className="flex flex-col items-center pt-1">
+                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
+                        {!isLast && <div className="w-px flex-1 bg-slate-200 mt-1" />}
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#0F172A", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{op.direccion}</div>
-                        <div style={{ fontSize: "11px", color: "#64748B", marginTop: "1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{op.tipo} · {op.agentes}</div>
-                        <div style={{ fontSize: "10.5px", color: "#94A3B8", marginTop: "2px" }}>
-                          {fmtFecha(op.fecha)} · <strong style={{ color }}>{fmtUSD(op.comision_neta)}</strong>
-                        </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12.5px] font-semibold text-slate-900 truncate m-0">{op.direccion}</p>
+                        <p className="text-[11px] text-slate-500 mt-0.5 truncate m-0">{op.tipo} · {op.agentes}</p>
+                        <p className="text-[10.5px] text-slate-400 mt-1 m-0">
+                          {fmtFecha(op.fecha)} ·{" "}
+                          <span className="font-semibold" style={{ color }}>{fmtUSD(op.comision_neta)}</span>
+                        </p>
                       </div>
                     </div>
                   )
