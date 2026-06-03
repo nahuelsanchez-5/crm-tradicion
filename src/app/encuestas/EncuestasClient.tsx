@@ -61,35 +61,6 @@ function mesNombre(key: string): string {
   return `${MONTH_NAMES[parseInt(m) - 1]} ${y}`
 }
 
-// ── Sub-components ───────────────────────────────────
-function KpiCard({
-  title, value, badge, gradient, shadowColor, icon,
-}: {
-  title: string; value: string | number; badge: string
-  gradient: string; shadowColor: string; icon: React.ReactNode
-}) {
-  return (
-    <div style={{
-      background: gradient, borderRadius: "14px",
-      padding: "18px 20px", color: "white",
-      boxShadow: `0 6px 20px ${shadowColor}`,
-      position: "relative", overflow: "hidden",
-    }}>
-      <div style={{ position: "absolute", top: "-15px", right: "-15px", width: "80px", height: "80px",
-        borderRadius: "50%", background: "rgba(255,255,255,0.08)" }} />
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
-        <div style={{ fontSize: "11px", fontWeight: 600, opacity: 0.8, textTransform: "uppercase" as const,
-          letterSpacing: "0.6px" }}>
-          {title}
-        </div>
-        <div style={{ opacity: 0.85 }}>{icon}</div>
-      </div>
-      <div style={{ fontSize: "32px", fontWeight: 800, letterSpacing: "-0.5px", lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: "12px", opacity: 0.85, marginTop: "6px", fontWeight: 500 }}>{badge}</div>
-    </div>
-  )
-}
-
 function NpsBadge({ nps }: { nps: number | null }) {
   const color = npsColor(nps)
   const bg    = nps === null ? "#F1F5F9" : nps >= 50 ? "#ECFDF5" : nps >= 0 ? "#FFFBEB" : "#FFF1F2"
