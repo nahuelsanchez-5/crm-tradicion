@@ -61,6 +61,13 @@ const PLAN_STYLES: Record<string, { bg: string; color: string }> = {
   "B_OFI": { bg: "#FFFBEB", color: "#D97706" },
 }
 
+const PLAN_LABELS: Record<string, string> = {
+  "PRO":   "CRM PRO",
+  "PRO+":  "CRM PRO+",
+  "B_QR":  "Bonificación QR",
+  "B_OFI": "Bonificación Oficina",
+}
+
 const AVATAR_GRADIENTS = [
   "linear-gradient(135deg,#E31837,#c0122d)",
   "linear-gradient(135deg,#7C3AED,#5b21b6)",
@@ -118,11 +125,15 @@ function getEfectivoPagaFee(ag: AgenteConPlan): boolean {
 
 // ── Sub-components ───────────────────────────────────
 function PlanBadge({ plan }: { plan: string | null }) {
-  if (!plan) return <span style={{ color: "#94A3B8", fontSize: "11px", fontStyle: "italic" }}>Sin plan</span>
+  if (!plan) return (
+    <span style={{ background: "#F1F5F9", color: "#94A3B8", padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700, display: "inline-block" }}>
+      Sin licencia
+    </span>
+  )
   const s = PLAN_STYLES[plan] ?? { bg: "#F1F5F9", color: "#64748B" }
   return (
     <span style={{ ...s, padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700, display: "inline-block" }}>
-      {plan}
+      {PLAN_LABELS[plan] ?? plan}
     </span>
   )
 }
@@ -447,7 +458,7 @@ export default function AgentesClient({
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
-                  {["Nombre", "Fecha alta", "Antigüedad", "Plan", "Paga FEE", "Facturación año", "Estado", "WA", ""].map(h => (
+                  {["Nombre", "Fecha alta", "Antigüedad", "Licencia CRM", "Paga FEE", "Facturación año", "Estado", "WA", ""].map(h => (
                     <th key={h} style={{
                       padding: "10px 16px", textAlign: "left",
                       fontSize: "10.5px", fontWeight: 700,
