@@ -27,14 +27,17 @@ interface NavItem {
 }
 
 const BASE_NAV: NavItem[] = [
-  { href: "/",              label: "Dashboard",    icon: LayoutDashboard },
-  { href: "/ofertas",       label: "Ofertas",      icon: Handshake },
-  { href: "/pagos",         label: "Cuentas",      icon: CreditCard },
-  { href: "/carteleria",    label: "Cartelería",   icon: MapPin },
-  { href: "/encuestas",     label: "Encuestas",    icon: ClipboardList },
-  { href: "/agentes",       label: "Agentes",      icon: Users },
-  { href: "/operaciones",   label: "Operaciones",  icon: Building2 },
-  { href: "/configuracion", label: "Configuración",icon: Settings },
+  { href: "/",            label: "Dashboard",   icon: LayoutDashboard },
+  { href: "/ofertas",     label: "Ofertas",     icon: Handshake },
+  { href: "/pagos",       label: "Cuentas",     icon: CreditCard },
+  { href: "/carteleria",  label: "Cartelería",  icon: MapPin },
+  { href: "/encuestas",   label: "Encuestas",   icon: ClipboardList },
+  { href: "/agentes",     label: "Agentes",     icon: Users },
+  { href: "/operaciones", label: "Operaciones", icon: Building2 },
+]
+
+const SYSTEM_NAV: NavItem[] = [
+  { href: "/configuracion", label: "Configuración", icon: Settings },
 ]
 
 interface Props {
@@ -79,14 +82,18 @@ export default function Sidebar({ agenteCount }: Props) {
           />
         ))}
 
-        <p className="text-[9.5px] font-bold tracking-[1.5px] uppercase text-white/25 px-2 pb-2 pt-5">
+        <div className="my-3 border-t border-slate-800" />
+        <p className="text-[9.5px] font-bold tracking-[1.5px] uppercase text-white/25 px-2 pb-2">
           Sistema
         </p>
-        <NavItemLink
-          item={{ href: "/configuracion", label: "Configuración", icon: Settings }}
-          isActive={pathname === "/configuracion"}
-          onNavClick={onNavClick}
-        />
+        {SYSTEM_NAV.map(item => (
+          <NavItemLink
+            key={item.href}
+            item={item}
+            isActive={pathname === item.href}
+            onNavClick={onNavClick}
+          />
+        ))}
       </nav>
 
       {/* User footer */}
