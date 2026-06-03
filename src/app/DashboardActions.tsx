@@ -63,17 +63,17 @@ function ModalShell({ title, subtitle, onClose, children }: {
 // ── Submit row ───────────────────────────────────────
 function SubmitRow({ isPending, onCancel, label }: { isPending: boolean; onCancel: () => void; label: string }) {
   return (
-    <div className="flex gap-2.5 justify-end pt-1">
+    <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end pt-1">
       <button
         type="button" onClick={onCancel} disabled={isPending}
-        className="px-5 py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] font-semibold text-slate-600 cursor-pointer hover:bg-slate-50 transition-colors duration-150 disabled:opacity-50"
+        className="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] font-semibold text-slate-600 cursor-pointer hover:bg-slate-50 transition-colors duration-150 disabled:opacity-50 min-h-[44px]"
         style={{ fontFamily: "inherit" }}
       >
         Cancelar
       </button>
       <button
         type="submit" disabled={isPending}
-        className="px-6 py-2.5 rounded-lg border-none bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold cursor-pointer flex items-center gap-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-md hover:-translate-y-px"
+        className="w-full sm:w-auto px-6 py-3 sm:py-2.5 rounded-lg border-none bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-md min-h-[44px]"
         style={{ fontFamily: "inherit" }}
       >
         {isPending && <Loader2 size={14} className="animate-spin" />}
@@ -203,20 +203,20 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
   return (
     <>
       {/* Quick action buttons */}
-      <div className="grid grid-cols-6 gap-3 mb-6">
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2.5 md:gap-3 mb-5 md:mb-6">
         {QUICK_BTNS.map(({ icon: Icon, label, sublabel, m, iconBg, iconColor, cardBg, cardBorder }) => (
           <button
             key={m}
             onClick={() => openModal(m)}
-            className={`flex flex-col items-center justify-center gap-3 p-5 rounded-2xl border ${cardBorder} ${cardBg} cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 min-h-[110px]`}
+            className={`flex flex-col items-center justify-center gap-2 md:gap-3 p-3 md:p-5 rounded-2xl border ${cardBorder} ${cardBg} cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 min-h-[88px] md:min-h-[110px]`}
             style={{ fontFamily: "inherit" }}
           >
-            <div className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
-              <Icon size={22} className={iconColor} strokeWidth={1.75} />
+            <div className={`w-9 h-9 md:w-11 md:h-11 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
+              <Icon size={18} className={`${iconColor} md:text-[22px]`} strokeWidth={1.75} />
             </div>
             <div className="text-center leading-tight">
-              <p className={`text-[10.5px] font-medium ${iconColor} opacity-70 m-0`}>{label}</p>
-              <p className={`text-[13px] font-bold ${iconColor} mt-0.5 m-0`}>{sublabel}</p>
+              <p className={`text-[9.5px] md:text-[10.5px] font-medium ${iconColor} opacity-70 m-0`}>{label}</p>
+              <p className={`text-[12px] md:text-[13px] font-bold ${iconColor} mt-0.5 m-0`}>{sublabel}</p>
             </div>
           </button>
         ))}
@@ -231,7 +231,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
                 {agentes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
               </select>
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Concepto *">
                 <select value={pagoForm.concepto} onChange={e => setPagoForm(f => ({ ...f, concepto: e.target.value }))} className={inp} required>
                   {CONCEPTOS_PAGO.map(c => <option key={c} value={c}>{c}</option>)}
@@ -241,7 +241,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
                 <input type="date" value={pagoForm.fecha} onChange={e => setPagoForm(f => ({ ...f, fecha: e.target.value }))} className={inp} required />
               </Field>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Monto que debe (USD) *">
                 <input type="number" min="0" step="0.01" placeholder="95.25" value={pagoForm.monto_debe} onChange={e => setPagoForm(f => ({ ...f, monto_debe: e.target.value }))} className={inp} required />
               </Field>
@@ -259,7 +259,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
       {modal === "carteleria" && (
         <ModalShell title="Devolución de Cartelería" subtitle="Registrar devolución en Airtable" onClose={closeModal}>
           <form onSubmit={handleCarteleria} className="p-6">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Número de cartel *">
                 <input type="number" min="1" placeholder="42" value={cartelForm.numero} onChange={e => setCartelForm(f => ({ ...f, numero: e.target.value }))} className={inp} required />
               </Field>
@@ -272,7 +272,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
             <Field label="Dirección">
               <input type="text" placeholder="Av. Colón 1234" value={cartelForm.direccion} onChange={e => setCartelForm(f => ({ ...f, direccion: e.target.value }))} className={inp} />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="MLS ID">
                 <input type="text" placeholder="MLS-001" value={cartelForm.mlsId} onChange={e => setCartelForm(f => ({ ...f, mlsId: e.target.value }))} className={inp} />
               </Field>
@@ -296,7 +296,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
       {modal === "encuesta" && (
         <ModalShell title="Registrar Encuesta" subtitle="Datos de encuestas del mes" onClose={closeModal}>
           <form onSubmit={handleEncuesta} className="p-6">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Encuestas enviadas *">
                 <input type="number" min="0" placeholder="20" value={encForm.enviadas} onChange={e => setEncForm(f => ({ ...f, enviadas: e.target.value }))} className={inp} required />
               </Field>
@@ -320,7 +320,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
             <Field label="Dirección *">
               <input type="text" placeholder="Av. San Martín 456" value={opForm.direccion} onChange={e => setOpForm(f => ({ ...f, direccion: e.target.value }))} className={inp} required />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Tipo *">
                 <select value={opForm.tipo} onChange={e => setOpForm(f => ({ ...f, tipo: e.target.value }))} className={inp} required>
                   {TIPOS_OP.map(t => <option key={t} value={t}>{t}</option>)}
@@ -333,7 +333,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
             <Field label="Agentes">
               <input type="text" placeholder="Juan, María" value={opForm.agentes} onChange={e => setOpForm(f => ({ ...f, agentes: e.target.value }))} className={inp} />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Comisión bruta (USD)">
                 <input type="number" min="0" step="0.01" placeholder="5000" value={opForm.comision_bruta} onChange={e => setOpForm(f => ({ ...f, comision_bruta: e.target.value }))} className={inp} />
               </Field>
@@ -362,7 +362,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
       {modal === "oferta" && (
         <ModalShell title="Registrar Oferta" subtitle="Nueva oferta inmobiliaria" onClose={closeModal}>
           <form onSubmit={handleOferta} className="p-6">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="N° de oferta *">
                 <input type="number" min="1" placeholder="42" value={ofertaForm.numero} onChange={e => setOfertaForm(f => ({ ...f, numero: e.target.value }))} className={inp} required />
               </Field>
@@ -373,7 +373,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
             <Field label="Dirección *">
               <input type="text" placeholder="Av. San Martín 456" value={ofertaForm.direccion} onChange={e => setOfertaForm(f => ({ ...f, direccion: e.target.value }))} className={inp} required />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Tipología *">
                 <select value={ofertaForm.tipologia} onChange={e => setOfertaForm(f => ({ ...f, tipologia: e.target.value }))} className={inp} required>
                   {TIPOLOGIAS_OFERTA.map(t => <option key={t} value={t}>{t}</option>)}
@@ -385,7 +385,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
                 </select>
               </Field>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Agente vendedor">
                 <select value={ofertaForm.agente_vendedor_id} onChange={e => setOfertaForm(f => ({ ...f, agente_vendedor_id: e.target.value }))} className={inp}>
                   <option value="">— Externo —</option>
@@ -399,7 +399,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
                 </select>
               </Field>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Monto ofertado (USD)">
                 <input type="number" min="0" step="1" placeholder="150000" value={ofertaForm.monto_ofertado_usd} onChange={e => setOfertaForm(f => ({ ...f, monto_ofertado_usd: e.target.value }))} className={inp} />
               </Field>

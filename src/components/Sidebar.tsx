@@ -169,7 +169,7 @@ function NavItemLink({
       href={item.href}
       onClick={onNavClick}
       className={[
-        "flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg text-[13px] mb-0.5 transition-all duration-150 no-underline",
+        "flex items-center gap-2.5 px-2.5 py-3 md:py-2.5 rounded-lg text-[13px] mb-0.5 transition-all duration-150 no-underline min-h-[44px]",
         isActive
           ? "bg-slate-800 text-white font-semibold border-l-2 border-blue-500 pl-[9px]"
           : "text-white/45 font-medium hover:bg-slate-800/50 hover:text-white/75",

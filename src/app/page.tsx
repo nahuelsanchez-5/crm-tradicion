@@ -178,28 +178,35 @@ export default async function DashboardPage() {
     <div className="flex flex-col h-full">
 
       {/* Header */}
-      <div className="grid bg-white border-b border-slate-200 flex-shrink-0 px-6"
-        style={{ gridTemplateColumns: "1fr auto 1fr", alignItems: "center", minHeight: "62px" }}
+      <div className="flex items-center bg-white border-b border-slate-200 flex-shrink-0"
+        style={{ minHeight: "62px", padding: "0 24px 0 64px" }}
       >
-        <DashboardClock />
-        <Image
-          src="/logo.png" alt="REMAX Tradición"
-          width={240} height={27}
-          priority
-        />
-        <div className="flex justify-end">
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-[12.5px] font-semibold text-slate-700">
+        {/* Clock — hidden on mobile */}
+        <div className="hidden md:block flex-1">
+          <DashboardClock />
+        </div>
+        <div className="flex-1 md:flex-none flex justify-center md:justify-start">
+          <Image
+            src="/logo.png" alt="REMAX Tradición"
+            width={200} height={22}
+            priority
+            className="md:w-[240px] md:h-[27px]"
+          />
+        </div>
+        <div className="flex-1 flex justify-end">
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-[11px] md:text-[12.5px] font-semibold text-slate-700">
             <span className="text-slate-400">📅</span>
-            {MES_LABEL}
+            <span className="hidden sm:inline">{MES_LABEL}</span>
+            <span className="sm:hidden">{MES_LABEL.slice(0, 3)}</span>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto p-4 md:p-6">
 
         {/* KPI Grid */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-5 md:mb-6">
           <KpiCard
             title="Agentes activos"
             value={agentesCount}
@@ -258,24 +265,24 @@ export default async function DashboardPage() {
               {ofertasSinActividad.map((o, i) => (
                 <div
                   key={o.id}
-                  className={`flex items-center justify-between px-5 py-3.5 hover:bg-slate-50/80 transition-colors duration-150 ${i < ofertasSinActividad.length - 1 ? "border-b border-slate-100" : ""}`}
+                  className={`flex items-center justify-between px-4 md:px-5 py-3 hover:bg-slate-50/80 transition-colors duration-150 gap-3 ${i < ofertasSinActividad.length - 1 ? "border-b border-slate-100" : ""}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="bg-slate-50 border border-slate-200 rounded-md px-2 py-0.5 text-[11px] font-bold text-slate-500">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <span className="bg-slate-50 border border-slate-200 rounded-md px-2 py-0.5 text-[11px] font-bold text-slate-500 flex-shrink-0">
                       #{o.numero}
                     </span>
-                    <div>
-                      <p className="text-[13px] font-semibold text-slate-900 m-0">{o.direccion}</p>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold text-slate-900 m-0 truncate">{o.direccion}</p>
                       <p className="text-[11px] text-slate-400 mt-0.5 m-0">
-                        {o.estado} · Última act. {fmtFechaRelativa(o.updated_at)}
+                        {o.estado} · {fmtFechaRelativa(o.updated_at)}
                       </p>
                     </div>
                   </div>
                   <Link
                     href={`/ofertas/${o.id}`}
-                    className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[12px] font-semibold no-underline transition-colors duration-150"
+                    className="flex-shrink-0 px-3 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[12px] font-semibold no-underline transition-colors duration-150"
                   >
-                    Actualizar →
+                    Ver →
                   </Link>
                 </div>
               ))}
@@ -284,7 +291,7 @@ export default async function DashboardPage() {
         )}
 
         {/* Bottom 2-col */}
-        <div className="grid gap-4" style={{ gridTemplateColumns: "1fr 340px" }}>
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-[1fr_340px]">
 
           {/* Left column */}
           <div className="flex flex-col gap-4">
@@ -305,34 +312,57 @@ export default async function DashboardPage() {
                   ✓ No hay pagos pendientes este mes
                 </div>
               ) : (
-                <table className="w-full border-collapse crm-table">
-                  <thead>
-                    <tr>
-                      {["Agente", "Plan", "Debe", "Pagado", "Estado"].map(h => (
-                        <th key={h}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
+                <>
+                  {/* Desktop table */}
+                  <table className="hidden md:table w-full border-collapse crm-table">
+                    <thead>
+                      <tr>
+                        {["Agente", "Plan", "Debe", "Pagado", "Estado"].map(h => (
+                          <th key={h}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pagos.map((p, i) => {
+                        const agentesField = p.agentes as { nombre: string } | null
+                        const nombre = agentesField?.nombre ?? "—"
+                        const plan   = extractPlan(p.concepto)
+                        return (
+                          <tr key={i}>
+                            <td>
+                              <p className="font-semibold text-slate-900 m-0">{nombre}</p>
+                              <p className="text-[11px] text-slate-400 mt-0.5 m-0">{MES_LABEL}</p>
+                            </td>
+                            <td><StatusBadge estado={plan} /></td>
+                            <td className="font-bold text-slate-900">{fmtUSD(p.monto_debe)}</td>
+                            <td className="text-slate-500">{fmtUSD(p.monto_pagado)}</td>
+                            <td><StatusBadge estado={p.estado} /></td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                  {/* Mobile card list */}
+                  <div className="md:hidden divide-y divide-slate-100">
                     {pagos.map((p, i) => {
                       const agentesField = p.agentes as { nombre: string } | null
                       const nombre = agentesField?.nombre ?? "—"
                       const plan   = extractPlan(p.concepto)
                       return (
-                        <tr key={i}>
-                          <td>
-                            <p className="font-semibold text-slate-900 m-0">{nombre}</p>
-                            <p className="text-[11px] text-slate-400 mt-0.5 m-0">{MES_LABEL}</p>
-                          </td>
-                          <td><StatusBadge estado={plan} /></td>
-                          <td className="font-bold text-slate-900">{fmtUSD(p.monto_debe)}</td>
-                          <td className="text-slate-500">{fmtUSD(p.monto_pagado)}</td>
-                          <td><StatusBadge estado={p.estado} /></td>
-                        </tr>
+                        <div key={i} className="flex items-center justify-between px-4 py-3 gap-3">
+                          <div className="min-w-0">
+                            <p className="text-[13px] font-semibold text-slate-900 m-0 truncate">{nombre}</p>
+                            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                              <StatusBadge estado={plan} />
+                              <span className="text-[11px] text-slate-500">{fmtUSD(p.monto_debe)}</span>
+                            </div>
+                          </div>
+                          <StatusBadge estado={p.estado} />
+                        </div>
                       )
                     })}
-                  </tbody>
-                </table>
+                  </div>
+                </>
               )}
             </div>
 
@@ -342,7 +372,7 @@ export default async function DashboardPage() {
                 <div className="w-2 h-2 rounded-full bg-blue-500" />
                 <h2 className="text-[14px] font-bold text-slate-900 m-0">Resumen rápido — {MES_LABEL}</h2>
               </div>
-              <div className="grid grid-cols-4 gap-3 p-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4">
                 {[
                   { n: cartelesData?.total_entregados  ?? 0, label: "Carteles entregados",  cls: "bg-rose-50 text-rose-600" },
                   { n: cartelesData?.total_recuperados ?? 0, label: "Carteles recuperados", cls: "bg-emerald-50 text-emerald-600" },
