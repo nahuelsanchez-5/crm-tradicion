@@ -248,6 +248,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
 
   // ── View mode ──────────────────────────────────────
   const [viewMode, setViewMode] = useState<"kanban" | "lista">("kanban")
+  const [mobileKanbanTab, setMobileKanbanTab] = useState<typeof ESTADOS[number]>(ESTADOS[0])
 
   // ── Filters ────────────────────────────────────────
   const [filterEstado,     setFilterEstado]     = useState("todos")
@@ -381,11 +382,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
       {/* ── Header ──────────────────────────────────── */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        minHeight: "62px", padding: "0 24px",
-        background: "white", borderBottom: "1px solid #EAECF2", flexShrink: 0,
-      }}>
+      <div className="crm-page-header flex-shrink-0">
         <div>
           <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0 }}>
             Ofertas
@@ -425,10 +422,10 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
       </div>
 
       {/* ── Content ─────────────────────────────────── */}
-      <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
+      <div className="flex-1 overflow-auto p-5 md:p-6">
 
         {/* KPIs */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "14px", marginBottom: "20px" }}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-5">
           <KpiCard
             title="Ofertas activas"
             value={String(kpis.activas)}
@@ -502,96 +499,140 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
 
         {/* ── KANBAN VIEW ─────────────────────────── */}
         {viewMode === "kanban" && (
-          <div style={{ overflowX: "auto", paddingBottom: "8px" }}>
-            <div style={{ display: "flex", gap: "14px", minWidth: "fit-content" }}>
+          <>
+            {/* Mobile: tab pills */}
+            <div className="md:hidden flex gap-1.5 overflow-x-auto pb-2 mb-3 -mx-1 px-1" style={{ scrollbarWidth: "none" as React.CSSProperties["scrollbarWidth"] }}>
               {ESTADOS.map(estado => {
-                const colOfertas = filtered.filter(o => o.estado === estado)
-                const colStyle   = ESTADO_STYLE[estado] ?? { bg: "#F1F5F9", color: "#64748B" }
+                const count = filtered.filter(o => o.estado === estado).length
                 return (
-                  <div key={estado} style={{ width: "240px", flexShrink: 0 }}>
-                    {/* Column header */}
-                    <div style={{
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      marginBottom: "10px", padding: "0 2px",
-                    }}>
-                      <span style={{ fontSize: "12px", fontWeight: 700, color: "#0F172A" }}>{estado}</span>
-                      <span style={{
-                        ...colStyle, padding: "2px 8px", borderRadius: "20px",
-                        fontSize: "11px", fontWeight: 700,
-                      }}>
-                        {colOfertas.length}
-                      </span>
-                    </div>
-                    {/* Cards */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                      {colOfertas.length === 0 ? (
-                        <div style={{
-                          padding: "20px 14px", borderRadius: "10px",
-                          border: "1.5px dashed #EAECF2", background: "#F8F9FC",
-                          textAlign: "center", fontSize: "12px", color: "#CBD5E1",
-                        }}>
-                          Sin ofertas
-                        </div>
-                      ) : (
-                        colOfertas.map(o => {
-                          const vendedor = agenteName(o.agente_vendedor_id, o.agente_vendedor_externo)
-                          const diasAct  = o.updated_at
-                            ? Math.floor((Date.now() - new Date(o.updated_at).getTime()) / (1000 * 60 * 60 * 24))
-                            : null
-                          return (
-                            <Link
-                              key={o.id}
-                              href={`/ofertas/${o.id}`}
-                              style={{ textDecoration: "none" }}
-                            >
-                              <div style={{
-                                background: "white", borderRadius: "10px",
-                                border: "1.5px solid #EAECF2", padding: "12px 14px",
-                                cursor: "pointer",
-                                transition: "box-shadow 0.15s",
-                              }}
-                              className="hover:shadow-md"
-                              >
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
-                                  <span style={{
-                                    background: "#F1F5F9", color: "#64748B",
-                                    padding: "1px 6px", borderRadius: "4px",
-                                    fontSize: "10px", fontWeight: 700,
-                                  }}>
-                                    #{o.numero}
-                                  </span>
-                                  <TipologiaBadge tipo={o.tipologia} />
-                                </div>
-                                <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#0F172A", lineHeight: 1.3, marginBottom: "6px" }}>
-                                  {o.direccion}
-                                </div>
-                                <div style={{ fontSize: "11px", color: "#64748B", marginBottom: "8px" }}>
-                                  {vendedor}
-                                </div>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                  <span style={{ fontSize: "12px", fontWeight: 700, color: "#0F172A" }}>
-                                    {fmtUSD(o.monto_ofertado_usd)}
-                                  </span>
-                                  {diasAct !== null && (
-                                    <span style={{
-                                      fontSize: "10px", color: diasAct >= 5 ? "#E11D48" : "#94A3B8",
-                                      fontWeight: diasAct >= 5 ? 700 : 400,
-                                    }}>
-                                      {diasAct === 0 ? "Hoy" : `${diasAct}d`}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </Link>
-                          )
-                        })
-                      )}
-                    </div>
-                  </div>
+                  <button
+                    key={estado}
+                    type="button"
+                    onClick={() => setMobileKanbanTab(estado)}
+                    className={[
+                      "flex-shrink-0 px-3 py-2 rounded-lg text-[11px] font-bold border transition-all whitespace-nowrap",
+                      mobileKanbanTab === estado
+                        ? "bg-slate-900 text-white border-slate-900"
+                        : "bg-white text-slate-500 border-slate-200",
+                    ].join(" ")}
+                  >
+                    {estado} <span className="opacity-60 ml-1">{count}</span>
+                  </button>
                 )
               })}
             </div>
-          </div>
+
+            {/* Mobile: single column for active tab */}
+            <div className="md:hidden flex flex-col gap-3">
+              {(() => {
+                const colOfertas = filtered.filter(o => o.estado === mobileKanbanTab)
+                if (colOfertas.length === 0) return (
+                  <div style={{
+                    padding: "32px 14px", borderRadius: "10px",
+                    border: "1.5px dashed #EAECF2", background: "#F8F9FC",
+                    textAlign: "center", fontSize: "13px", color: "#CBD5E1",
+                  }}>
+                    Sin ofertas en esta etapa
+                  </div>
+                )
+                return colOfertas.map(o => {
+                  const vendedor = agenteName(o.agente_vendedor_id, o.agente_vendedor_externo)
+                  const diasAct  = o.updated_at
+                    ? Math.floor((Date.now() - new Date(o.updated_at).getTime()) / (1000 * 60 * 60 * 24))
+                    : null
+                  return (
+                    <Link key={o.id} href={`/ofertas/${o.id}`} style={{ textDecoration: "none" }}>
+                      <div style={{
+                        background: "white", borderRadius: "10px",
+                        border: "1.5px solid #EAECF2", padding: "14px 16px",
+                        cursor: "pointer", transition: "box-shadow 0.15s",
+                      }} className="hover:shadow-md">
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
+                          <span style={{ background: "#F1F5F9", color: "#64748B", padding: "1px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: 700 }}>#{o.numero}</span>
+                          <TipologiaBadge tipo={o.tipologia} />
+                        </div>
+                        <div style={{ fontSize: "13px", fontWeight: 600, color: "#0F172A", lineHeight: 1.3, marginBottom: "4px" }}>{o.direccion}</div>
+                        <div style={{ fontSize: "11px", color: "#64748B", marginBottom: "8px" }}>{vendedor}</div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: "13px", fontWeight: 700, color: "#0F172A" }}>{fmtUSD(o.monto_ofertado_usd)}</span>
+                          {diasAct !== null && (
+                            <span style={{ fontSize: "11px", color: diasAct >= 5 ? "#E11D48" : "#94A3B8", fontWeight: diasAct >= 5 ? 700 : 400 }}>
+                              {diasAct === 0 ? "Hoy" : `${diasAct}d`}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  )
+                })
+              })()}
+            </div>
+
+            {/* Desktop: full multi-column kanban */}
+            <div className="hidden md:block" style={{ overflowX: "auto", paddingBottom: "8px" }}>
+              <div style={{ display: "flex", gap: "14px", minWidth: "fit-content" }}>
+                {ESTADOS.map(estado => {
+                  const colOfertas = filtered.filter(o => o.estado === estado)
+                  const colStyle   = ESTADO_STYLE[estado] ?? { bg: "#F1F5F9", color: "#64748B" }
+                  return (
+                    <div key={estado} style={{ width: "240px", flexShrink: 0 }}>
+                      <div style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                        marginBottom: "10px", padding: "0 2px",
+                      }}>
+                        <span style={{ fontSize: "12px", fontWeight: 700, color: "#0F172A" }}>{estado}</span>
+                        <span style={{ ...colStyle, padding: "2px 8px", borderRadius: "20px", fontSize: "11px", fontWeight: 700 }}>
+                          {colOfertas.length}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        {colOfertas.length === 0 ? (
+                          <div style={{
+                            padding: "20px 14px", borderRadius: "10px",
+                            border: "1.5px dashed #EAECF2", background: "#F8F9FC",
+                            textAlign: "center", fontSize: "12px", color: "#CBD5E1",
+                          }}>
+                            Sin ofertas
+                          </div>
+                        ) : (
+                          colOfertas.map(o => {
+                            const vendedor = agenteName(o.agente_vendedor_id, o.agente_vendedor_externo)
+                            const diasAct  = o.updated_at
+                              ? Math.floor((Date.now() - new Date(o.updated_at).getTime()) / (1000 * 60 * 60 * 24))
+                              : null
+                            return (
+                              <Link key={o.id} href={`/ofertas/${o.id}`} style={{ textDecoration: "none" }}>
+                                <div style={{
+                                  background: "white", borderRadius: "10px",
+                                  border: "1.5px solid #EAECF2", padding: "12px 14px",
+                                  cursor: "pointer", transition: "box-shadow 0.15s",
+                                }} className="hover:shadow-md">
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
+                                    <span style={{ background: "#F1F5F9", color: "#64748B", padding: "1px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: 700 }}>#{o.numero}</span>
+                                    <TipologiaBadge tipo={o.tipologia} />
+                                  </div>
+                                  <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#0F172A", lineHeight: 1.3, marginBottom: "6px" }}>{o.direccion}</div>
+                                  <div style={{ fontSize: "11px", color: "#64748B", marginBottom: "8px" }}>{vendedor}</div>
+                                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                    <span style={{ fontSize: "12px", fontWeight: 700, color: "#0F172A" }}>{fmtUSD(o.monto_ofertado_usd)}</span>
+                                    {diasAct !== null && (
+                                      <span style={{ fontSize: "10px", color: diasAct >= 5 ? "#E11D48" : "#94A3B8", fontWeight: diasAct >= 5 ? 700 : 400 }}>
+                                        {diasAct === 0 ? "Hoy" : `${diasAct}d`}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </Link>
+                            )
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </>
         )}
 
         {/* ── LISTA VIEW ───────────────────────────── */}
@@ -678,24 +719,11 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
           MODAL — NUEVA OFERTA
       ══════════════════════════════════════════════ */}
       {modal && (
-        <div
-          onClick={closeModal}
-          style={{
-            position: "fixed", inset: 0,
-            background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            zIndex: 1000, padding: "20px",
-          }}
-        >
+        <div onClick={closeModal} className="crm-modal-backdrop">
           <div
             onClick={e => e.stopPropagation()}
-            style={{
-              background: "white", borderRadius: "16px",
-              width: "100%", maxWidth: "600px",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
-              maxHeight: "92vh", display: "flex", flexDirection: "column",
-              overflow: "hidden", animation: "modalIn 0.18s ease-out",
-            }}
+            className="crm-modal"
+            style={{ maxWidth: "600px" }}
           >
             {/* Header */}
             <div style={{
@@ -733,7 +761,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
               </div>
 
               {/* Número + Fecha */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="N° Oferta *">
                   <input type="number" value={form.numero} onChange={e => setF("numero", e.target.value)}
                     style={inp} min="1" required />
@@ -751,7 +779,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
               </Field>
 
               {/* Tipología + Tipo operación */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Tipología *">
                   <select value={form.tipologia} onChange={e => setF("tipologia", e.target.value)} style={inp} required>
                     {TIPOLOGIAS.map(t => <option key={t} value={t}>{t}</option>)}
@@ -842,7 +870,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
               )}
 
               {/* Montos */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label={`Monto ofertado (${form.moneda}) *`}>
                   <input type="number" value={form.monto_ofertado_usd} min="0" step="100"
                     onChange={e => setF("monto_ofertado_usd", e.target.value)}
@@ -905,7 +933,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", alignItems: "center" }}>
+              <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center pt-1">
                 {saveSuccess ? (
                   <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-lg">
                     <CheckCircle2 size={15} /> Oferta creada correctamente
@@ -913,6 +941,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                 ) : (
                   <>
                     <button type="button" onClick={closeModal} disabled={isPending}
+                      className="w-full sm:w-auto min-h-[44px]"
                       style={{
                         padding: "9px 20px", borderRadius: "8px",
                         border: "1.5px solid #EAECF2", background: "white",
@@ -922,12 +951,13 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                       Cancelar
                     </button>
                     <button type="submit" disabled={isPending}
+                      className="w-full sm:w-auto min-h-[44px]"
                       style={{
                         padding: "9px 24px", borderRadius: "8px", border: "none",
                         background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
                         color: "white", fontSize: "13px", fontWeight: 700,
                         cursor: isPending ? "not-allowed" : "pointer",
-                        fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
+                        fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
                         boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
                       }}>
                       {isPending && <Loader2 size={14} className="animate-spin" />}
