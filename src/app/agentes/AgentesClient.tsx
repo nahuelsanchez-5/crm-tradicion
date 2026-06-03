@@ -329,11 +329,7 @@ export default function AgentesClient({
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
       {/* ── Page Header ──────────────────────────── */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        minHeight: "62px", padding: "0 24px",
-        background: "white", borderBottom: "1px solid #EAECF2", flexShrink: 0,
-      }}>
+      <div className="crm-page-header flex-shrink-0">
         <div>
           <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0 }}>
             Agentes
@@ -366,7 +362,7 @@ export default function AgentesClient({
       </div>
 
       {/* ── Scrollable content ────────────────────── */}
-      <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
+      <div className="flex-1 overflow-auto p-5 md:p-6">
 
         {/* ── Próximo Mainstreet ─────────────────── */}
         {proximosMainstreet.length > 0 && (
@@ -454,7 +450,69 @@ export default function AgentesClient({
             </div>
           </div>
 
-          <div style={{ overflowX: "auto" }}>
+          {/* Mobile card list */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {sorted.length === 0 ? (
+              <div style={{ padding: "32px 20px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
+                No hay agentes registrados.
+              </div>
+            ) : (
+              sorted.map((ag, i) => {
+                const facturacion = facturacionPorNombre[ag.nombre.toLowerCase().trim()] ?? 0
+                return (
+                  <div key={ag.id} className="flex items-center gap-3 px-4 py-3.5">
+                    <div style={{
+                      width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0,
+                      background: AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length],
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "12px", fontWeight: 700, color: "white",
+                    }}>
+                      {initials(ag.nombre)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div style={{ fontWeight: 600, fontSize: "13px", color: "#0F172A" }}>{ag.nombre}</div>
+                      <div className="flex flex-wrap gap-1.5 mt-1 items-center">
+                        <PlanBadge plan={ag.plan?.tipo_plan ?? null} />
+                        <EstadoBadge activo={ag.activo} />
+                        {facturacion > 0 && (
+                          <span style={{ fontSize: "11px", fontWeight: 600, color: "#059669" }}>{fmtUSD(facturacion)}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {ag.telefono && (
+                        <button
+                          onClick={() => openWhatsApp(ag)}
+                          style={{
+                            background: "#25D366", border: "none", borderRadius: "8px",
+                            width: "34px", height: "34px", display: "flex",
+                            alignItems: "center", justifyContent: "center",
+                            cursor: "pointer", color: "white",
+                          }}
+                        >
+                          <MessageCircle size={14} />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => openEditar(ag)}
+                        style={{
+                          padding: "6px 14px", borderRadius: "7px",
+                          border: "1.5px solid #EAECF2", background: "white",
+                          fontSize: "12px", fontWeight: 600, color: "#0F172A",
+                          cursor: "pointer", fontFamily: "inherit", minHeight: "34px",
+                        }}
+                      >
+                        Editar
+                      </button>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:block" style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
@@ -579,22 +637,11 @@ export default function AgentesClient({
 
       {/* ── MODAL ────────────────────────────────── */}
       {modal !== "none" && (
-        <div
-          onClick={closeModal}
-          style={{
-            position: "fixed", inset: 0,
-            background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            zIndex: 1000, padding: "20px",
-          }}
-        >
+        <div onClick={closeModal} className="crm-modal-backdrop">
           <div
             onClick={e => e.stopPropagation()}
-            style={{
-              background: "white", borderRadius: "16px",
-              width: "100%", maxWidth: "480px",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
-            }}
+            className="crm-modal"
+            style={{ maxWidth: "480px" }}
           >
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -629,7 +676,7 @@ export default function AgentesClient({
                   required autoFocus
                 />
               </Field>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Email">
                   <input type="email" value={form.email}
                     onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
@@ -641,7 +688,7 @@ export default function AgentesClient({
                     style={inputStyle} placeholder="+54 9 362 ..." />
                 </Field>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Fecha de alta *">
                   <input type="date" value={form.fecha_alta}
                     onChange={e => setForm(f => ({ ...f, fecha_alta: e.target.value }))}
@@ -698,8 +745,9 @@ export default function AgentesClient({
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "4px" }}>
+              <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center pt-1">
                 <button type="button" onClick={closeModal} disabled={isPending}
+                  className="w-full sm:w-auto min-h-[44px]"
                   style={{
                     padding: "9px 20px", borderRadius: "8px",
                     border: "1.5px solid #EAECF2", background: "white",
@@ -709,6 +757,7 @@ export default function AgentesClient({
                   Cancelar
                 </button>
                 <button type="submit" disabled={isPending}
+                  className="w-full sm:w-auto min-h-[44px] justify-center"
                   style={{
                     padding: "9px 24px", borderRadius: "8px", border: "none",
                     background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
