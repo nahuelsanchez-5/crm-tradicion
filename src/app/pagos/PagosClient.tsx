@@ -240,15 +240,7 @@ function KpiConcepto({
 // ── Modal backdrop ───────────────────────────────────
 function Backdrop({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed", inset: 0,
-        background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        zIndex: 1000, padding: "20px",
-      }}
-    >
+    <div onClick={onClose} className="crm-modal-backdrop">
       <div onClick={e => e.stopPropagation()}>{children}</div>
     </div>
   )
@@ -653,11 +645,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
       {/* ── Page Header ──────────────────────────── */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        minHeight: "62px", padding: "0 24px",
-        background: "white", borderBottom: "1px solid #EAECF2", flexShrink: 0,
-      }}>
+      <div className="crm-page-header flex-shrink-0">
         <div>
           <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0 }}>
             Cuentas
@@ -696,10 +684,10 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
       </div>
 
       {/* ── Scrollable content ────────────────────── */}
-      <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
+      <div className="flex-1 overflow-auto p-5 md:p-6">
 
         {/* ── KPI boxes (4 conceptos) ───────────────── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "14px", marginBottom: "20px" }}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-5">
           <KpiConcepto
             label="FEE mensual"
             x={kpiStats.feeCobrX}
@@ -813,7 +801,123 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
             )}
           </div>
 
-          <div style={{ overflowX: "auto" }}>
+          {/* Mobile card list */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {agentesPagos.length === 0 ? (
+              <div style={{ padding: "32px 20px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
+                No hay registros para el filtro seleccionado.
+              </div>
+            ) : (
+              agentesPagos.map(ag => {
+                const isExpanded = expandedAgent === ag.agente_id
+                const enMora     = enMoraAgentes.has(ag.agente_id)
+                return (
+                  <div key={ag.agente_id}>
+                    <div
+                      onClick={() => setExpandedAgent(isExpanded ? null : ag.agente_id)}
+                      className="flex items-center gap-3 px-4 py-3.5 cursor-pointer active:bg-slate-50"
+                    >
+                      <span style={{
+                        fontSize: "11px", color: "#64748B",
+                        transform: isExpanded ? "rotate(90deg)" : "none",
+                        display: "inline-block", transition: "transform 0.15s",
+                      }}>▶</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span style={{ fontWeight: 600, fontSize: "13px", color: "#0F172A" }}>{ag.nombre}</span>
+                          {enMora && (
+                            <span style={{
+                              background: "#FFF1F2", color: "#E11D48",
+                              border: "1px solid #FECDD3",
+                              padding: "1px 7px", borderRadius: "12px",
+                              fontSize: "10px", fontWeight: 700,
+                            }}>EN MORA</span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: "11px", color: "#94A3B8", marginTop: "2px" }}>{fmtFecha(ag.ultimoMov)}</div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span style={{ fontSize: "13px", fontWeight: 700, color: ag.saldo > 0 ? "#E11D48" : "#059669" }}>
+                          {ag.saldo > 0 ? `- ${fmtUSD(ag.saldo)}` : ag.saldo < 0 ? `+ ${fmtUSD(-ag.saldo)}` : fmtUSD(0)}
+                        </span>
+                        <EstadoBadge estado={ag.estadoGral} />
+                      </div>
+                    </div>
+                    {isExpanded && (
+                      <div style={{ background: "#F8FAFF", borderTop: "1px solid #EEF0F8", padding: "12px 16px" }}>
+                        <div className="flex gap-3 mb-3 flex-wrap" style={{ fontSize: "12px" }}>
+                          <span><span style={{ color: "#64748B" }}>Pagado: </span><strong style={{ color: "#059669" }}>{fmtUSD(ag.totalPagado)}</strong></span>
+                          <span><span style={{ color: "#64748B" }}>Pendiente: </span><strong style={{ color: "#E11D48" }}>{fmtUSD(Math.max(0, ag.saldo))}</strong></span>
+                        </div>
+                        {ag.pagos.map((p, pi) => (
+                          <div key={p.id} style={{
+                            background: "white", borderRadius: "8px", border: "1px solid #EAECF2",
+                            padding: "10px 12px", marginBottom: pi < ag.pagos.length - 1 ? "8px" : 0,
+                          }}>
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#0F172A" }}>{p.concepto}</div>
+                                <div style={{ fontSize: "11px", color: "#64748B", marginTop: "2px" }}>{fmtFecha(p.fecha)}</div>
+                              </div>
+                              <div className="flex flex-col items-end gap-1">
+                                <EstadoBadge estado={p.estado} />
+                                <span style={{ fontSize: "12px", fontWeight: 700, color: "#E11D48" }}>{fmtUSD(Number(p.monto_debe))}</span>
+                              </div>
+                            </div>
+                            {p.estado !== "Pagado" && (
+                              <button
+                                onClick={() => openEditar(p)}
+                                className="mt-2 w-full min-h-[38px]"
+                                style={{
+                                  padding: "6px 12px", borderRadius: "7px",
+                                  border: "1.5px solid #EAECF2", background: "white",
+                                  fontSize: "12px", fontWeight: 600, color: "#0F172A",
+                                  cursor: "pointer", fontFamily: "inherit",
+                                }}
+                              >
+                                Registrar pago
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <div className="flex gap-3 mt-3 flex-wrap">
+                          {ag.telefono && (
+                            <button
+                              onClick={() => openWhatsApp(ag.nombre, ag.telefono, ag.pagos, ag.saldo)}
+                              style={{
+                                background: "#25D366", border: "none", borderRadius: "8px",
+                                padding: "8px 14px", display: "flex", alignItems: "center", gap: "6px",
+                                cursor: "pointer", color: "white", fontSize: "12px", fontWeight: 600,
+                                fontFamily: "inherit",
+                              }}
+                            >
+                              <MessageCircle size={14} /> WhatsApp
+                            </button>
+                          )}
+                          {ag.estadoGral !== "Pagado" && (
+                            <button
+                              onClick={() => openNuevo(ag.agente_id)}
+                              style={{
+                                padding: "8px 16px", borderRadius: "8px",
+                                border: "1.5px solid #EAECF2", background: "white",
+                                fontSize: "12px", fontWeight: 600, color: "#0F172A",
+                                cursor: "pointer", fontFamily: "inherit",
+                              }}
+                            >
+                              Registrar pago
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            )}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:block" style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
@@ -1040,12 +1144,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
       ════════════════════════════════════════════ */}
       {modal === "nuevo" && (
         <Backdrop onClose={closeModal}>
-          <div style={{
-            background: "white", borderRadius: "16px",
-            width: "100%", maxWidth: "500px",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
-            animation: "modalIn 0.18s ease-out",
-          }}>
+          <div className="crm-modal" style={{ maxWidth: "500px" }}>
             <ModalHeader
               title="Registrar Pago"
               subtitle="Nuevo registro en el historial de pagos"
@@ -1066,7 +1165,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                   ))}
                 </select>
               </Field>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Concepto *">
                   <select
                     value={nuevoForm.concepto}
@@ -1083,7 +1182,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                     style={inp} required />
                 </Field>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Monto que debe (USD) *">
                   <input type="number" min="0" step="0.01" placeholder="95.25"
                     value={nuevoForm.monto_debe}
@@ -1107,15 +1206,15 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 <EstadoBadge estado={nuevoEstado} />
               </div>
               <ErrorBox />
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", alignItems: "center" }}>
+              <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center pt-1">
                 {saveSuccessNuevo ? (
                   <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-lg">
                     <CheckCircle2 size={15} /> Pago registrado correctamente
                   </div>
                 ) : (
                   <>
-                    <button type="button" onClick={closeModal} disabled={isPending} style={btnCancel}>Cancelar</button>
-                    <button type="submit" disabled={isPending} style={btnSave}>
+                    <button type="button" onClick={closeModal} disabled={isPending} className="w-full sm:w-auto min-h-[44px]" style={btnCancel}>Cancelar</button>
+                    <button type="submit" disabled={isPending} className="w-full sm:w-auto min-h-[44px] justify-center" style={btnSave}>
                       {isPending && <Loader2 size={14} className="animate-spin" />}
                       {isPending ? "Guardando..." : <><Save size={14} /> Guardar</>}
                     </button>
@@ -1132,12 +1231,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
       ════════════════════════════════════════════ */}
       {modal === "gasto" && (
         <Backdrop onClose={closeModal}>
-          <div style={{
-            background: "white", borderRadius: "16px",
-            width: "100%", maxWidth: "520px",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
-            animation: "modalIn 0.18s ease-out",
-          }}>
+          <div className="crm-modal" style={{ maxWidth: "520px" }}>
             <ModalHeader
               title="Registrar Gasto"
               subtitle="Nuevo cargo pendiente para el agente"
@@ -1155,7 +1249,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                   {agentes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
                 </select>
               </Field>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Concepto *">
                   <input
                     type="text" placeholder="Ej: FEE mensual"
@@ -1185,7 +1279,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                   </div>
                 </Field>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Monto (USD) *">
                   <input type="number" min="0" step="0.01" placeholder="0"
                     value={gastoForm.monto_debe}
@@ -1230,15 +1324,15 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
               </div>
 
               <ErrorBox />
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", alignItems: "center" }}>
+              <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center pt-1">
                 {saveSuccessGasto ? (
                   <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-lg">
                     <CheckCircle2 size={15} /> Gasto registrado correctamente
                   </div>
                 ) : (
                   <>
-                    <button type="button" onClick={closeModal} disabled={isPending} style={btnCancel}>Cancelar</button>
-                    <button type="submit" disabled={isPending} style={btnSave}>
+                    <button type="button" onClick={closeModal} disabled={isPending} className="w-full sm:w-auto min-h-[44px]" style={btnCancel}>Cancelar</button>
+                    <button type="submit" disabled={isPending} className="w-full sm:w-auto min-h-[44px] justify-center" style={btnSave}>
                       {isPending && <Loader2 size={14} className="animate-spin" />}
                       {isPending ? "Guardando..." : <><Save size={14} /> Registrar gasto</>}
                     </button>
@@ -1255,19 +1349,14 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
       ════════════════════════════════════════════ */}
       {modal === "gasto_rec" && (
         <Backdrop onClose={closeModal}>
-          <div style={{
-            background: "white", borderRadius: "16px",
-            width: "100%", maxWidth: "560px",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
-            maxHeight: "90vh", display: "flex", flexDirection: "column",
-          }}>
+          <div className="crm-modal" style={{ maxWidth: "560px" }}>
             <ModalHeader
               title="Gasto Recurrente"
               subtitle="Aplicar cargo a múltiples agentes a la vez"
               onClose={closeModal}
             />
             <form onSubmit={handleGastoRec} style={{ padding: "20px", overflow: "auto", flex: 1, display: "flex", flexDirection: "column" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Concepto *">
                   <select
                     value={gastoRec.concepto}
@@ -1364,10 +1453,11 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
               </Field>
 
               <ErrorBox />
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "auto" }}>
-                <button type="button" onClick={closeModal} disabled={isPending} style={btnCancel}>Cancelar</button>
+              <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center mt-auto pt-2">
+                <button type="button" onClick={closeModal} disabled={isPending} className="w-full sm:w-auto min-h-[44px]" style={btnCancel}>Cancelar</button>
                 <button
                   type="submit" disabled={isPending}
+                  className="w-full sm:w-auto min-h-[44px] justify-center"
                   style={{
                     ...btnSave,
                     background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#7C3AED 0%,#5B21B6 100%)",
@@ -1388,11 +1478,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
       ════════════════════════════════════════════ */}
       {modal === "editar" && selectedPago && (
         <Backdrop onClose={closeModal}>
-          <div style={{
-            background: "white", borderRadius: "16px",
-            width: "100%", maxWidth: "440px",
-            boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
-          }}>
+          <div className="crm-modal" style={{ maxWidth: "440px" }}>
             <ModalHeader
               title="Registrar Pago Parcial"
               subtitle="Actualizá el monto abonado"
@@ -1403,7 +1489,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 label="Agente"
                 value={(selectedPago.agentes as { nombre: string } | null)?.nombre ?? "—"}
               />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <ReadOnlyField label="Concepto" value={selectedPago.concepto} />
                 <ReadOnlyField label="Monto que debe" value={fmtUSD(Number(selectedPago.monto_debe))} />
               </div>
@@ -1430,9 +1516,9 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 </span>
               </div>
               <ErrorBox />
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                <button type="button" onClick={closeModal} disabled={isPending} style={btnCancel}>Cancelar</button>
-                <button type="submit" disabled={isPending} style={btnSave}>
+              <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center pt-1">
+                <button type="button" onClick={closeModal} disabled={isPending} className="w-full sm:w-auto min-h-[44px]" style={btnCancel}>Cancelar</button>
+                <button type="submit" disabled={isPending} className="w-full sm:w-auto min-h-[44px] justify-center" style={btnSave}>
                   {isPending && <Loader2 size={14} className="animate-spin" />}
                   {isPending ? "Guardando..." : "Actualizar pago"}
                 </button>
