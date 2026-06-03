@@ -224,11 +224,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
       {/* ── Page Header ──────────────────────────── */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        minHeight: "62px", padding: "0 24px",
-        background: "white", borderBottom: "1px solid #EAECF2", flexShrink: 0,
-      }}>
+      <div className="crm-page-header flex-shrink-0">
         <div>
           <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0 }}>
             Encuestas
@@ -444,23 +440,11 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
           MODAL — REGISTRAR ENCUESTA
       ════════════════════════════════════════════ */}
       {showModal && (
-        <div
-          onClick={closeModal}
-          style={{
-            position: "fixed", inset: 0,
-            background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            zIndex: 1000, padding: "20px",
-          }}
-        >
+        <div onClick={closeModal} className="crm-modal-backdrop">
           <div
             onClick={e => e.stopPropagation()}
-            style={{
-              background: "white", borderRadius: "16px",
-              width: "100%", maxWidth: "500px",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
-              animation: "modalIn 0.18s ease-out",
-            }}
+            className="crm-modal"
+            style={{ maxWidth: "500px" }}
           >
             {/* Header */}
             <div style={{
