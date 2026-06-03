@@ -184,8 +184,7 @@ export default async function DashboardPage() {
         <DashboardClock />
         <Image
           src="/logo.png" alt="REMAX Tradición"
-          width={240} height={76}
-          style={{ objectFit: "contain", maxWidth: "240px", height: "auto", display: "block" }}
+          width={240} height={27}
           priority
         />
         <div className="flex justify-end">

@@ -62,8 +62,7 @@ export default function Sidebar({ agenteCount }: Props) {
           src="/logo-sidebar-crema.png"
           alt="REMAX Tradición"
           width={150}
-          height={56}
-          style={{ objectFit: "contain", maxWidth: "150px", height: "auto" }}
+          height={63}
           priority
         />
       </div>
