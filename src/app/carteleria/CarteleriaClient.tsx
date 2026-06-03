@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import KpiCard from "@/components/KpiCard"
 import { crearCartel, editarCartel } from "./actions"
 import type { CartelFormData } from "./actions"
-import { MapPin, AlertTriangle, Award, X, Loader2, Plus, Search } from "lucide-react"
+import { MapPin, AlertTriangle, Award, X, Loader2, Plus, Search, CheckCircle2, Save } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────
 export interface CartelRow {
@@ -112,6 +112,7 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
   const [editTarget,  setEditTarget]  = useState<CartelRow | null>(null)
   const [form,        setForm]        = useState<ModalForm>(EMPTY_FORM)
   const [error,       setError]       = useState("")
+  const [saveSuccess, setSaveSuccess] = useState(false)
 
   // ── KPI stats ──────────────────────────────────────
   const stats = useMemo(() => {
@@ -205,7 +206,7 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
         ? await editarCartel(editTarget.id, payload)
         : await crearCartel(payload)
       if (result.error) setError(result.error)
-      else { closeModal(); router.refresh() }
+      else { setSaveSuccess(true); setTimeout(() => { setSaveSuccess(false); closeModal(); router.refresh() }, 1000) }
     })
   }
 
@@ -546,23 +547,29 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
               background: "white", borderRadius: "16px",
               width: "100%", maxWidth: "500px",
               boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
+              animation: "modalIn 0.18s ease-out",
             }}
           >
             {/* Header */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "18px 20px", borderBottom: "1px solid #EAECF2",
+              padding: "16px 20px", borderBottom: "1px solid #EAECF2",
             }}>
-              <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
-                  {modalMode === "nuevo" ? "Nuevo cartel" : "Editar cartel"}
-                </h2>
-                <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
-                  {modalMode === "nuevo"
-                    ? "Se creará un registro en Airtable"
-                    : `Cartel #${editTarget?.numero} · ${editTarget?.direccion}`
-                  }
-                </p>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div className="bg-teal-50 rounded-xl p-2.5 flex-shrink-0">
+                  <MapPin size={20} className="text-teal-600" />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
+                    {modalMode === "nuevo" ? "Nuevo cartel" : "Editar cartel"}
+                  </h2>
+                  <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
+                    {modalMode === "nuevo"
+                      ? "Se creará un registro en Airtable"
+                      : `Cartel #${editTarget?.numero} · ${editTarget?.direccion}`
+                    }
+                  </p>
+                </div>
               </div>
               <button onClick={closeModal} style={{
                 background: "#F8F9FC", border: "none", borderRadius: "8px",
@@ -661,41 +668,49 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
               )}
 
               {/* Actions */}
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  disabled={isPending}
-                  style={{
-                    padding: "9px 20px", borderRadius: "8px",
-                    border: "1.5px solid #EAECF2", background: "white",
-                    fontSize: "13px", fontWeight: 600, color: "#64748B",
-                    cursor: "pointer", fontFamily: "inherit",
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={isPending}
-                  style={{
-                    padding: "9px 24px", borderRadius: "8px", border: "none",
-                    background: isPending
-                      ? "#CBD5E1"
-                      : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
-                    color: "white", fontSize: "13px", fontWeight: 700,
-                    cursor: isPending ? "not-allowed" : "pointer",
-                    fontFamily: "inherit",
-                    display: "flex", alignItems: "center", gap: "6px",
-                    boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
-                  }}
-                >
-                  {isPending && <Loader2 size={14} className="animate-spin" />}
-                  {isPending
-                    ? "Guardando..."
-                    : modalMode === "nuevo" ? "Crear cartel" : "Guardar cambios"
-                  }
-                </button>
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", alignItems: "center" }}>
+                {saveSuccess ? (
+                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-lg">
+                    <CheckCircle2 size={15} /> Guardado correctamente
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      disabled={isPending}
+                      style={{
+                        padding: "9px 20px", borderRadius: "8px",
+                        border: "1.5px solid #EAECF2", background: "white",
+                        fontSize: "13px", fontWeight: 600, color: "#64748B",
+                        cursor: "pointer", fontFamily: "inherit",
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isPending}
+                      style={{
+                        padding: "9px 24px", borderRadius: "8px", border: "none",
+                        background: isPending
+                          ? "#CBD5E1"
+                          : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                        color: "white", fontSize: "13px", fontWeight: 700,
+                        cursor: isPending ? "not-allowed" : "pointer",
+                        fontFamily: "inherit",
+                        display: "flex", alignItems: "center", gap: "6px",
+                        boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
+                      }}
+                    >
+                      {isPending && <Loader2 size={14} className="animate-spin" />}
+                      {isPending
+                        ? "Guardando..."
+                        : <><Save size={14} /> {modalMode === "nuevo" ? "Crear cartel" : "Guardar cambios"}</>
+                      }
+                    </button>
+                  </>
+                )}
               </div>
             </form>
           </div>

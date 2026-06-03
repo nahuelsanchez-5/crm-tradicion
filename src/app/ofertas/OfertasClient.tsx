@@ -8,7 +8,7 @@ import { crearOferta } from "./actions"
 import type { OfertaFormData } from "./actions"
 import {
   Handshake, TrendingUp, CheckCircle2, XCircle,
-  X, Loader2, ChevronRight,
+  X, Loader2, ChevronRight, Save,
 } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────
@@ -275,7 +275,8 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
   }, [ofertas])
 
   // ── Modal ──────────────────────────────────────────
-  const [modal, setModal] = useState(false)
+  const [modal,       setModal]       = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
   const [form,  setForm]  = useState<FormData>({
     numero:                   String(nextNumero),
     direccion:                "",
@@ -355,8 +356,8 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
     startTransition(async () => {
       const result = await crearOferta(payload)
       if (result.error) { setFormError(result.error); return }
-      closeModal()
-      router.refresh()
+      setSaveSuccess(true)
+      setTimeout(() => { setSaveSuccess(false); closeModal(); router.refresh() }, 1000)
     })
   }
 
@@ -693,19 +694,24 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
               width: "100%", maxWidth: "600px",
               boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
               maxHeight: "92vh", display: "flex", flexDirection: "column",
-              overflow: "hidden",
+              overflow: "hidden", animation: "modalIn 0.18s ease-out",
             }}
           >
             {/* Header */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "18px 20px", borderBottom: "1px solid #EAECF2", flexShrink: 0,
+              padding: "16px 20px", borderBottom: "1px solid #EAECF2", flexShrink: 0,
             }}>
-              <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>Nueva Oferta</h2>
-                <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
-                  Estado inicial: Espera rta. vendedor
-                </p>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div className="bg-blue-50 rounded-xl p-2.5 flex-shrink-0">
+                  <Handshake size={20} className="text-blue-600" />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>Nueva Oferta</h2>
+                  <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
+                    Registrá los datos de la operación
+                  </p>
+                </div>
               </div>
               <button onClick={closeModal} style={{
                 background: "#F8F9FC", border: "none", borderRadius: "8px",
@@ -719,6 +725,12 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
 
             {/* Form */}
             <form onSubmit={handleSubmit} style={{ padding: "20px", overflowY: "auto" }}>
+
+              {/* SECCIÓN: Propiedad */}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" as const, color: "#94A3B8" }}>Propiedad</span>
+                <div style={{ flex: 1, height: "1px", background: "#F1F5F9" }} />
+              </div>
 
               {/* Número + Fecha */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
@@ -737,6 +749,27 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                 <input type="text" value={form.direccion} onChange={e => setF("direccion", e.target.value)}
                   placeholder="Av. San Martín 1250, Resistencia" style={inp} required />
               </Field>
+
+              {/* Tipología + Tipo operación */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <Field label="Tipología *">
+                  <select value={form.tipologia} onChange={e => setF("tipologia", e.target.value)} style={inp} required>
+                    {TIPOLOGIAS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </Field>
+                <Field label="Tipo de operación *">
+                  <select value={form.tipo_operacion} onChange={e => setF("tipo_operacion", e.target.value)} style={inp} required>
+                    <option value="Venta">Venta</option>
+                    <option value="Alquiler">Alquiler</option>
+                  </select>
+                </Field>
+              </div>
+
+              {/* SECCIÓN: Participantes */}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px", marginTop: "8px" }}>
+                <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" as const, color: "#94A3B8" }}>Participantes</span>
+                <div style={{ flex: 1, height: "1px", background: "#F1F5F9" }} />
+              </div>
 
               {/* Agente vendedor */}
               <Field label="Agente vendedor">
@@ -780,19 +813,10 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                 </div>
               </Field>
 
-              {/* Tipología + Tipo operación */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <Field label="Tipología *">
-                  <select value={form.tipologia} onChange={e => setF("tipologia", e.target.value)} style={inp} required>
-                    {TIPOLOGIAS.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </Field>
-                <Field label="Tipo de operación *">
-                  <select value={form.tipo_operacion} onChange={e => setF("tipo_operacion", e.target.value)} style={inp} required>
-                    <option value="Venta">Venta</option>
-                    <option value="Alquiler">Alquiler</option>
-                  </select>
-                </Field>
+              {/* SECCIÓN: Montos */}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px", marginTop: "8px" }}>
+                <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" as const, color: "#94A3B8" }}>Montos</span>
+                <div style={{ flex: 1, height: "1px", background: "#F1F5F9" }} />
               </div>
 
               {/* Moneda + Tipo de cambio */}
@@ -881,28 +905,36 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                <button type="button" onClick={closeModal} disabled={isPending}
-                  style={{
-                    padding: "9px 20px", borderRadius: "8px",
-                    border: "1.5px solid #EAECF2", background: "white",
-                    fontSize: "13px", fontWeight: 600, color: "#64748B",
-                    cursor: "pointer", fontFamily: "inherit",
-                  }}>
-                  Cancelar
-                </button>
-                <button type="submit" disabled={isPending}
-                  style={{
-                    padding: "9px 24px", borderRadius: "8px", border: "none",
-                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
-                    color: "white", fontSize: "13px", fontWeight: 700,
-                    cursor: isPending ? "not-allowed" : "pointer",
-                    fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
-                    boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
-                  }}>
-                  {isPending && <Loader2 size={14} className="animate-spin" />}
-                  {isPending ? "Guardando..." : "Crear oferta"}
-                </button>
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", alignItems: "center" }}>
+                {saveSuccess ? (
+                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-lg">
+                    <CheckCircle2 size={15} /> Oferta creada correctamente
+                  </div>
+                ) : (
+                  <>
+                    <button type="button" onClick={closeModal} disabled={isPending}
+                      style={{
+                        padding: "9px 20px", borderRadius: "8px",
+                        border: "1.5px solid #EAECF2", background: "white",
+                        fontSize: "13px", fontWeight: 600, color: "#64748B",
+                        cursor: "pointer", fontFamily: "inherit",
+                      }}>
+                      Cancelar
+                    </button>
+                    <button type="submit" disabled={isPending}
+                      style={{
+                        padding: "9px 24px", borderRadius: "8px", border: "none",
+                        background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                        color: "white", fontSize: "13px", fontWeight: 700,
+                        cursor: isPending ? "not-allowed" : "pointer",
+                        fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
+                        boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
+                      }}>
+                      {isPending && <Loader2 size={14} className="animate-spin" />}
+                      {isPending ? "Guardando..." : <><Save size={14} /> Crear oferta</>}
+                    </button>
+                  </>
+                )}
               </div>
             </form>
           </div>

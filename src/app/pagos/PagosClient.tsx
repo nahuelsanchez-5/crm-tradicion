@@ -3,7 +3,7 @@
 import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
 import { crearPago, actualizarPago, crearGasto, crearGastoRecurrente } from "./actions"
-import { DollarSign, X, Loader2, MessageCircle, TrendingDown, Repeat } from "lucide-react"
+import { DollarSign, X, Loader2, MessageCircle, TrendingDown, Repeat, CheckCircle2, Save } from "lucide-react"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -255,15 +255,22 @@ function Backdrop({ onClose, children }: { onClose: () => void; children: React.
 }
 
 // ── Modal header ─────────────────────────────────────
-function ModalHeader({ title, subtitle, onClose }: { title: string; subtitle?: string; onClose: () => void }) {
+function ModalHeader({ title, subtitle, onClose, icon, iconBg }: { title: string; subtitle?: string; onClose: () => void; icon?: React.ReactNode; iconBg?: string }) {
   return (
     <div style={{
       display: "flex", alignItems: "center", justifyContent: "space-between",
       padding: "18px 20px", borderBottom: "1px solid #EAECF2",
     }}>
-      <div>
-        <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>{title}</h2>
-        {subtitle && <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>{subtitle}</p>}
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        {icon && (
+          <div className={`${iconBg ?? "bg-slate-50"} rounded-xl p-2.5 flex-shrink-0`}>
+            {icon}
+          </div>
+        )}
+        <div>
+          <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>{title}</h2>
+          {subtitle && <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>{subtitle}</p>}
+        </div>
       </div>
       <button onClick={onClose} style={{
         background: "#F8F9FC", border: "none", borderRadius: "8px",
@@ -331,6 +338,9 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
   const [selectedAgentesRec, setSelectedAgentesRec] = useState<Set<string>>(new Set())
 
   const [editForm, setEditForm] = useState<EditForm>({ monto_pagado: "0" })
+
+  const [saveSuccessNuevo, setSaveSuccessNuevo] = useState(false)
+  const [saveSuccessGasto, setSaveSuccessGasto] = useState(false)
 
   // ── Computed: KPI stats ────────────────────────────
   const kpiStats = useMemo(() => {
@@ -544,7 +554,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
         monto_pagado: pagado,
       })
       if (result.error) setError(result.error)
-      else { closeModal(); router.refresh() }
+      else { setSaveSuccessNuevo(true); setTimeout(() => { setSaveSuccessNuevo(false); closeModal(); router.refresh() }, 1000) }
     })
   }
 
@@ -563,7 +573,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
         monto_debe: debe,
       })
       if (result.error) setError(result.error)
-      else { closeModal(); router.refresh() }
+      else { setSaveSuccessGasto(true); setTimeout(() => { setSaveSuccessGasto(false); closeModal(); router.refresh() }, 1000) }
     })
   }
 
@@ -1034,11 +1044,14 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
             background: "white", borderRadius: "16px",
             width: "100%", maxWidth: "500px",
             boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
+            animation: "modalIn 0.18s ease-out",
           }}>
             <ModalHeader
               title="Registrar Pago"
               subtitle="Nuevo registro en el historial de pagos"
               onClose={closeModal}
+              icon={<DollarSign size={20} className="text-emerald-600" />}
+              iconBg="bg-emerald-50"
             />
             <form onSubmit={handleNuevo} style={{ padding: "20px" }}>
               <Field label="Agente *">
@@ -1094,12 +1107,20 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 <EstadoBadge estado={nuevoEstado} />
               </div>
               <ErrorBox />
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                <button type="button" onClick={closeModal} disabled={isPending} style={btnCancel}>Cancelar</button>
-                <button type="submit" disabled={isPending} style={btnSave}>
-                  {isPending && <Loader2 size={14} className="animate-spin" />}
-                  {isPending ? "Guardando..." : "Guardar"}
-                </button>
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", alignItems: "center" }}>
+                {saveSuccessNuevo ? (
+                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-lg">
+                    <CheckCircle2 size={15} /> Pago registrado correctamente
+                  </div>
+                ) : (
+                  <>
+                    <button type="button" onClick={closeModal} disabled={isPending} style={btnCancel}>Cancelar</button>
+                    <button type="submit" disabled={isPending} style={btnSave}>
+                      {isPending && <Loader2 size={14} className="animate-spin" />}
+                      {isPending ? "Guardando..." : <><Save size={14} /> Guardar</>}
+                    </button>
+                  </>
+                )}
               </div>
             </form>
           </div>
@@ -1115,11 +1136,14 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
             background: "white", borderRadius: "16px",
             width: "100%", maxWidth: "520px",
             boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
+            animation: "modalIn 0.18s ease-out",
           }}>
             <ModalHeader
               title="Registrar Gasto"
               subtitle="Nuevo cargo pendiente para el agente"
               onClose={closeModal}
+              icon={<TrendingDown size={20} className="text-rose-600" />}
+              iconBg="bg-rose-50"
             />
             <form onSubmit={handleGasto} style={{ padding: "20px" }}>
               <Field label="Agente *">
@@ -1206,12 +1230,20 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
               </div>
 
               <ErrorBox />
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                <button type="button" onClick={closeModal} disabled={isPending} style={btnCancel}>Cancelar</button>
-                <button type="submit" disabled={isPending} style={btnSave}>
-                  {isPending && <Loader2 size={14} className="animate-spin" />}
-                  {isPending ? "Guardando..." : "Registrar gasto"}
-                </button>
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", alignItems: "center" }}>
+                {saveSuccessGasto ? (
+                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-lg">
+                    <CheckCircle2 size={15} /> Gasto registrado correctamente
+                  </div>
+                ) : (
+                  <>
+                    <button type="button" onClick={closeModal} disabled={isPending} style={btnCancel}>Cancelar</button>
+                    <button type="submit" disabled={isPending} style={btnSave}>
+                      {isPending && <Loader2 size={14} className="animate-spin" />}
+                      {isPending ? "Guardando..." : <><Save size={14} /> Registrar gasto</>}
+                    </button>
+                  </>
+                )}
               </div>
             </form>
           </div>

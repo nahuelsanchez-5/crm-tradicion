@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { registrarEncuesta } from "./actions"
 import type { RegistroEncuestaData } from "./actions"
 import type { RegistroRow } from "./page"
-import { ClipboardList, TrendingUp, Star, X, Loader2, ChevronDown, ChevronRight } from "lucide-react"
+import { ClipboardList, TrendingUp, Star, X, Loader2, ChevronDown, ChevronRight, CheckCircle2, Save } from "lucide-react"
 import KpiCardGlobal from "@/components/KpiCard"
 
 // ── Constants ────────────────────────────────────────
@@ -118,8 +118,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 export default function EncuestasClient({ registros, objetivoPct, mesActual, anio }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
-  const [showModal, setShowModal]    = useState(false)
-  const [error,     setError]        = useState("")
+  const [showModal,   setShowModal]   = useState(false)
+  const [error,       setError]      = useState("")
+  const [saveSuccess, setSaveSuccess] = useState(false)
   const todayStr = new Date().toISOString().split("T")[0]
 
   const [form, setForm] = useState<FormState>({
@@ -210,7 +211,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
     startTransition(async () => {
       const result = await registrarEncuesta(payload)
       if (result.error) setError(result.error)
-      else { closeModal(); router.refresh() }
+      else { setSaveSuccess(true); setTimeout(() => { setSaveSuccess(false); closeModal(); router.refresh() }, 1000) }
     })
   }
 
@@ -458,20 +459,26 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
               background: "white", borderRadius: "16px",
               width: "100%", maxWidth: "500px",
               boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
+              animation: "modalIn 0.18s ease-out",
             }}
           >
             {/* Header */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "18px 20px", borderBottom: "1px solid #EAECF2",
+              padding: "16px 20px", borderBottom: "1px solid #EAECF2",
             }}>
-              <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
-                  Registrar Encuesta
-                </h2>
-                <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
-                  Nueva respuesta de satisfacción
-                </p>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div className="bg-violet-50 rounded-xl p-2.5 flex-shrink-0">
+                  <ClipboardList size={20} className="text-violet-600" />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
+                    Registrar Encuesta
+                  </h2>
+                  <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
+                    Nueva respuesta de satisfacción
+                  </p>
+                </div>
               </div>
               <button onClick={closeModal} style={{
                 background: "#F8F9FC", border: "none", borderRadius: "8px",
@@ -609,28 +616,36 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                <button type="button" onClick={closeModal} disabled={isPending}
-                  style={{
-                    padding: "9px 20px", borderRadius: "8px",
-                    border: "1.5px solid #EAECF2", background: "white",
-                    fontSize: "13px", fontWeight: 600, color: "#64748B",
-                    cursor: "pointer", fontFamily: "inherit",
-                  }}>
-                  Cancelar
-                </button>
-                <button type="submit" disabled={isPending}
-                  style={{
-                    padding: "9px 24px", borderRadius: "8px", border: "none",
-                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
-                    color: "white", fontSize: "13px", fontWeight: 700,
-                    cursor: isPending ? "not-allowed" : "pointer", fontFamily: "inherit",
-                    display: "flex", alignItems: "center", gap: "6px",
-                    boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
-                  }}>
-                  {isPending && <Loader2 size={14} className="animate-spin" />}
-                  {isPending ? "Guardando..." : "Registrar"}
-                </button>
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", alignItems: "center" }}>
+                {saveSuccess ? (
+                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-lg">
+                    <CheckCircle2 size={15} /> Encuesta registrada
+                  </div>
+                ) : (
+                  <>
+                    <button type="button" onClick={closeModal} disabled={isPending}
+                      style={{
+                        padding: "9px 20px", borderRadius: "8px",
+                        border: "1.5px solid #EAECF2", background: "white",
+                        fontSize: "13px", fontWeight: 600, color: "#64748B",
+                        cursor: "pointer", fontFamily: "inherit",
+                      }}>
+                      Cancelar
+                    </button>
+                    <button type="submit" disabled={isPending}
+                      style={{
+                        padding: "9px 24px", borderRadius: "8px", border: "none",
+                        background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                        color: "white", fontSize: "13px", fontWeight: 700,
+                        cursor: isPending ? "not-allowed" : "pointer", fontFamily: "inherit",
+                        display: "flex", alignItems: "center", gap: "6px",
+                        boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
+                      }}>
+                      {isPending && <Loader2 size={14} className="animate-spin" />}
+                      {isPending ? "Guardando..." : <><Save size={14} /> Registrar</>}
+                    </button>
+                  </>
+                )}
               </div>
             </form>
           </div>
