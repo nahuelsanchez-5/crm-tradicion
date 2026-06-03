@@ -458,7 +458,7 @@ export default function AgentesClient({
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
-                  {["Nombre", "Fecha alta", "Antigüedad", "Licencia CRM", "Paga FEE", "Facturación año", "Estado", "WA", ""].map(h => (
+                  {["Nombre", "Fecha alta", "Licencia CRM", "Paga FEE", "Facturación año", "Estado", "WA", ""].map(h => (
                     <th key={h} style={{
                       padding: "10px 16px", textAlign: "left",
                       fontSize: "10.5px", fontWeight: 700,
@@ -474,7 +474,7 @@ export default function AgentesClient({
               <tbody>
                 {sorted.length === 0 ? (
                   <tr>
-                    <td colSpan={9} style={{ padding: "40px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
+                    <td colSpan={8} style={{ padding: "40px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
                       No hay agentes registrados. Hacé clic en &quot;+ Nuevo Agente&quot; para empezar.
                     </td>
                   </tr>
@@ -505,9 +505,6 @@ export default function AgentesClient({
                         </td>
                         <td style={{ padding: "12px 16px", fontSize: "13px", color: "#64748B", whiteSpace: "nowrap" }}>
                           {fmtFecha(ag.fecha_alta)}
-                        </td>
-                        <td style={{ padding: "12px 16px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>
-                          {antiguedad(ag.fecha_alta)}
                         </td>
                         <td style={{ padding: "12px 16px" }}>
                           <PlanBadge plan={ag.plan?.tipo_plan ?? null} />
