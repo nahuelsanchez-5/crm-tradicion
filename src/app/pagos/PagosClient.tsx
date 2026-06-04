@@ -60,7 +60,6 @@ export interface AgenteInfo {
   telefono: string | null
   activo: boolean
   paga_fee: boolean | null
-  licencia?: string | null
 }
 
 interface NuevoForm {
@@ -342,8 +341,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
     const agentesActivosCount = agentesActivos.length
     const agentesFeeCount     = agentes.filter(a => a.paga_fee === true).length
     const agentesCrmCount     = agentes.filter(a =>
-      a.activo && a.paga_fee === true &&
-      a.licencia && a.licencia !== "---"
+      a.activo && a.paga_fee === true
     ).length
 
     // FEE
@@ -1427,15 +1425,6 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                         style={{ accentColor: "#7C3AED", width: "14px", height: "14px" }}
                       />
                       <span style={{ fontSize: "13px", fontWeight: 500, color: "#0F172A" }}>{a.nombre}</span>
-                      {a.licencia && a.licencia !== "---" && (
-                        <span style={{
-                          fontSize: "10px", fontWeight: 700, color: "#7C3AED",
-                          background: "#F5F3FF", padding: "1px 6px", borderRadius: "10px",
-                          marginLeft: "auto",
-                        }}>
-                          {a.licencia}
-                        </span>
-                      )}
                     </label>
                   ))}
                 </div>
