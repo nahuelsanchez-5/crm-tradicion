@@ -75,24 +75,39 @@ async function callGemini(
   history: { role: string; content: string }[],
   message: string
 ): Promise<GeminiIntent> {
-  const contents = [
-    ...history.map((h) => ({
-      role: h.role === "assistant" ? "model" : "user",
-      parts: [{ text: h.content }],
-    })),
-    { role: "user", parts: [{ text: message }] },
-  ]
+  // System prompt inyectado como prefijo del primer mensaje de usuario.
+  // Gemini v1 no soporta system_instruction, así que va concatenado al inicio.
+  type GeminiContent = { role: string; parts: { text: string }[] }
+  let contents: GeminiContent[]
+
+  if (history.length === 0) {
+    // Primera vuelta: system prompt + mensaje actual en un solo turno
+    contents = [
+      { role: "user", parts: [{ text: `${systemPrompt}\n\nUsuario: ${message}` }] },
+    ]
+  } else {
+    // Vueltas siguientes: system prompt en el primer mensaje del historial,
+    // resto del historial alternando user/model, y mensaje actual al final
+    const [first, ...rest] = history
+    contents = [
+      { role: "user", parts: [{ text: `${systemPrompt}\n\nUsuario: ${first.content}` }] },
+      ...rest.map((h) => ({
+        role: h.role === "assistant" ? "model" : "user",
+        parts: [{ text: h.content }],
+      })),
+      { role: "user", parts: [{ text: message }] },
+    ]
+  }
 
   const apiKey = process.env.GEMINI_API_KEY ?? ""
   const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      system_instruction: { parts: [{ text: systemPrompt }] },
       contents,
       generationConfig: {
-        responseMimeType: "application/json",
-        temperature: 0.2,
+        temperature: 0.3,
+        maxOutputTokens: 1024,
       },
     }),
   })
