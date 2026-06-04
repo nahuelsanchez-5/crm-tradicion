@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { createServerClient } from "@/lib/supabase"
 import OfertasClient from "./OfertasClient"
 import type { OfertaRow, AgenteSimple } from "./OfertasClient"
