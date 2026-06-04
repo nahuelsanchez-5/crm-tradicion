@@ -94,7 +94,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
   const mesActual  = new Date().getMonth() + 1
   const anioActual = new Date().getFullYear()
 
-  const [pagoForm,      setPagoForm]      = useState({ agente_id: agentes[0]?.id ?? "", concepto: CONCEPTOS_PAGO[0], monto_debe: "", monto_pagado: "0", fecha: todayStr })
+  const [pagoForm,      setPagoForm]      = useState({ agente_id: agentes[0]?.id ?? "", concepto: CONCEPTOS_PAGO[0], monto_pagado: "", fecha: todayStr })
   const [encForm,       setEncForm]       = useState({ mes: mesActual, anio: anioActual, enviadas: "", respondidas: "", nps_promedio: "" })
   const [opForm,        setOpForm]        = useState({ fecha: todayStr, direccion: "", agentes: "", tipo: TIPOS_OP[0], comision_bruta: "", comision_neta: "", encuesta_comprador: false, encuesta_vendedor: false })
   const [cartelForm,    setCartelForm]    = useState({ numero: "", direccion: "", mlsId: "", vencimiento: todayStr, tipo: TIPOS_CARTEL[0], agente: "" })
@@ -111,7 +111,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
 
   function openModal(m: ModalT) {
     setError("")
-    setPagoForm({ agente_id: agentes[0]?.id ?? "", concepto: CONCEPTOS_PAGO[0], monto_debe: "", monto_pagado: "0", fecha: todayStr })
+    setPagoForm({ agente_id: agentes[0]?.id ?? "", concepto: CONCEPTOS_PAGO[0], monto_pagado: "", fecha: todayStr })
     setOpForm({ fecha: todayStr, direccion: "", agentes: "", tipo: TIPOS_OP[0], comision_bruta: "", comision_neta: "", encuesta_comprador: false, encuesta_vendedor: false })
     setCartelForm({ numero: "", direccion: "", mlsId: "", vencimiento: todayStr, tipo: TIPOS_CARTEL[0], agente: "" })
     setOfertaForm({ numero: "", direccion: "", tipologia: TIPOLOGIAS_OFERTA[0], tipo_operacion: TIPOS_OP_OFERTA[0], agente_vendedor_id: agentes[0]?.id ?? "", agente_comprador_id: "", monto_ofertado_usd: "", precio_publicacion_usd: "", fecha_oferta: todayStr, notas: "" })
@@ -121,11 +121,10 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
 
   function handlePago(e: React.FormEvent) {
     e.preventDefault()
-    const debe   = parseFloat(pagoForm.monto_debe)   || 0
     const pagado = parseFloat(pagoForm.monto_pagado) || 0
-    if (debe <= 0) { setError("El monto debe ser mayor a 0"); return }
+    if (pagado <= 0) { setError("El monto debe ser mayor a 0"); return }
     startTransition(async () => {
-      const r = await crearPago({ agente_id: pagoForm.agente_id, fecha: pagoForm.fecha, concepto: pagoForm.concepto, monto_debe: debe, monto_pagado: pagado })
+      const r = await crearPago({ agente_id: pagoForm.agente_id, fecha: pagoForm.fecha, concepto: pagoForm.concepto, monto_debe: pagado, monto_pagado: pagado })
       if (r.error) setError(r.error)
       else { closeModal(); router.refresh() }
     })
@@ -207,7 +206,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
         {QUICK_BTNS.map(({ icon: Icon, label, sublabel, m, iconBg, iconColor, cardBg, cardBorder }) => (
           <button
             key={m}
-            onClick={() => openModal(m)}
+            onClick={() => m === "encuesta" ? router.push("/encuestas") : openModal(m)}
             className={`flex flex-col items-center justify-center gap-2 md:gap-3 p-3 md:p-5 rounded-2xl border ${cardBorder} ${cardBg} cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 min-h-[88px] md:min-h-[110px]`}
             style={{ fontFamily: "inherit" }}
           >
@@ -241,14 +240,9 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
                 <input type="date" value={pagoForm.fecha} onChange={e => setPagoForm(f => ({ ...f, fecha: e.target.value }))} className={inp} required />
               </Field>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Monto que debe (USD) *">
-                <input type="number" min="0" step="0.01" placeholder="95.25" value={pagoForm.monto_debe} onChange={e => setPagoForm(f => ({ ...f, monto_debe: e.target.value }))} className={inp} required />
-              </Field>
-              <Field label="Monto pagado (USD)">
-                <input type="number" min="0" step="0.01" placeholder="0" value={pagoForm.monto_pagado} onChange={e => setPagoForm(f => ({ ...f, monto_pagado: e.target.value }))} className={inp} />
-              </Field>
-            </div>
+            <Field label="Monto pagado (USD) *">
+              <input type="number" min="0" step="0.01" placeholder="95.25" value={pagoForm.monto_pagado} onChange={e => setPagoForm(f => ({ ...f, monto_pagado: e.target.value }))} className={inp} required />
+            </Field>
             <ErrorBox />
             <SubmitRow isPending={isPending} onCancel={closeModal} label="Guardar" />
           </form>

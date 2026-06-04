@@ -66,7 +66,6 @@ export interface AgenteInfo {
 interface NuevoForm {
   agente_id: string
   concepto: string
-  monto_debe: string
   monto_pagado: string
   fecha: string
 }
@@ -310,8 +309,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
   const [nuevoForm, setNuevoForm] = useState<NuevoForm>({
     agente_id:    agentes[0]?.id ?? "",
     concepto:     CONCEPTOS_PAGO[0],
-    monto_debe:   "",
-    monto_pagado: "0",
+    monto_pagado: "",
     fecha:        todayStr,
   })
 
@@ -423,8 +421,9 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
 
   // ── Real-time form estado ──────────────────────────
   const nuevoEstado = useMemo(() => {
-    return calcEstado(parseFloat(nuevoForm.monto_debe) || 0, parseFloat(nuevoForm.monto_pagado) || 0)
-  }, [nuevoForm.monto_debe, nuevoForm.monto_pagado])
+    const pagado = parseFloat(nuevoForm.monto_pagado) || 0
+    return pagado > 0 ? "Pagado" : "Pendiente"
+  }, [nuevoForm.monto_pagado])
 
   const editEstado = useMemo(() => {
     if (!selectedPago) return "Pendiente"
@@ -451,8 +450,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
     setNuevoForm({
       agente_id:    preAgente ?? agentes[0]?.id ?? "",
       concepto:     CONCEPTOS_PAGO[0],
-      monto_debe:   "",
-      monto_pagado: "0",
+      monto_pagado: "",
       fecha:        todayStr,
     })
     setError("")
@@ -533,16 +531,15 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
   function handleNuevo(e: React.FormEvent) {
     e.preventDefault()
     setError("")
-    const debe   = parseFloat(nuevoForm.monto_debe)   || 0
     const pagado = parseFloat(nuevoForm.monto_pagado) || 0
-    if (debe <= 0) { setError("El monto debe ser mayor a 0"); return }
+    if (pagado <= 0) { setError("El monto debe ser mayor a 0"); return }
 
     startTransition(async () => {
       const result = await crearPago({
         agente_id:    nuevoForm.agente_id,
         fecha:        nuevoForm.fecha,
         concepto:     nuevoForm.concepto,
-        monto_debe:   debe,
+        monto_debe:   pagado,
         monto_pagado: pagado,
       })
       if (result.error) setError(result.error)
@@ -1182,20 +1179,12 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                     style={inp} required />
                 </Field>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Field label="Monto que debe (USD) *">
-                  <input type="number" min="0" step="0.01" placeholder="95.25"
-                    value={nuevoForm.monto_debe}
-                    onChange={e => setNuevoForm(f => ({ ...f, monto_debe: e.target.value }))}
-                    style={inp} required />
-                </Field>
-                <Field label="Monto pagado (USD)">
-                  <input type="number" min="0" step="0.01" placeholder="0"
-                    value={nuevoForm.monto_pagado}
-                    onChange={e => setNuevoForm(f => ({ ...f, monto_pagado: e.target.value }))}
-                    style={inp} />
-                </Field>
-              </div>
+              <Field label="Monto pagado (USD) *">
+                <input type="number" min="0" step="0.01" placeholder="95.25"
+                  value={nuevoForm.monto_pagado}
+                  onChange={e => setNuevoForm(f => ({ ...f, monto_pagado: e.target.value }))}
+                  style={inp} required />
+              </Field>
               <div style={{
                 display: "flex", alignItems: "center", gap: "8px",
                 padding: "10px 12px", borderRadius: "8px",
