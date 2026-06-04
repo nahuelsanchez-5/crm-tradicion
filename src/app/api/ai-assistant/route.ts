@@ -4,7 +4,7 @@ import { createServerClient } from "@/lib/supabase"
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent"
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -75,53 +75,52 @@ async function callGemini(
   history: { role: string; content: string }[],
   message: string
 ): Promise<GeminiIntent> {
-  // System prompt inyectado como prefijo del primer mensaje de usuario.
-  // Gemini v1 no soporta system_instruction, así que va concatenado al inicio.
-  type GeminiContent = { role: string; parts: { text: string }[] }
-  let contents: GeminiContent[]
+  const contents = [
+    ...history.map((h) => ({
+      role: h.role === "assistant" ? "model" : "user",
+      parts: [{ text: h.content }],
+    })),
+    { role: "user", parts: [{ text: message }] },
+  ]
 
-  if (history.length === 0) {
-    // Primera vuelta: system prompt + mensaje actual en un solo turno
-    contents = [
-      { role: "user", parts: [{ text: `${systemPrompt}\n\nUsuario: ${message}` }] },
-    ]
-  } else {
-    // Vueltas siguientes: system prompt en el primer mensaje del historial,
-    // resto del historial alternando user/model, y mensaje actual al final
-    const [first, ...rest] = history
-    contents = [
-      { role: "user", parts: [{ text: `${systemPrompt}\n\nUsuario: ${first.content}` }] },
-      ...rest.map((h) => ({
-        role: h.role === "assistant" ? "model" : "user",
-        parts: [{ text: h.content }],
-      })),
-      { role: "user", parts: [{ text: message }] },
-    ]
-  }
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) throw new Error("GEMINI_API_KEY no definida dentro de callGemini")
 
-  const apiKey = process.env.GEMINI_API_KEY ?? ""
   const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      system_instruction: { parts: [{ text: systemPrompt }] },
       contents,
       generationConfig: {
         temperature: 0.3,
         maxOutputTokens: 1024,
+        responseMimeType: "application/json",
       },
     }),
   })
 
   if (!res.ok) {
-    const errText = await res.text()
-    throw new Error(`Gemini ${res.status}: ${errText}`)
+    const errBody = await res.text()
+    console.error(`[ai-assistant] Gemini HTTP ${res.status}:`, errBody)
+    throw new Error(`Gemini ${res.status}: ${errBody}`)
   }
 
   const data = await res.json()
-  const raw: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}"
-  // Strip markdown code blocks if present (safety net)
+  const raw: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? ""
+
+  if (!raw) {
+    console.error("[ai-assistant] Gemini respuesta vacía:", JSON.stringify(data))
+    return { intent: "no_entendido", params: {}, response: "No pude procesar tu mensaje. Intentá de nuevo.", requiresConfirmation: false }
+  }
+
   const cleaned = raw.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim()
-  return JSON.parse(cleaned) as GeminiIntent
+  try {
+    return JSON.parse(cleaned) as GeminiIntent
+  } catch (parseErr) {
+    console.error("[ai-assistant] JSON parse error. Raw:", cleaned, "Error:", parseErr)
+    return { intent: "no_entendido", params: {}, response: "No entendí la respuesta del modelo. Intentá de nuevo.", requiresConfirmation: false }
+  }
 }
 
 // ── Agent resolution ──────────────────────────────────────────────────────────
