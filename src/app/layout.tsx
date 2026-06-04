@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Plus_Jakarta_Sans } from "next/font/google"
 import "./globals.css"
 import Sidebar from "@/components/Sidebar"
+import AIAssistant from "@/components/AIAssistant"
 import { createServerClient } from "@/lib/supabase"
 
 const jakarta = Plus_Jakarta_Sans({
@@ -33,6 +34,7 @@ export default async function RootLayout({
             {children}
           </main>
         </div>
+        <AIAssistant />
       </body>
     </html>
   )
