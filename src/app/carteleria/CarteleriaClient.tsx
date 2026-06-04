@@ -3,9 +3,9 @@
 import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import KpiCard from "@/components/KpiCard"
-import { crearCartel, editarCartel } from "./actions"
+import { crearCartel, editarCartel, devolverCartel } from "./actions"
 import type { CartelFormData } from "./actions"
-import { MapPin, AlertTriangle, Award, X, Loader2, Plus, Search, CheckCircle2, Save } from "lucide-react"
+import { MapPin, AlertTriangle, Award, X, Loader2, Plus, Search, CheckCircle2, Save, RotateCcw } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────
 export interface CartelRow {
@@ -114,6 +114,11 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
   const [error,       setError]       = useState("")
   const [saveSuccess, setSaveSuccess] = useState(false)
 
+  // ── Devolver ───────────────────────────────────────
+  const [devolverTarget,  setDevolverTarget]  = useState<CartelRow | null>(null)
+  const [devolverLoading, setDevolverLoading] = useState(false)
+  const [devolverError,   setDevolverError]   = useState("")
+
   // ── KPI stats ──────────────────────────────────────
   const stats = useMemo(() => {
     const total    = carteles.length
@@ -208,6 +213,21 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
       if (result.error) setError(result.error)
       else { setSaveSuccess(true); setTimeout(() => { setSaveSuccess(false); closeModal(); router.refresh() }, 1000) }
     })
+  }
+
+  // ── Devolver handler ───────────────────────────────
+  async function handleConfirmDevolver() {
+    if (!devolverTarget) return
+    setDevolverLoading(true)
+    setDevolverError("")
+    const result = await devolverCartel(devolverTarget.id)
+    setDevolverLoading(false)
+    if (result.error) {
+      setDevolverError(result.error)
+    } else {
+      setDevolverTarget(null)
+      router.refresh()
+    }
   }
 
   // ── Agentes para el modal ──────────────────────────
@@ -501,19 +521,35 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
                         </span>
                       </td>
 
-                      {/* Acción */}
+                      {/* Acciones */}
                       <td style={{ padding: "13px 16px" }}>
-                        <button
-                          onClick={() => openEditar(c)}
-                          style={{
-                            padding: "5px 14px", borderRadius: "7px",
-                            border: "1.5px solid #EAECF2", background: "white",
-                            fontSize: "12px", fontWeight: 600, color: "#0F172A",
-                            cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
-                          }}
-                        >
-                          Editar
-                        </button>
+                        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                          <button
+                            onClick={() => openEditar(c)}
+                            style={{
+                              padding: "5px 14px", borderRadius: "7px",
+                              border: "1.5px solid #EAECF2", background: "white",
+                              fontSize: "12px", fontWeight: 600, color: "#0F172A",
+                              cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                            }}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => { setDevolverTarget(c); setDevolverError("") }}
+                            title="Registrar devolución"
+                            style={{
+                              padding: "5px 10px", borderRadius: "7px",
+                              border: "1.5px solid #FECDD3", background: "white",
+                              fontSize: "12px", fontWeight: 600, color: "#E11D48",
+                              cursor: "pointer", fontFamily: "inherit",
+                              display: "flex", alignItems: "center", gap: "4px",
+                            }}
+                          >
+                            <RotateCcw size={12} />
+                            Devolver
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -697,6 +733,95 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
                 )}
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════
+          MODAL — CONFIRMAR DEVOLUCIÓN
+      ════════════════════════════════════════════ */}
+      {devolverTarget && (
+        <div onClick={() => { setDevolverTarget(null); setDevolverError("") }} className="crm-modal-backdrop">
+          <div
+            onClick={e => e.stopPropagation()}
+            className="crm-modal"
+            style={{ maxWidth: "420px" }}
+          >
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "16px 20px", borderBottom: "1px solid #EAECF2",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div className="bg-rose-50 rounded-xl p-2.5 flex-shrink-0">
+                  <RotateCcw size={18} className="text-rose-600" />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
+                    Confirmar devolución
+                  </h2>
+                  <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
+                    Cartel #{devolverTarget.numero} · {devolverTarget.direccion}
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => { setDevolverTarget(null); setDevolverError("") }} style={{
+                background: "#F8F9FC", border: "none", borderRadius: "8px",
+                width: "32px", height: "32px", display: "flex",
+                alignItems: "center", justifyContent: "center",
+                cursor: "pointer", color: "#64748B",
+              }}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <div style={{ padding: "20px" }}>
+              <p style={{ fontSize: "13px", color: "#0F172A", marginBottom: "8px", lineHeight: 1.5 }}>
+                ¿Registrar la devolución de este cartel? Se actualizará el vencimiento al día de hoy en Airtable.
+              </p>
+              <p style={{ fontSize: "12px", color: "#64748B", marginBottom: "20px" }}>
+                Agente: <strong>{devolverTarget.agente || "—"}</strong>
+              </p>
+
+              {devolverError && (
+                <div style={{
+                  background: "#FFF1F2", border: "1px solid #FECDD3",
+                  borderRadius: "8px", padding: "10px 12px",
+                  fontSize: "12.5px", color: "#E11D48", marginBottom: "14px",
+                }}>
+                  ⚠️ {devolverError}
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button
+                  onClick={() => { setDevolverTarget(null); setDevolverError("") }}
+                  disabled={devolverLoading}
+                  style={{
+                    padding: "9px 20px", borderRadius: "8px",
+                    border: "1.5px solid #EAECF2", background: "white",
+                    fontSize: "13px", fontWeight: 600, color: "#64748B",
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleConfirmDevolver}
+                  disabled={devolverLoading}
+                  style={{
+                    padding: "9px 20px", borderRadius: "8px", border: "none",
+                    background: devolverLoading ? "#CBD5E1" : "#E11D48",
+                    color: "white", fontSize: "13px", fontWeight: 700,
+                    cursor: devolverLoading ? "not-allowed" : "pointer",
+                    fontFamily: "inherit",
+                    display: "flex", alignItems: "center", gap: "6px",
+                  }}
+                >
+                  {devolverLoading && <Loader2 size={14} className="animate-spin" />}
+                  {devolverLoading ? "Registrando..." : <><RotateCcw size={14} /> Confirmar devolución</>}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

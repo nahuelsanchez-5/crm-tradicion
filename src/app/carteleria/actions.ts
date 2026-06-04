@@ -61,6 +61,24 @@ export async function crearCartel(data: CartelFormData) {
   return { success: true }
 }
 
+export async function devolverCartel(id: string) {
+  const today = new Date().toISOString().split("T")[0]
+  const res = await fetch(apiUrl(), {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify({ records: [{ id, fields: { [F.vencimiento]: today } }] }),
+  })
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    const msg  = (body as { error?: { message?: string } }).error?.message
+    return { error: msg ?? `Error Airtable ${res.status}` }
+  }
+
+  revalidatePath("/carteleria")
+  return { success: true }
+}
+
 export async function editarCartel(id: string, data: CartelFormData) {
   const res = await fetch(apiUrl(), {
     method: "PATCH",
