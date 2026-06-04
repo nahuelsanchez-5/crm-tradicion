@@ -3,9 +3,8 @@ import { createServerClient } from "@/lib/supabase"
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? ""
 const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent"
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -84,7 +83,8 @@ async function callGemini(
     { role: "user", parts: [{ text: message }] },
   ]
 
-  const res = await fetch(`${GEMINI_URL}?key=${GEMINI_API_KEY}`, {
+  const apiKey = process.env.GEMINI_API_KEY ?? ""
+  const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -281,9 +281,19 @@ async function executeAction(
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  if (!GEMINI_API_KEY) {
+  // ── Diagnóstico de env ────────────────────────────────────────────────────
+  const apiKey = process.env.GEMINI_API_KEY ?? ""
+  console.log(
+    "[ai-assistant] GEMINI_API_KEY presente:",
+    !!apiKey,
+    "| primeros 10 chars:",
+    apiKey ? apiKey.slice(0, 10) + "..." : "(vacía)"
+  )
+
+  if (!apiKey) {
+    console.error("[ai-assistant] GEMINI_API_KEY no está definida en el entorno")
     return NextResponse.json(
-      { message: "GEMINI_API_KEY no configurada." },
+      { message: "GEMINI_API_KEY no configurada en el servidor." },
       { status: 500 }
     )
   }
@@ -354,9 +364,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       requiresConfirmation: geminiResponse.requiresConfirmation,
     })
   } catch (err) {
-    console.error("[ai-assistant]", err)
+    const errMsg = err instanceof Error ? err.message : String(err)
+    const errStack = err instanceof Error ? err.stack : undefined
+    console.error("[ai-assistant] Error:", errMsg)
+    if (errStack) console.error("[ai-assistant] Stack:", errStack)
     return NextResponse.json(
-      { message: "Ups, algo salió mal. Intentá de nuevo." },
+      {
+        message: `Error del servidor: ${errMsg}`,
+        debug: {
+          error: errMsg,
+          geminiModel: "gemini-1.5-flash",
+          hasApiKey: !!process.env.GEMINI_API_KEY,
+        },
+      },
       { status: 500 }
     )
   }
