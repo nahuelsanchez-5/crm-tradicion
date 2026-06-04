@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
-import { crearPago, actualizarPago, crearGasto, crearGastoRecurrente } from "./actions"
-import { DollarSign, X, Loader2, MessageCircle, TrendingDown, Repeat, CheckCircle2, Save } from "lucide-react"
+import { crearPago, actualizarPago, crearGasto, crearGastoRecurrente, eliminarPago } from "./actions"
+import { DollarSign, X, Loader2, MessageCircle, TrendingDown, Repeat, CheckCircle2, Save, Trash2 } from "lucide-react"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -326,6 +326,11 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
   })
   const [selectedAgentesRec, setSelectedAgentesRec] = useState<Set<string>>(new Set())
 
+  // ── Eliminar registro ──────────────────────────────
+  const [deleteTarget,  setDeleteTarget]  = useState<PagoRow | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError,   setDeleteError]   = useState("")
+
   const [editForm, setEditForm] = useState<EditForm>({ monto_pagado: "0" })
 
   const [saveSuccessNuevo, setSaveSuccessNuevo] = useState(false)
@@ -598,6 +603,20 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
     })
   }
 
+  async function handleConfirmEliminar() {
+    if (!deleteTarget) return
+    setDeleteLoading(true)
+    setDeleteError("")
+    const result = await eliminarPago(deleteTarget.id)
+    setDeleteLoading(false)
+    if (result.error) {
+      setDeleteError(result.error)
+    } else {
+      setDeleteTarget(null)
+      router.refresh()
+    }
+  }
+
   const cardStyle: React.CSSProperties = {
     background: "white", borderRadius: "14px",
     border: "1.5px solid #EAECF2", overflow: "hidden",
@@ -859,20 +878,34 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                 <span style={{ fontSize: "12px", fontWeight: 700, color: "#E11D48" }}>{fmtUSD(Number(p.monto_debe))}</span>
                               </div>
                             </div>
-                            {p.estado !== "Pagado" && (
+                            <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                              {p.estado !== "Pagado" && (
+                                <button
+                                  onClick={() => openEditar(p)}
+                                  className="flex-1 min-h-[38px]"
+                                  style={{
+                                    padding: "6px 12px", borderRadius: "7px",
+                                    border: "1.5px solid #EAECF2", background: "white",
+                                    fontSize: "12px", fontWeight: 600, color: "#0F172A",
+                                    cursor: "pointer", fontFamily: "inherit",
+                                  }}
+                                >
+                                  Registrar pago
+                                </button>
+                              )}
                               <button
-                                onClick={() => openEditar(p)}
-                                className="mt-2 w-full min-h-[38px]"
+                                onClick={() => { setDeleteTarget(p); setDeleteError("") }}
+                                title="Eliminar registro"
                                 style={{
-                                  padding: "6px 12px", borderRadius: "7px",
-                                  border: "1.5px solid #EAECF2", background: "white",
-                                  fontSize: "12px", fontWeight: 600, color: "#0F172A",
-                                  cursor: "pointer", fontFamily: "inherit",
+                                  width: "38px", height: "38px", borderRadius: "7px",
+                                  border: "1.5px solid #FECDD3", background: "white",
+                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                  cursor: "pointer", color: "#E11D48", flexShrink: 0,
                                 }}
                               >
-                                Registrar pago
+                                <Trash2 size={15} />
                               </button>
-                            )}
+                            </div>
                           </div>
                         ))}
                         <div className="flex gap-3 mt-3 flex-wrap">
@@ -1088,19 +1121,33 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                             <EstadoBadge estado={p.estado} />
                                           </td>
                                           <td style={{ padding: "10px 14px" }}>
-                                            {p.estado !== "Pagado" && (
+                                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                              {p.estado !== "Pagado" && (
+                                                <button
+                                                  onClick={() => openEditar(p)}
+                                                  style={{
+                                                    padding: "3px 10px", borderRadius: "6px",
+                                                    border: "1.5px solid #EAECF2", background: "white",
+                                                    fontSize: "11px", fontWeight: 600, color: "#0F172A",
+                                                    cursor: "pointer", fontFamily: "inherit",
+                                                  }}
+                                                >
+                                                  Registrar pago
+                                                </button>
+                                              )}
                                               <button
-                                                onClick={() => openEditar(p)}
+                                                onClick={() => { setDeleteTarget(p); setDeleteError("") }}
+                                                title="Eliminar registro"
                                                 style={{
-                                                  padding: "3px 10px", borderRadius: "6px",
-                                                  border: "1.5px solid #EAECF2", background: "white",
-                                                  fontSize: "11px", fontWeight: 600, color: "#0F172A",
-                                                  cursor: "pointer", fontFamily: "inherit",
+                                                  width: "28px", height: "28px", borderRadius: "6px",
+                                                  border: "1.5px solid #FECDD3", background: "white",
+                                                  display: "flex", alignItems: "center", justifyContent: "center",
+                                                  cursor: "pointer", color: "#E11D48", flexShrink: 0,
                                                 }}
                                               >
-                                                Registrar pago
+                                                <Trash2 size={13} />
                                               </button>
-                                            )}
+                                            </div>
                                           </td>
                                         </tr>
                                       )
@@ -1502,6 +1549,71 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 </button>
               </div>
             </form>
+          </div>
+        </Backdrop>
+      )}
+
+      {/* ════════════════════════════════════════════
+          MODAL — CONFIRMAR ELIMINACIÓN
+      ════════════════════════════════════════════ */}
+      {deleteTarget && (
+        <Backdrop onClose={() => !deleteLoading && setDeleteTarget(null)}>
+          <div className="crm-modal" style={{ maxWidth: "440px" }}>
+            <ModalHeader
+              title="Eliminar registro"
+              subtitle="Esta acción no se puede deshacer"
+              onClose={() => !deleteLoading && setDeleteTarget(null)}
+              icon={<Trash2 size={20} className="text-red-500" />}
+              iconBg="bg-red-50"
+            />
+            <div style={{ padding: "20px" }}>
+              <div style={{
+                padding: "14px 16px", borderRadius: "10px",
+                background: "#FFF1F2", border: "1px solid #FECDD3",
+                marginBottom: "18px",
+              }}>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "#0F172A", marginBottom: "4px" }}>
+                  {deleteTarget.concepto}
+                </div>
+                <div style={{ fontSize: "12px", color: "#64748B" }}>
+                  {fmtUSD(Number(deleteTarget.monto_debe))} · {fmtFecha(deleteTarget.fecha)}
+                </div>
+              </div>
+              {deleteError && (
+                <div style={{
+                  padding: "10px 12px", borderRadius: "8px",
+                  background: "#FFF1F2", border: "1px solid #FECDD3",
+                  fontSize: "12px", color: "#E11D48", marginBottom: "14px",
+                }}>
+                  {deleteError}
+                </div>
+              )}
+              <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center">
+                <button
+                  type="button"
+                  onClick={() => setDeleteTarget(null)}
+                  disabled={deleteLoading}
+                  className="w-full sm:w-auto min-h-[44px]"
+                  style={btnCancel}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmEliminar}
+                  disabled={deleteLoading}
+                  className="w-full sm:w-auto min-h-[44px] justify-center"
+                  style={{
+                    ...btnSave,
+                    background: deleteLoading ? "#F87171" : "#E11D48",
+                    borderColor: "#E11D48",
+                  }}
+                >
+                  {deleteLoading && <Loader2 size={14} className="animate-spin" />}
+                  {deleteLoading ? "Eliminando..." : "Eliminar registro"}
+                </button>
+              </div>
+            </div>
           </div>
         </Backdrop>
       )}

@@ -95,6 +95,23 @@ export async function crearGastoRecurrente(data: {
 }
 
 // ─────────────────────────────────────────────────────
+//  ELIMINAR PAGO / GASTO
+// ─────────────────────────────────────────────────────
+export async function eliminarPago(id: string) {
+  const supabase = createServerClient()
+
+  const { error } = await supabase
+    .from("pagos")
+    .delete()
+    .eq("id", id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath("/pagos")
+  return { success: true }
+}
+
+// ─────────────────────────────────────────────────────
 //  ACTUALIZAR PAGO PARCIAL
 // ─────────────────────────────────────────────────────
 export async function actualizarPago(
