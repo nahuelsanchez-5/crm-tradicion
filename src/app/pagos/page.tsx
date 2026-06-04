@@ -17,6 +17,7 @@ export default async function PagosPage() {
     supabase
       .from("agentes")
       .select("id, nombre, telefono, activo, paga_fee, licencia")
+      .eq("activo", true)
       .order("nombre"),
 
     supabase
