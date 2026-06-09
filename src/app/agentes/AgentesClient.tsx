@@ -19,6 +19,7 @@ export interface AgenteConPlan {
   email: string | null
   telefono: string | null
   fecha_alta: string
+  fecha_mainstreet: string | null
   fecha_baja: string | null
   activo: boolean
   paga_fee: boolean | null
@@ -51,6 +52,7 @@ const MONTH_NAMES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","A
 const EMPTY_FORM: AgenteFormData = {
   nombre: "", email: "", telefono: "",
   fecha_alta: new Date().toISOString().split("T")[0],
+  fecha_mainstreet: "",
   plan: "PRO", activo: true,
 }
 
@@ -284,12 +286,13 @@ export default function AgentesClient({
   function openEditar(ag: AgenteConPlan) {
     setSelectedAgent(ag)
     setForm({
-      nombre:     ag.nombre,
-      email:      ag.email    ?? "",
-      telefono:   ag.telefono ?? "",
-      fecha_alta: ag.fecha_alta,
-      plan:       (ag.plan?.tipo_plan ?? "PRO") as Plan,
-      activo:     ag.activo,
+      nombre:           ag.nombre,
+      email:            ag.email    ?? "",
+      telefono:         ag.telefono ?? "",
+      fecha_alta:       ag.fecha_alta,
+      fecha_mainstreet: ag.fecha_mainstreet ?? "",
+      plan:             (ag.plan?.tipo_plan ?? "PRO") as Plan,
+      activo:           ag.activo,
     })
     setError("")
     setModal("editar")
@@ -516,7 +519,7 @@ export default function AgentesClient({
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
-                  {["Nombre", "Fecha alta", "Licencia CRM", "Paga FEE", "Facturación año", "Estado", "WA", ""].map(h => (
+                  {["Nombre", "Fecha alta", "Mainstreet", "Licencia CRM", "Paga FEE", "Facturación año", "Estado", "WA", ""].map(h => (
                     <th key={h} style={{
                       padding: "10px 16px", textAlign: "left",
                       fontSize: "10.5px", fontWeight: 700,
@@ -532,7 +535,7 @@ export default function AgentesClient({
               <tbody>
                 {sorted.length === 0 ? (
                   <tr>
-                    <td colSpan={8} style={{ padding: "40px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
+                    <td colSpan={9} style={{ padding: "40px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
                       No hay agentes registrados. Hacé clic en &quot;+ Nuevo Agente&quot; para empezar.
                     </td>
                   </tr>
@@ -563,6 +566,9 @@ export default function AgentesClient({
                         </td>
                         <td style={{ padding: "12px 16px", fontSize: "13px", color: "#64748B", whiteSpace: "nowrap" }}>
                           {fmtFecha(ag.fecha_alta)}
+                        </td>
+                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "#64748B", whiteSpace: "nowrap" }}>
+                          {ag.fecha_mainstreet ? fmtFecha(ag.fecha_mainstreet) : "—"}
                         </td>
                         <td style={{ padding: "12px 16px" }}>
                           <PlanBadge plan={ag.plan?.tipo_plan ?? null} />
@@ -694,17 +700,22 @@ export default function AgentesClient({
                     onChange={e => setForm(f => ({ ...f, fecha_alta: e.target.value }))}
                     style={inputStyle} required />
                 </Field>
-                <Field label="Plan inicial *">
-                  <select value={form.plan}
-                    onChange={e => setForm(f => ({ ...f, plan: e.target.value }))}
-                    style={{ ...inputStyle, cursor: "pointer" }} required>
-                    <option value="PRO">PRO</option>
-                    <option value="PRO+">PRO+</option>
-                    <option value="B_QR">B_QR</option>
-                    <option value="B_OFI">B_OFI</option>
-                  </select>
+                <Field label="Fecha Mainstreet">
+                  <input type="date" value={form.fecha_mainstreet ?? ""}
+                    onChange={e => setForm(f => ({ ...f, fecha_mainstreet: e.target.value || null }))}
+                    style={inputStyle} />
                 </Field>
               </div>
+              <Field label={modal === "nuevo" ? "Plan inicial *" : "Plan *"}>
+                <select value={form.plan}
+                  onChange={e => setForm(f => ({ ...f, plan: e.target.value }))}
+                  style={{ ...inputStyle, cursor: "pointer" }} required>
+                  <option value="PRO">PRO</option>
+                  <option value="PRO+">PRO+</option>
+                  <option value="B_QR">B_QR</option>
+                  <option value="B_OFI">B_OFI</option>
+                </select>
+              </Field>
 
               {modal === "editar" && (
                 <Field label="Estado del agente">

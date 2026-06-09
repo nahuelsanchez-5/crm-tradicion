@@ -18,7 +18,7 @@ export default async function AgentesPage() {
   ] = await Promise.all([
     supabase
       .from("agentes")
-      .select("id, nombre, email, telefono, fecha_alta, fecha_baja, activo, paga_fee")
+      .select("id, nombre, email, telefono, fecha_alta, fecha_mainstreet, fecha_baja, activo, paga_fee")
       .order("nombre"),
 
     supabase

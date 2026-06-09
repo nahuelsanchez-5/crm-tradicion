@@ -11,6 +11,7 @@ export interface AgenteFormData {
   email: string
   telefono: string
   fecha_alta: string
+  fecha_mainstreet?: string | null
   plan: string
   activo?: boolean
 }
@@ -24,11 +25,12 @@ export async function crearAgente(data: AgenteFormData) {
   const { data: agente, error } = await supabase
     .from("agentes")
     .insert({
-      nombre:     data.nombre.trim(),
-      email:      data.email.trim()    || null,
-      telefono:   data.telefono.trim() || null,
-      fecha_alta: data.fecha_alta,
-      activo:     true,
+      nombre:           data.nombre.trim(),
+      email:            data.email.trim()    || null,
+      telefono:         data.telefono.trim() || null,
+      fecha_alta:       data.fecha_alta,
+      fecha_mainstreet: data.fecha_mainstreet || null,
+      activo:           true,
     })
     .select("id")
     .single()
@@ -80,11 +82,13 @@ export async function actualizarAgente(id: string, data: AgenteFormData) {
   const { error } = await supabase
     .from("agentes")
     .update({
-      nombre:     data.nombre.trim(),
-      email:      data.email.trim()    || null,
-      telefono:   data.telefono.trim() || null,
-      activo:     data.activo ?? true,
-      fecha_baja: data.activo ? null : new Date().toISOString().split("T")[0],
+      nombre:           data.nombre.trim(),
+      email:            data.email.trim()    || null,
+      telefono:         data.telefono.trim() || null,
+      activo:           data.activo ?? true,
+      fecha_alta:       data.fecha_alta,
+      fecha_mainstreet: data.fecha_mainstreet || null,
+      fecha_baja:       data.activo ? null : new Date().toISOString().split("T")[0],
     })
     .eq("id", id)
 
