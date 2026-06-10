@@ -2,8 +2,8 @@
 
 import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
-import { crearPago, actualizarPago, crearGasto, crearGastoRecurrente, eliminarPago } from "./actions"
-import { DollarSign, X, Loader2, MessageCircle, TrendingDown, Repeat, CheckCircle2, Save, Trash2 } from "lucide-react"
+import { crearPago, actualizarPago, crearGasto, crearGastoRecurrente, eliminarPago, registrarSaldoFavor, crearGastoConCredito } from "./actions"
+import { DollarSign, X, Loader2, MessageCircle, TrendingDown, TrendingUp, Repeat, CheckCircle2, Save, Trash2 } from "lucide-react"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -85,6 +85,14 @@ interface GastoRecForm {
 interface EditForm {
   monto_pagado: string
 }
+
+interface SaldoFavorForm {
+  agente_id: string
+  monto: string
+  fecha: string
+}
+
+type CreditoOpcion = "todo" | "parcial" | "no"
 
 // ── Helpers ──────────────────────────────────────────
 function calcEstado(debe: number, pagado: number): string {
@@ -298,7 +306,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null)
 
   // ── Modal ──────────────────────────────────────────
-  type ModalT = "none" | "nuevo" | "editar" | "gasto" | "gasto_rec"
+  type ModalT = "none" | "nuevo" | "editar" | "gasto" | "gasto_rec" | "saldo_favor"
   const [modal,        setModal]        = useState<ModalT>("none")
   const [selectedPago, setSelectedPago] = useState<PagoRow | null>(null)
   const [error,        setError]        = useState("")
@@ -332,6 +340,15 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
   const [deleteError,   setDeleteError]   = useState("")
 
   const [editForm, setEditForm] = useState<EditForm>({ monto_pagado: "0" })
+
+  const [saldoFavorForm, setSaldoFavorForm] = useState<SaldoFavorForm>({
+    agente_id: agentes[0]?.id ?? "",
+    monto: "",
+    fecha: todayStr,
+  })
+
+  const [creditoOpcion,       setCreditoOpcion]       = useState<CreditoOpcion>("no")
+  const [creditoParcialMonto, setCreditoParcialMonto] = useState("")
 
   const [saveSuccessNuevo, setSaveSuccessNuevo] = useState(false)
   const [saveSuccessGasto, setSaveSuccessGasto] = useState(false)
@@ -422,6 +439,21 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
       .sort((a, b) => b.saldo - a.saldo)
   }, [pagos, agentes, selectedMonth, selectedEstado])
 
+  // ── Saldo a favor por agente (todos los pagos) ────
+  const saldoPorAgente = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const p of pagos) {
+      const cur = map.get(p.agente_id) ?? 0
+      map.set(p.agente_id, cur + Number(p.monto_pagado) - Number(p.monto_debe))
+    }
+    return map
+  }, [pagos])
+
+  const saldoGastoAgente = useMemo(() =>
+    Math.max(0, saldoPorAgente.get(gastoForm.agente_id) ?? 0),
+    [saldoPorAgente, gastoForm.agente_id]
+  )
+
   // ── Real-time form estado ──────────────────────────
   const nuevoEstado = useMemo(() => {
     const pagado = parseFloat(nuevoForm.monto_pagado) || 0
@@ -468,8 +500,20 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
       fecha:     todayStr,
       tipo:      "Ordinario",
     })
+    setCreditoOpcion("no")
+    setCreditoParcialMonto("")
     setError("")
     setModal("gasto")
+  }
+
+  function openSaldoFavor() {
+    setSaldoFavorForm({
+      agente_id: agentes[0]?.id ?? "",
+      monto:     "",
+      fecha:     todayStr,
+    })
+    setError("")
+    setModal("saldo_favor")
   }
 
   function openGastoRec() {
@@ -557,15 +601,53 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
     if (debe <= 0) { setError("El monto debe ser mayor a 0"); return }
     if (!gastoForm.concepto.trim()) { setError("Ingresá un concepto"); return }
 
+    const conceptoFinal = `${gastoForm.tipo === "Extraordinario" ? "[Ext] " : ""}${gastoForm.concepto}`
+
+    let creditoAplicar = 0
+    if (creditoOpcion === "todo" && saldoGastoAgente > 0) {
+      creditoAplicar = Math.min(saldoGastoAgente, debe)
+    } else if (creditoOpcion === "parcial" && saldoGastoAgente > 0) {
+      creditoAplicar = Math.min(parseFloat(creditoParcialMonto) || 0, saldoGastoAgente, debe)
+    }
+    if (creditoAplicar < 0) creditoAplicar = 0
+
     startTransition(async () => {
-      const result = await crearGasto({
-        agente_id:  gastoForm.agente_id,
-        fecha:      gastoForm.fecha,
-        concepto:   `${gastoForm.tipo === "Extraordinario" ? "[Ext] " : ""}${gastoForm.concepto}`,
-        monto_debe: debe,
-      })
+      let result
+      if (creditoAplicar > 0) {
+        result = await crearGastoConCredito({
+          agente_id:        gastoForm.agente_id,
+          fecha:            gastoForm.fecha,
+          concepto:         conceptoFinal,
+          monto_debe:       debe,
+          credito_aplicado: creditoAplicar,
+        })
+      } else {
+        result = await crearGasto({
+          agente_id:  gastoForm.agente_id,
+          fecha:      gastoForm.fecha,
+          concepto:   conceptoFinal,
+          monto_debe: debe,
+        })
+      }
       if (result.error) setError(result.error)
       else { setSaveSuccessGasto(true); setTimeout(() => { setSaveSuccessGasto(false); closeModal(); router.refresh() }, 1000) }
+    })
+  }
+
+  function handleSaldoFavor(e: React.FormEvent) {
+    e.preventDefault()
+    setError("")
+    const monto = parseFloat(saldoFavorForm.monto) || 0
+    if (monto <= 0) { setError("El monto debe ser mayor a 0"); return }
+
+    startTransition(async () => {
+      const result = await registrarSaldoFavor({
+        agente_id: saldoFavorForm.agente_id,
+        fecha:     saldoFavorForm.fecha,
+        monto,
+      })
+      if (result.error) setError(result.error)
+      else { closeModal(); router.refresh() }
     })
   }
 
@@ -669,6 +751,18 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
           </p>
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
+          <button
+            onClick={() => openSaldoFavor()}
+            style={{
+              background: "#F0FDF4", color: "#059669",
+              border: "1.5px solid #6EE7B7",
+              padding: "8px 16px", borderRadius: "9px",
+              fontSize: "13px", fontWeight: 700, cursor: "pointer",
+              fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
+            }}
+          >
+            <TrendingUp size={14} /> Saldo a favor
+          </button>
           <button
             onClick={() => openGasto()}
             style={{
@@ -865,17 +959,27 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                         </div>
                         {ag.pagos.map((p, pi) => (
                           <div key={p.id} style={{
-                            background: "white", borderRadius: "8px", border: "1px solid #EAECF2",
+                            background: p.concepto === "Saldo a favor" ? "#F0FDF4" : p.concepto === "Crédito aplicado" ? "#EFF6FF" : "white",
+                            borderRadius: "8px", border: "1px solid #EAECF2",
                             padding: "10px 12px", marginBottom: pi < ag.pagos.length - 1 ? "8px" : 0,
                           }}>
                             <div className="flex items-start justify-between gap-2">
                               <div>
-                                <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#0F172A" }}>{p.concepto}</div>
+                                {p.concepto === "Saldo a favor" ? (
+                                  <span style={{ background: "#ECFDF5", color: "#059669", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>Saldo a favor</span>
+                                ) : p.concepto === "Crédito aplicado" ? (
+                                  <span style={{ background: "#EFF6FF", color: "#2563EB", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>Crédito aplicado</span>
+                                ) : (
+                                  <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#0F172A" }}>{p.concepto}</div>
+                                )}
                                 <div style={{ fontSize: "11px", color: "#64748B", marginTop: "2px" }}>{fmtFecha(p.fecha)}</div>
                               </div>
                               <div className="flex flex-col items-end gap-1">
                                 <EstadoBadge estado={p.estado} />
-                                <span style={{ fontSize: "12px", fontWeight: 700, color: "#E11D48" }}>{fmtUSD(Number(p.monto_debe))}</span>
+                                {p.concepto === "Saldo a favor"
+                                  ? <span style={{ fontSize: "12px", fontWeight: 700, color: "#059669" }}>+{fmtUSD(Number(p.monto_pagado))}</span>
+                                  : <span style={{ fontSize: "12px", fontWeight: 700, color: "#E11D48" }}>{fmtUSD(Number(p.monto_debe))}</span>
+                                }
                               </div>
                             </div>
                             <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
@@ -1098,24 +1202,36 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                   </thead>
                                   <tbody>
                                     {ag.pagos.map((p, pi) => {
-                                      const rowBg = p.estado === "Pagado"
+                                      const isSaldoFavor = p.concepto === "Saldo a favor"
+                                      const isCreditoAplicado = p.concepto === "Crédito aplicado"
+                                      const rowBg = isSaldoFavor
                                         ? "#F0FDF4"
-                                        : p.estado === "Parcial"
-                                          ? "#FFFBEB"
-                                          : "#FFF8F8"
+                                        : isCreditoAplicado
+                                          ? "#EFF6FF"
+                                          : p.estado === "Pagado" ? "#F0FDF4" : p.estado === "Parcial" ? "#FFFBEB" : "#FFF8F8"
                                       return (
                                         <tr key={p.id} style={{ borderTop: pi > 0 ? "1px solid #F3F4F6" : "none", background: rowBg }}>
                                           <td style={{ padding: "10px 14px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>
                                             {fmtFecha(p.fecha)}
                                           </td>
                                           <td style={{ padding: "10px 14px", fontSize: "12px", color: "#0F172A" }}>
-                                            {p.concepto}
+                                            {isSaldoFavor ? (
+                                              <span style={{ background: "#ECFDF5", color: "#059669", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>
+                                                Saldo a favor
+                                              </span>
+                                            ) : isCreditoAplicado ? (
+                                              <span style={{ background: "#EFF6FF", color: "#2563EB", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>
+                                                Crédito aplicado
+                                              </span>
+                                            ) : p.concepto}
                                           </td>
-                                          <td style={{ padding: "10px 14px", fontSize: "12px", fontWeight: 600, color: "#E11D48", whiteSpace: "nowrap" }}>
-                                            {fmtUSD(Number(p.monto_debe))}
+                                          <td style={{ padding: "10px 14px", fontSize: "12px", fontWeight: 600, color: isCreditoAplicado ? "#2563EB" : "#E11D48", whiteSpace: "nowrap" }}>
+                                            {isSaldoFavor ? "—" : fmtUSD(Number(p.monto_debe))}
                                           </td>
                                           <td style={{ padding: "10px 14px", fontSize: "12px", color: "#059669", fontWeight: 600, whiteSpace: "nowrap" }}>
-                                            {Number(p.monto_pagado) > 0 ? fmtUSD(Number(p.monto_pagado)) : "—"}
+                                            {isSaldoFavor
+                                              ? <span style={{ color: "#059669" }}>+{fmtUSD(Number(p.monto_pagado))}</span>
+                                              : Number(p.monto_pagado) > 0 ? fmtUSD(Number(p.monto_pagado)) : "—"}
                                           </td>
                                           <td style={{ padding: "10px 14px" }}>
                                             <EstadoBadge estado={p.estado} />
@@ -1277,7 +1393,11 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
               <Field label="Agente *">
                 <select
                   value={gastoForm.agente_id}
-                  onChange={e => setGastoForm(f => ({ ...f, agente_id: e.target.value }))}
+                  onChange={e => {
+                    setGastoForm(f => ({ ...f, agente_id: e.target.value }))
+                    setCreditoOpcion("no")
+                    setCreditoParcialMonto("")
+                  }}
                   style={inp} required
                 >
                   {agentes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
@@ -1326,6 +1446,46 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                     style={inp} required />
                 </Field>
               </div>
+
+              {/* Crédito disponible */}
+              {saldoGastoAgente > 0 && (
+                <div style={{
+                  padding: "12px 14px", borderRadius: "10px",
+                  background: "#F0FDF4", border: "1.5px solid #6EE7B7",
+                  marginBottom: "14px",
+                }}>
+                  <div style={{ fontSize: "12.5px", fontWeight: 700, color: "#065F46", marginBottom: "8px" }}>
+                    Este agente tiene {fmtUSD(saldoGastoAgente)} a favor. ¿Cómo lo aplicás?
+                  </div>
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                    {(["todo", "parcial", "no"] as CreditoOpcion[]).map(op => (
+                      <button
+                        key={op} type="button"
+                        onClick={() => { setCreditoOpcion(op); if (op !== "parcial") setCreditoParcialMonto("") }}
+                        style={{
+                          padding: "5px 12px", borderRadius: "7px", fontSize: "12px",
+                          fontWeight: creditoOpcion === op ? 700 : 500,
+                          cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
+                          border: creditoOpcion === op ? "1.5px solid #059669" : "1.5px solid #A7F3D0",
+                          background: creditoOpcion === op ? "#059669" : "white",
+                          color: creditoOpcion === op ? "white" : "#059669",
+                        }}
+                      >
+                        {op === "todo" ? "Aplicar todo" : op === "parcial" ? "Aplicar parcialmente" : "No aplicar"}
+                      </button>
+                    ))}
+                  </div>
+                  {creditoOpcion === "parcial" && (
+                    <input
+                      type="number" min="0.01" step="0.01"
+                      placeholder={`Máx. ${fmtUSD(saldoGastoAgente)}`}
+                      value={creditoParcialMonto}
+                      onChange={e => setCreditoParcialMonto(e.target.value)}
+                      style={{ ...inp, marginTop: "8px" }}
+                    />
+                  )}
+                </div>
+              )}
 
               {/* Gasto recurrente CTA */}
               <div style={{
@@ -1546,6 +1706,65 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 <button type="submit" disabled={isPending} className="w-full sm:w-auto min-h-[44px] justify-center" style={btnSave}>
                   {isPending && <Loader2 size={14} className="animate-spin" />}
                   {isPending ? "Guardando..." : "Actualizar pago"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </Backdrop>
+      )}
+
+      {/* ════════════════════════════════════════════
+          MODAL — SALDO A FAVOR
+      ════════════════════════════════════════════ */}
+      {modal === "saldo_favor" && (
+        <Backdrop onClose={closeModal}>
+          <div className="crm-modal" style={{ maxWidth: "440px" }}>
+            <ModalHeader
+              title="Registrar Saldo a Favor"
+              subtitle="El monto se acredita como crédito del agente"
+              onClose={closeModal}
+              icon={<TrendingUp size={20} className="text-emerald-600" />}
+              iconBg="bg-emerald-50"
+            />
+            <form onSubmit={handleSaldoFavor} style={{ padding: "20px" }}>
+              <Field label="Agente *">
+                <select
+                  value={saldoFavorForm.agente_id}
+                  onChange={e => setSaldoFavorForm(f => ({ ...f, agente_id: e.target.value }))}
+                  style={inp} required
+                >
+                  {agentes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                </select>
+              </Field>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Field label="Monto (USD) *">
+                  <input
+                    type="number" min="0.01" step="0.01" placeholder="0.00"
+                    value={saldoFavorForm.monto}
+                    onChange={e => setSaldoFavorForm(f => ({ ...f, monto: e.target.value }))}
+                    style={inp} required autoFocus
+                  />
+                </Field>
+                <Field label="Fecha *">
+                  <input type="date" value={saldoFavorForm.fecha}
+                    onChange={e => setSaldoFavorForm(f => ({ ...f, fecha: e.target.value }))}
+                    style={inp} required />
+                </Field>
+              </div>
+              <ErrorBox />
+              <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center pt-1">
+                <button type="button" onClick={closeModal} disabled={isPending} className="w-full sm:w-auto min-h-[44px]" style={btnCancel}>Cancelar</button>
+                <button
+                  type="submit" disabled={isPending}
+                  className="w-full sm:w-auto min-h-[44px] justify-center"
+                  style={{
+                    ...btnSave,
+                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#059669 0%,#047857 100%)",
+                    boxShadow: isPending ? "none" : "0 2px 8px rgba(5,150,105,0.3)",
+                  }}
+                >
+                  {isPending && <Loader2 size={14} className="animate-spin" />}
+                  {isPending ? "Guardando..." : <><Save size={14} /> Guardar</>}
                 </button>
               </div>
             </form>

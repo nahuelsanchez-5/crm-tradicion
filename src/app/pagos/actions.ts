@@ -112,6 +112,70 @@ export async function eliminarPago(id: string) {
 }
 
 // ─────────────────────────────────────────────────────
+//  REGISTRAR SALDO A FAVOR
+// ─────────────────────────────────────────────────────
+export async function registrarSaldoFavor(data: {
+  agente_id: string
+  fecha: string
+  monto: number
+}) {
+  const supabase = createServerClient()
+
+  const { error } = await supabase.from("pagos").insert({
+    agente_id:    data.agente_id,
+    fecha:        data.fecha,
+    concepto:     "Saldo a favor",
+    monto_debe:   0,
+    monto_pagado: data.monto,
+    estado:       "Pagado",
+  })
+
+  if (error) return { error: error.message }
+
+  revalidatePath("/pagos")
+  return { success: true }
+}
+
+// ─────────────────────────────────────────────────────
+//  CREAR GASTO APLICANDO CRÉDITO
+// ─────────────────────────────────────────────────────
+export async function crearGastoConCredito(data: {
+  agente_id: string
+  fecha: string
+  concepto: string
+  monto_debe: number
+  credito_aplicado: number
+}) {
+  const supabase = createServerClient()
+
+  const montoNeto = Math.max(0, data.monto_debe - data.credito_aplicado)
+
+  const { error } = await supabase.from("pagos").insert([
+    {
+      agente_id:    data.agente_id,
+      fecha:        data.fecha,
+      concepto:     data.concepto,
+      monto_debe:   montoNeto,
+      monto_pagado: 0,
+      estado:       montoNeto === 0 ? "Pagado" : "Pendiente",
+    },
+    {
+      agente_id:    data.agente_id,
+      fecha:        data.fecha,
+      concepto:     "Crédito aplicado",
+      monto_debe:   data.credito_aplicado,
+      monto_pagado: 0,
+      estado:       "Pagado",
+    },
+  ])
+
+  if (error) return { error: error.message }
+
+  revalidatePath("/pagos")
+  return { success: true }
+}
+
+// ─────────────────────────────────────────────────────
 //  ACTUALIZAR PAGO PARCIAL
 // ─────────────────────────────────────────────────────
 export async function actualizarPago(
