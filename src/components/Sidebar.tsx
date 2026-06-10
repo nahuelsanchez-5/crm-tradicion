@@ -18,6 +18,7 @@ import {
   X,
   LucideIcon,
 } from "lucide-react"
+import DolarWidget from "./DolarWidget"
 
 interface NavItem {
   href: string
@@ -96,6 +97,9 @@ export default function Sidebar({ agenteCount }: Props) {
           />
         ))}
       </nav>
+
+      {/* Dolar widget */}
+      <DolarWidget />
 
       {/* User footer */}
       <div className="px-3 pb-4 pt-2 border-t border-slate-800">
