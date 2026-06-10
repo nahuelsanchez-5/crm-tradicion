@@ -6,7 +6,7 @@ import { crearAgente, actualizarAgente, actualizarPagaFee, type AgenteFormData }
 import { Users, X, Loader2, MessageCircle, AlertCircle } from "lucide-react"
 
 // ── Types ────────────────────────────────────────────
-type Plan = "PRO" | "PRO+" | "B_QR" | "B_OFI"
+type Plan = "PRO" | "PRO+" | "B QR" | "B Ofi"
 
 interface Plan_CRM {
   tipo_plan: string
@@ -23,6 +23,7 @@ export interface AgenteConPlan {
   fecha_baja: string | null
   activo: boolean
   paga_fee: boolean | null
+  tipo_plan: string | null
   plan: Plan_CRM | null
 }
 
@@ -58,16 +59,16 @@ const EMPTY_FORM: AgenteFormData = {
 
 const PLAN_STYLES: Record<string, { bg: string; color: string }> = {
   "PRO":   { bg: "#EFF6FF", color: "#2563EB" },
-  "PRO+":  { bg: "#F5F3FF", color: "#7C3AED" },
-  "B_QR":  { bg: "#F0FDFA", color: "#0D9488" },
-  "B_OFI": { bg: "#FFFBEB", color: "#D97706" },
+  "PRO+":  { bg: "#FFFBEB", color: "#D97706" },
+  "B QR":  { bg: "#ECFDF5", color: "#059669" },
+  "B Ofi": { bg: "#ECFDF5", color: "#059669" },
 }
 
 const PLAN_LABELS: Record<string, string> = {
-  "PRO":   "CRM PRO",
-  "PRO+":  "CRM PRO+",
-  "B_QR":  "Bonificación QR",
-  "B_OFI": "Bonificación Oficina",
+  "PRO":   "PRO",
+  "PRO+":  "PRO+",
+  "B QR":  "B QR",
+  "B Ofi": "B Ofi",
 }
 
 const AVATAR_GRADIENTS = [
@@ -97,17 +98,39 @@ function fmtUSD(n: number): string {
 }
 
 function antiguedad(fechaStr: string): string {
+  if (!fechaStr) return "—"
   const alta  = new Date(fechaStr + "T00:00:00")
   const today = new Date()
-  const anios = today.getFullYear() - alta.getFullYear()
-  const meses = today.getMonth() - alta.getMonth()
-  const totalM = anios * 12 + meses
-  if (totalM < 1)  return "< 1 mes"
-  if (totalM < 12) return `${totalM} mes${totalM !== 1 ? "es" : ""}`
-  const a = Math.floor(totalM / 12)
-  const m = totalM % 12
-  if (m === 0) return `${a} año${a !== 1 ? "s" : ""}`
-  return `${a}a ${m}m`
+  today.setHours(0, 0, 0, 0)
+
+  const totalDias = Math.floor((today.getTime() - alta.getTime()) / 86_400_000)
+  if (totalDias < 0) return "—"
+  if (totalDias < 30) return `${totalDias} día${totalDias !== 1 ? "s" : ""}`
+
+  // Complete years
+  let anios = today.getFullYear() - alta.getFullYear()
+  const anivEsteAnio = new Date(today.getFullYear(), alta.getMonth(), alta.getDate())
+  if (anivEsteAnio > today) anios--
+
+  if (anios >= 1) {
+    const ultimoAniv = new Date(alta.getFullYear() + anios, alta.getMonth(), alta.getDate())
+    const diasResto = Math.floor((today.getTime() - ultimoAniv.getTime()) / 86_400_000)
+    if (diasResto === 0) return `${anios} año${anios !== 1 ? "s" : ""}`
+    return `${anios} año${anios !== 1 ? "s" : ""} ${diasResto} día${diasResto !== 1 ? "s" : ""}`
+  }
+
+  // Less than 1 year: months + days
+  let meses = (today.getFullYear() - alta.getFullYear()) * 12 + (today.getMonth() - alta.getMonth())
+  if (today.getDate() < alta.getDate()) meses--
+  if (meses < 0) meses = 0
+
+  const inicioMes = new Date(alta)
+  inicioMes.setMonth(alta.getMonth() + meses)
+  const diasResto = Math.floor((today.getTime() - inicioMes.getTime()) / 86_400_000)
+
+  if (meses === 0) return `${diasResto} día${diasResto !== 1 ? "s" : ""}`
+  if (diasResto === 0) return `${meses} mes${meses !== 1 ? "es" : ""}`
+  return `${meses} mes${meses !== 1 ? "es" : ""} ${diasResto} día${diasResto !== 1 ? "s" : ""}`
 }
 
 function nextMainstreetDate(fechaStr: string): Date {
@@ -195,9 +218,9 @@ export default function AgentesClient({
   const proximosMainstreet = useMemo(() => {
     const today = new Date(); today.setHours(0,0,0,0)
     return agentes
-      .filter(a => a.activo)
+      .filter(a => a.activo && a.fecha_mainstreet)
       .map(a => {
-        const date = nextMainstreetDate(a.fecha_alta)
+        const date = nextMainstreetDate(a.fecha_mainstreet!)
         const dias = Math.round((date.getTime() - today.getTime()) / 86400000)
         return { ...a, mainstreetDate: date, diasRestantes: dias }
       })
@@ -291,7 +314,7 @@ export default function AgentesClient({
       telefono:         ag.telefono ?? "",
       fecha_alta:       ag.fecha_alta,
       fecha_mainstreet: ag.fecha_mainstreet ?? "",
-      plan:             (ag.plan?.tipo_plan ?? "PRO") as Plan,
+      plan:             (ag.tipo_plan ?? "PRO") as Plan,
       activo:           ag.activo,
     })
     setError("")
@@ -475,7 +498,7 @@ export default function AgentesClient({
                     <div className="flex-1 min-w-0">
                       <div style={{ fontWeight: 600, fontSize: "13px", color: "#0F172A" }}>{ag.nombre}</div>
                       <div className="flex flex-wrap gap-1.5 mt-1 items-center">
-                        <PlanBadge plan={ag.plan?.tipo_plan ?? null} />
+                        <PlanBadge plan={ag.tipo_plan ?? null} />
                         <EstadoBadge activo={ag.activo} />
                         {facturacion > 0 && (
                           <span style={{ fontSize: "11px", fontWeight: 600, color: "#059669" }}>{fmtUSD(facturacion)}</span>
@@ -519,7 +542,7 @@ export default function AgentesClient({
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
-                  {["Nombre", "Fecha alta", "Mainstreet", "Licencia CRM", "Paga FEE", "Facturación año", "Estado", "WA", ""].map(h => (
+                  {["Nombre", "Antigüedad", "Próx. Mainstreet", "Licencia CRM", "Paga FEE", "Facturación año", "Estado", "WA", ""].map(h => (
                     <th key={h} style={{
                       padding: "10px 16px", textAlign: "left",
                       fontSize: "10.5px", fontWeight: 700,
@@ -565,13 +588,15 @@ export default function AgentesClient({
                           </div>
                         </td>
                         <td style={{ padding: "12px 16px", fontSize: "13px", color: "#64748B", whiteSpace: "nowrap" }}>
-                          {fmtFecha(ag.fecha_alta)}
+                          {antiguedad(ag.fecha_alta)}
                         </td>
                         <td style={{ padding: "12px 16px", fontSize: "13px", color: "#64748B", whiteSpace: "nowrap" }}>
-                          {ag.fecha_mainstreet ? fmtFecha(ag.fecha_mainstreet) : "—"}
+                          {ag.fecha_mainstreet
+                            ? fmtFecha(nextMainstreetDate(ag.fecha_mainstreet).toISOString().split("T")[0])
+                            : "—"}
                         </td>
                         <td style={{ padding: "12px 16px" }}>
-                          <PlanBadge plan={ag.plan?.tipo_plan ?? null} />
+                          <PlanBadge plan={ag.tipo_plan ?? null} />
                         </td>
                         <td style={{ padding: "12px 16px" }}>
                           <select
@@ -712,8 +737,8 @@ export default function AgentesClient({
                   style={{ ...inputStyle, cursor: "pointer" }} required>
                   <option value="PRO">PRO</option>
                   <option value="PRO+">PRO+</option>
-                  <option value="B_QR">B_QR</option>
-                  <option value="B_OFI">B_OFI</option>
+                  <option value="B QR">B QR</option>
+                  <option value="B Ofi">B Ofi</option>
                 </select>
               </Field>
 
