@@ -535,17 +535,33 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
     if (!telefono) return
 
     const mes = mesLabel(selectedMonth)
-    let msg: string
 
-    if (saldo > 0) {
-      msg = `Hola ${nombre}! Quedó pendiente un saldo de ${fmtUSD(saldo)} del ${mes}. Cuando puedas, avisanos para coordinar. Gracias!`
-    } else {
-      const pagados = agentePagos.filter(p => Number(p.monto_pagado) > 0)
-      const detalle = pagados
-        .map(p => `• ${p.concepto} (${fmtFecha(p.fecha)}): ${fmtUSD(Number(p.monto_pagado))} \u2705`)
-        .join("\n")
-      msg = `Hola ${nombre}! Te paso el resumen de tus pagos de ${mes}:\n\n${detalle}\n\nEstás al día. Gracias!`
-    }
+    const detalle = agentePagos
+      .filter(p => p.concepto !== "Saldo a favor")
+      .map(p => {
+        const debe   = Number(p.monto_debe)
+        const pagado = Number(p.monto_pagado)
+        const resta  = debe - pagado
+        if (p.estado === "Pagado" || resta <= 0) {
+          return `- ${p.concepto} — ${fmtUSD(debe > 0 ? debe : pagado)} \u2705`
+        }
+        if (pagado > 0) {
+          return `- ${p.concepto} — pagaste ${fmtUSD(pagado)} de ${fmtUSD(debe)}. Te quedan ${fmtUSD(resta)}.`
+        }
+        return `- ${p.concepto} — pendiente ${fmtUSD(debe)}.`
+      })
+      .join("\n")
+
+    const agenteId   = agentePagos[0]?.agente_id ?? ""
+    const saldoFavor = saldoPorAgente.get(agenteId) ?? 0
+
+    const cierre = saldo > 0
+      ? `Cuando puedas, avisanos para coordinar. Gracias!`
+      : saldoFavor > 0
+        ? `Tenés ${fmtUSD(saldoFavor)} a favor para el próximo mes. Gracias!`
+        : `Todo al día. Gracias!`
+
+    const msg = `Hola ${nombre}! Te paso el resumen de ${mes}:\n\n${detalle}\n\n${cierre}`
 
     const num = telefono.replace(/\D/g, "")
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, "_blank")
