@@ -280,7 +280,7 @@ export default function AgentesClient({
       msg += `*Facturación acumulada ${anio}:* ${fmtUSD(facturAno)}\n\n`
     }
 
-    msg += `Cualquier consulta, estamos a disposición.\n_REMAX Tradición_`
+    msg = msg.trimEnd()
 
     const num = ag.telefono.replace(/\D/g, "")
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, "_blank")

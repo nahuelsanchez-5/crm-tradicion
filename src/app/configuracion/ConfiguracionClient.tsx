@@ -28,7 +28,7 @@ const DEFAULT_CONFIG: ConfigEntry[] = [
   // Comunicación
   {
     clave:    "mensaje_whatsapp",
-    valor:    "Hola [nombre], te recordamos que tenés un saldo pendiente de USD [monto] correspondiente a [mes]. Cualquier consulta estamos a disposición. REMAX Tradición",
+    valor:    "Hola [nombre]! Quedó pendiente un saldo de USD [monto] del [mes]. Cuando puedas, avisanos para coordinar. Gracias!",
     etiqueta: "Mensaje WhatsApp de cobro",
     grupo:    "comunicacion",
   },
