@@ -534,41 +534,18 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
   function openWhatsApp(nombre: string, telefono: string | null, agentePagos: PagoRow[], saldo: number) {
     if (!telefono) return
 
-    const pendientes = agentePagos.filter(p => p.estado === "Pendiente" || p.estado === "Parcial")
-    const pagados    = agentePagos.filter(p => Number(p.monto_pagado) > 0)
-
-    let msg = `Hola ${nombre}! 👋\n\n`
-
-    if (pendientes.length > 0) {
-      msg += `*Cargos pendientes:*\n`
-      for (const p of pendientes) {
-        const pendiente = Number(p.monto_debe) - Number(p.monto_pagado)
-        msg += `• ${p.concepto} (${fmtFecha(p.fecha)}): ${fmtUSD(Number(p.monto_debe))}`
-        if (Number(p.monto_pagado) > 0) msg += ` — pagaste ${fmtUSD(Number(p.monto_pagado))}`
-        else msg += ` — pendiente ${fmtUSD(pendiente)}`
-        msg += `\n`
-      }
-      msg += `\n`
-    }
-
-    if (pagados.length > 0 && pendientes.length > 0) {
-      // partial payment lines already noted above
-    } else if (pagados.length > 0 && pendientes.length === 0) {
-      msg += `*Pagos registrados:*\n`
-      for (const p of pagados) {
-        msg += `• ${p.concepto} (${fmtFecha(p.fecha)}): ${fmtUSD(Number(p.monto_pagado))}\n`
-      }
-      msg += `\n`
-    }
+    const mes = mesLabel(selectedMonth)
+    let msg: string
 
     if (saldo > 0) {
-      msg += `*Saldo pendiente: ${fmtUSD(saldo)}*\n\n`
-      msg += `Te pedimos que regularices tu situación a la brevedad.`
+      msg = `Hola ${nombre}! Quedó pendiente un saldo de ${fmtUSD(saldo)} del ${mes}. Cuando puedas, avisanos para coordinar. Gracias!`
     } else {
-      msg += `✅ *Estás al día con tus pagos!*`
+      const pagados = agentePagos.filter(p => Number(p.monto_pagado) > 0)
+      const detalle = pagados
+        .map(p => `• ${p.concepto} (${fmtFecha(p.fecha)}): ${fmtUSD(Number(p.monto_pagado))} \u2705`)
+        .join("\n")
+      msg = `Hola ${nombre}! Te paso el resumen de tus pagos de ${mes}:\n\n${detalle}\n\nEstás al día. Gracias!`
     }
-
-    msg += `\n\nCualquier consulta, estamos a disposición.\n_REMAX Tradición_`
 
     const num = telefono.replace(/\D/g, "")
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, "_blank")
