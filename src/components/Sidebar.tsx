@@ -60,7 +60,7 @@ export default function Sidebar({ agenteCount }: Props) {
   const sidebarContent = (onNavClick?: () => void) => (
     <>
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-slate-800 flex justify-center">
+      <div className="px-5 py-5 flex justify-center" style={{ borderBottom: "1px solid var(--crm-divider)" }}>
         <Image
           src="/logo-sidebar-crema.png"
           alt="REMAX Tradición"
@@ -84,7 +84,7 @@ export default function Sidebar({ agenteCount }: Props) {
           />
         ))}
 
-        <div className="my-3 border-t border-slate-800" />
+        <div className="my-3" style={{ borderTop: "1px solid var(--crm-divider)" }} />
         <p className="text-[9.5px] font-bold tracking-[1.5px] uppercase text-white/25 px-2 pb-2">
           Sistema
         </p>
@@ -102,9 +102,9 @@ export default function Sidebar({ agenteCount }: Props) {
       <DolarWidget />
 
       {/* User footer */}
-      <div className="px-3 pb-4 pt-2 border-t border-slate-800">
+      <div className="px-3 pb-4 pt-2" style={{ borderTop: "1px solid var(--crm-divider)" }}>
         <div className="flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer hover:bg-white/[0.05] transition-colors duration-150">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-violet-800 flex items-center justify-center text-[12px] font-bold text-white flex-shrink-0">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[12px] font-bold text-white flex-shrink-0" style={{ background: "rgba(227,24,55,0.2)", border: "1px solid rgba(227,24,55,0.3)" }}>
             N
           </div>
           <div className="min-w-0">
@@ -137,8 +137,11 @@ export default function Sidebar({ agenteCount }: Props) {
 
       {/* Mobile sidebar */}
       <aside
-        className="md:hidden fixed top-0 left-0 bottom-0 w-[224px] bg-[#0F172A] flex flex-col z-45"
+        className="md:hidden fixed top-0 left-0 bottom-0 w-[224px] flex flex-col z-45"
         style={{
+          background: "var(--crm-sidebar)",
+          backdropFilter: "blur(16px)",
+          borderRight: "1px solid var(--crm-divider)",
           transform: mobileOpen ? "translateX(0)" : "translateX(-100%)",
           transition: "transform 0.25s ease",
         }}
@@ -154,7 +157,10 @@ export default function Sidebar({ agenteCount }: Props) {
       </aside>
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-[224px] min-w-[224px] bg-[#0F172A] flex-col h-full flex-shrink-0">
+      <aside
+        className="hidden md:flex w-[224px] min-w-[224px] flex-col h-full flex-shrink-0"
+        style={{ background: "var(--crm-sidebar)", backdropFilter: "blur(16px)", borderRight: "1px solid var(--crm-divider)" }}
+      >
         {sidebarContent()}
       </aside>
     </>
@@ -177,8 +183,8 @@ function NavItemLink({
       className={[
         "flex items-center gap-2.5 px-2.5 py-3 md:py-2.5 rounded-lg text-[13px] mb-0.5 transition-all duration-150 no-underline min-h-[44px]",
         isActive
-          ? "bg-slate-800 text-white font-semibold border-l-2 border-blue-500 pl-[9px]"
-          : "text-white/45 font-medium hover:bg-slate-800/50 hover:text-white/75",
+          ? "bg-[rgba(227,24,55,0.15)] text-[#ff8a9a] font-semibold border-l-2 border-[#E31837] pl-[9px]"
+          : "text-white/45 font-medium hover:bg-white/[0.05] hover:text-white/75",
       ].join(" ")}
     >
       <item.icon size={15} className="flex-shrink-0" />

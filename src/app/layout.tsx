@@ -27,7 +27,7 @@ export default async function RootLayout({
 
   return (
     <html lang="es" className={`${jakarta.variable} h-full antialiased`}>
-      <body className="h-full overflow-hidden" style={{ background: "#F8F9FC" }}>
+      <body className="h-full overflow-hidden" style={{ background: "linear-gradient(135deg, #0a0a1a 0%, #0d0d2b 50%, #0a1a0f 100%)" }}>
         <div style={{ display: "flex", height: "100%" }}>
           <Sidebar agenteCount={count ?? 0} />
           <main style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>

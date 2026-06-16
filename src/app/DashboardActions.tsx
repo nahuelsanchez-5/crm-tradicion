@@ -44,12 +44,13 @@ function ModalShell({ title, subtitle, onClose, children }: {
       <div className="crm-modal" onClick={e => e.stopPropagation()}>
         <div className="crm-modal-header">
           <div>
-            <h2 className="text-[17px] font-bold text-slate-900 m-0">{title}</h2>
-            <p className="text-[12px] text-slate-500 m-0 mt-0.5">{subtitle}</p>
+            <h2 className="text-[17px] font-bold m-0" style={{ color: "var(--crm-text)" }}>{title}</h2>
+            <p className="text-[12px] m-0 mt-0.5" style={{ color: "var(--crm-text-muted)" }}>{subtitle}</p>
           </div>
           <button
             onClick={onClose}
-            className="bg-slate-100 hover:bg-slate-200 border-none rounded-lg w-8 h-8 flex items-center justify-center cursor-pointer text-slate-500 transition-colors duration-150"
+            className="border-none rounded-lg w-8 h-8 flex items-center justify-center cursor-pointer transition-colors duration-150 hover:bg-white/10"
+            style={{ background: "rgba(255,255,255,0.08)", color: "var(--crm-text-muted)" }}
           >
             <X size={15} />
           </button>
@@ -66,14 +67,14 @@ function SubmitRow({ isPending, onCancel, label }: { isPending: boolean; onCance
     <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end pt-1">
       <button
         type="button" onClick={onCancel} disabled={isPending}
-        className="w-full sm:w-auto px-5 py-3 sm:py-2.5 rounded-lg border border-slate-200 bg-white text-[13px] font-semibold text-slate-600 cursor-pointer hover:bg-slate-50 transition-colors duration-150 disabled:opacity-50 min-h-[44px]"
+        className="crm-btn-secondary w-full sm:w-auto px-5 py-3 sm:py-2.5 min-h-[44px]"
         style={{ fontFamily: "inherit" }}
       >
         Cancelar
       </button>
       <button
         type="submit" disabled={isPending}
-        className="w-full sm:w-auto px-6 py-3 sm:py-2.5 rounded-lg border-none bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-2 transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed hover:shadow-md min-h-[44px]"
+        className="crm-btn-primary w-full sm:w-auto px-6 py-3 sm:py-2.5 min-h-[44px]"
         style={{ fontFamily: "inherit" }}
       >
         {isPending && <Loader2 size={14} className="animate-spin" />}
@@ -183,16 +184,19 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
     icon: LucideIcon; label: string; sublabel: string; m: ModalT
     iconBg: string; iconColor: string; cardBg: string; cardBorder: string
   }> = [
-    { icon: DollarSign,  label: "Registrar",  sublabel: "Pago",        m: "pago",             iconBg: "bg-emerald-50",  iconColor: "text-emerald-600", cardBg: "bg-emerald-50/60",  cardBorder: "border-emerald-200" },
-    { icon: MapPin,      label: "Devolución", sublabel: "Cartelería",  m: "carteleria",       iconBg: "bg-amber-50",    iconColor: "text-amber-600",   cardBg: "bg-amber-50/60",    cardBorder: "border-amber-200" },
-    { icon: ClipboardList, label: "Registrar", sublabel: "Encuesta",   m: "encuesta",         iconBg: "bg-blue-50",     iconColor: "text-blue-600",    cardBg: "bg-blue-50/60",     cardBorder: "border-blue-200" },
-    { icon: Building2,   label: "Registrar",  sublabel: "Operación",   m: "operacion",        iconBg: "bg-orange-50",   iconColor: "text-orange-600",  cardBg: "bg-orange-50/60",   cardBorder: "border-orange-200" },
-    { icon: Handshake,   label: "Registrar",  sublabel: "Oferta",      m: "oferta",           iconBg: "bg-violet-50",   iconColor: "text-violet-600",  cardBg: "bg-violet-50/60",   cardBorder: "border-violet-200" },
-    { icon: RefreshCw,   label: "Actualizar", sublabel: "Oferta",      m: "actualizar_oferta",iconBg: "bg-sky-50",      iconColor: "text-sky-600",     cardBg: "bg-sky-50/60",      cardBorder: "border-sky-200" },
+    { icon: DollarSign,    label: "Registrar",  sublabel: "Pago",       m: "pago",             iconBg: "bg-emerald-500/15",  iconColor: "text-emerald-400", cardBg: "bg-emerald-500/[0.08]",  cardBorder: "border-emerald-500/25" },
+    { icon: MapPin,        label: "Devolución", sublabel: "Cartelería", m: "carteleria",       iconBg: "bg-amber-500/15",    iconColor: "text-amber-400",   cardBg: "bg-amber-500/[0.08]",    cardBorder: "border-amber-500/25" },
+    { icon: ClipboardList, label: "Registrar",  sublabel: "Encuesta",   m: "encuesta",         iconBg: "bg-blue-500/15",     iconColor: "text-blue-400",    cardBg: "bg-blue-500/[0.08]",     cardBorder: "border-blue-500/25" },
+    { icon: Building2,     label: "Registrar",  sublabel: "Operación",  m: "operacion",        iconBg: "bg-orange-500/15",   iconColor: "text-orange-400",  cardBg: "bg-orange-500/[0.08]",   cardBorder: "border-orange-500/25" },
+    { icon: Handshake,     label: "Registrar",  sublabel: "Oferta",     m: "oferta",           iconBg: "bg-violet-500/15",   iconColor: "text-violet-400",  cardBg: "bg-violet-500/[0.08]",   cardBorder: "border-violet-500/25" },
+    { icon: RefreshCw,     label: "Actualizar", sublabel: "Oferta",     m: "actualizar_oferta",iconBg: "bg-sky-500/15",      iconColor: "text-sky-400",     cardBg: "bg-sky-500/[0.08]",      cardBorder: "border-sky-500/25" },
   ]
 
   const ErrorBox = () => error ? (
-    <div className="bg-rose-50 border border-rose-200 rounded-lg px-3 py-2.5 text-[12.5px] text-rose-600 mb-4">
+    <div
+      className="rounded-lg px-3 py-2.5 text-[12.5px] mb-4"
+      style={{ background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)", color: "#ff8a9a" }}
+    >
       ⚠️ {error}
     </div>
   ) : null
@@ -207,11 +211,11 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
           <button
             key={m}
             onClick={() => m === "encuesta" ? router.push("/encuestas") : openModal(m)}
-            className={`flex flex-col items-center justify-center gap-2 md:gap-3 p-3 md:p-5 rounded-2xl border ${cardBorder} ${cardBg} cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 min-h-[88px] md:min-h-[110px]`}
+            className={`flex flex-col items-center justify-center gap-2 md:gap-3 p-3 md:p-5 rounded-2xl border ${cardBorder} ${cardBg} cursor-pointer hover:-translate-y-0.5 hover:brightness-110 transition-all duration-200 min-h-[88px] md:min-h-[110px] backdrop-blur-[4px]`}
             style={{ fontFamily: "inherit" }}
           >
             <div className={`w-9 h-9 md:w-11 md:h-11 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
-              <Icon size={18} className={`${iconColor} md:text-[22px]`} strokeWidth={1.75} />
+              <Icon size={18} className={iconColor} strokeWidth={1.75} />
             </div>
             <div className="text-center leading-tight">
               <p className={`text-[9.5px] md:text-[10.5px] font-medium ${iconColor} opacity-70 m-0`}>{label}</p>
@@ -340,8 +344,8 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
                 { key: "encuesta_comprador" as const, label: "Encuesta comprador" },
                 { key: "encuesta_vendedor"  as const, label: "Encuesta vendedor" },
               ] as const).map(({ key, label }) => (
-                <label key={key} className="flex items-center gap-2 text-[13px] cursor-pointer text-slate-700">
-                  <input type="checkbox" checked={opForm[key]} onChange={e => setOpForm(f => ({ ...f, [key]: e.target.checked }))} className="w-4 h-4 accent-blue-600" />
+                <label key={key} className="flex items-center gap-2 text-[13px] cursor-pointer" style={{ color: "var(--crm-text-muted)" }}>
+                  <input type="checkbox" checked={opForm[key]} onChange={e => setOpForm(f => ({ ...f, [key]: e.target.checked }))} className="w-4 h-4 accent-[#E31837]" />
                   {label}
                 </label>
               ))}
@@ -415,7 +419,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
         <ModalShell title="Actualizar Oferta" subtitle="Agregar movimiento a una oferta activa" onClose={closeModal}>
           <form onSubmit={handleActualizar} className="p-6">
             {ofertasActivas.length === 0 ? (
-              <div className="py-8 text-center text-slate-400 text-[13px]">
+              <div className="py-8 text-center text-[13px]" style={{ color: "var(--crm-text-muted)" }}>
                 No hay ofertas activas en este momento
               </div>
             ) : (

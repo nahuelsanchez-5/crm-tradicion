@@ -37,7 +37,7 @@ export default function DolarWidget() {
   }, [])
 
   return (
-    <div className="mx-3 mb-2 px-3 py-2.5 rounded-xl bg-white/[0.04]">
+    <div className="mx-3 mb-2 px-3 py-2.5 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid var(--crm-divider)" }}>
       <p className="text-[9.5px] font-bold tracking-[1.5px] uppercase text-white/25 mb-2">
         Dólar hoy
       </p>

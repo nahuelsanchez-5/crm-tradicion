@@ -30,14 +30,14 @@ export default function DashboardClock() {
     <div>
       <div style={{
         fontSize: "12.5px", fontWeight: 600,
-        color: "#64748B", letterSpacing: "0.1px",
+        color: "rgba(255,255,255,0.40)", letterSpacing: "0.1px",
         marginBottom: "2px",
       }}>
         {formatFecha(now)}
       </div>
       <div style={{
         fontSize: "24px", fontWeight: 800,
-        color: "#0F172A", letterSpacing: "1px",
+        color: "var(--crm-text)", letterSpacing: "1px",
         fontVariantNumeric: "tabular-nums",
         lineHeight: 1,
       }}>

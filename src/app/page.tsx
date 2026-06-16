@@ -77,15 +77,15 @@ export interface OfertaActiva {
 
 function StatusBadge({ estado }: { estado: string }) {
   const map: Record<string, string> = {
-    Pendiente: "bg-rose-50 text-rose-600 border-rose-200",
-    Parcial:   "bg-amber-50 text-amber-600 border-amber-200",
-    Pagado:    "bg-emerald-50 text-emerald-600 border-emerald-200",
-    "PRO+":    "bg-violet-50 text-violet-600 border-violet-200",
-    PRO:       "bg-cyan-50 text-cyan-600 border-cyan-200",
-    B_QR:      "bg-cyan-50 text-cyan-600 border-cyan-200",
-    B_OFI:     "bg-cyan-50 text-cyan-600 border-cyan-200",
+    Pendiente: "bg-rose-500/15 text-rose-400 border-rose-500/25",
+    Parcial:   "bg-amber-500/15 text-amber-400 border-amber-500/25",
+    Pagado:    "bg-emerald-500/15 text-emerald-400 border-emerald-500/25",
+    "PRO+":    "bg-violet-500/15 text-violet-400 border-violet-500/25",
+    PRO:       "bg-cyan-500/15 text-cyan-400 border-cyan-500/25",
+    B_QR:      "bg-cyan-500/15 text-cyan-400 border-cyan-500/25",
+    B_OFI:     "bg-cyan-500/15 text-cyan-400 border-cyan-500/25",
   }
-  const cls = map[estado] ?? "bg-slate-50 text-slate-600 border-slate-200"
+  const cls = map[estado] ?? "bg-white/[0.08] text-white/50 border-white/15"
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${cls}`}>
       {estado}
@@ -178,8 +178,9 @@ export default async function DashboardPage() {
     <div className="flex flex-col h-full">
 
       {/* Header */}
-      <div className="flex items-center bg-white border-b border-slate-200 flex-shrink-0"
-        style={{ minHeight: "62px", padding: "0 24px 0 64px" }}
+      <div
+        className="flex items-center flex-shrink-0"
+        style={{ minHeight: "62px", padding: "0 24px 0 64px", background: "rgba(10,10,26,0.8)", borderBottom: "1px solid var(--crm-divider)", backdropFilter: "blur(8px)" }}
       >
         {/* Clock — hidden on mobile */}
         <div className="hidden md:block flex-1">
@@ -194,8 +195,11 @@ export default async function DashboardPage() {
           />
         </div>
         <div className="flex-1 flex justify-end">
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-[11px] md:text-[12.5px] font-semibold text-slate-700">
-            <span className="text-slate-400">📅</span>
+          <div
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] md:text-[12.5px] font-semibold"
+            style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--crm-text)" }}
+          >
+            <span style={{ color: "var(--crm-text-muted)" }}>📅</span>
             <span className="hidden sm:inline">{MES_LABEL}</span>
             <span className="sm:hidden">{MES_LABEL.slice(0, 3)}</span>
           </div>
@@ -210,37 +214,41 @@ export default async function DashboardPage() {
           <KpiCard
             title="Agentes activos"
             value={agentesCount}
-            iconBg="bg-rose-50"
-            iconColor="text-rose-600"
+            iconBg="bg-rose-500/15"
+            iconColor="text-rose-400"
             icon={<Users size={18} />}
             trend="Sin cambios"
+            animate
           />
           <KpiCard
             title="Ofertas en curso"
             value={ofertasEnCurso}
-            iconBg="bg-amber-50"
-            iconColor="text-amber-600"
+            iconBg="bg-amber-500/15"
+            iconColor="text-amber-400"
             icon={<Handshake size={18} />}
             trend="Activas"
+            animate
           />
           <KpiCard
             title="Operaciones del mes"
             value={opsMesCount}
-            iconBg="bg-violet-50"
-            iconColor="text-violet-600"
+            iconBg="bg-violet-500/15"
+            iconColor="text-violet-400"
             icon={<Building2 size={18} />}
             trend={`↑ ${MES_LABEL}`}
             trendUp
+            animate
           />
           <KpiCard
             title="Facturación USD"
             value={factLabel}
-            iconBg="bg-teal-50"
-            iconColor="text-teal-600"
+            iconBg="bg-teal-500/15"
+            iconColor="text-teal-400"
             icon={<DollarSign size={18} />}
             badge={factPct !== null ? `${factPct}% obj.` : undefined}
             trend={factPct !== null ? (factPct >= 100 ? "↑ Objetivo alcanzado" : `${factPct}% del objetivo`) : undefined}
             trendUp={factPct !== null && factPct >= 100}
+            primary
           />
         </div>
 
@@ -249,14 +257,17 @@ export default async function DashboardPage() {
 
         {/* Ofertas sin actividad +5 días */}
         {ofertasSinActividad.length > 0 && (
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm mb-6 overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div className="crm-glass-section mb-6">
+            <div className="crm-section-hd">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center">
-                  <Clock size={14} className="text-amber-600" />
+                <div className="w-7 h-7 rounded-lg bg-amber-500/15 flex items-center justify-center">
+                  <Clock size={14} className="text-amber-400" />
                 </div>
-                <h2 className="text-[14px] font-bold text-slate-900 m-0">Ofertas sin actividad +5 días</h2>
-                <span className="bg-amber-100 text-amber-700 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-amber-200">
+                <h2 className="crm-section-title">Ofertas sin actividad +5 días</h2>
+                <span
+                  className="text-[11px] font-bold px-2.5 py-0.5 rounded-full"
+                  style={{ background: "rgba(245,158,11,0.15)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.25)" }}
+                >
                   {ofertasSinActividad.length}
                 </span>
               </div>
@@ -265,22 +276,22 @@ export default async function DashboardPage() {
               {ofertasSinActividad.map((o, i) => (
                 <div
                   key={o.id}
-                  className={`flex items-center justify-between px-4 md:px-5 py-3 hover:bg-slate-50/80 transition-colors duration-150 gap-3 ${i < ofertasSinActividad.length - 1 ? "border-b border-slate-100" : ""}`}
+                  className="crm-row flex items-center justify-between px-4 md:px-5 py-3 gap-3"
+                  style={i < ofertasSinActividad.length - 1 ? { borderBottom: "1px solid var(--crm-divider)" } : {}}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                    <span className="bg-slate-50 border border-slate-200 rounded-md px-2 py-0.5 text-[11px] font-bold text-slate-500 flex-shrink-0">
-                      #{o.numero}
-                    </span>
+                    <span className="crm-num-badge">#{o.numero}</span>
                     <div className="min-w-0">
-                      <p className="text-[13px] font-semibold text-slate-900 m-0 truncate">{o.direccion}</p>
-                      <p className="text-[11px] text-slate-400 mt-0.5 m-0">
+                      <p className="text-[13px] font-semibold m-0 truncate" style={{ color: "var(--crm-text)" }}>{o.direccion}</p>
+                      <p className="text-[11px] mt-0.5 m-0" style={{ color: "var(--crm-text-muted)" }}>
                         {o.estado} · {fmtFechaRelativa(o.updated_at)}
                       </p>
                     </div>
                   </div>
                   <Link
                     href={`/ofertas/${o.id}`}
-                    className="flex-shrink-0 px-3 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-[12px] font-semibold no-underline transition-colors duration-150"
+                    className="flex-shrink-0 px-3 py-2 rounded-lg text-white text-[12px] font-semibold no-underline transition-all duration-150 hover:brightness-110"
+                    style={{ background: "var(--crm-accent)" }}
                   >
                     Ver →
                   </Link>
@@ -297,18 +308,18 @@ export default async function DashboardPage() {
           <div className="flex flex-col gap-4">
 
             {/* Pagos pendientes */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div className="crm-glass-section">
+              <div className="crm-section-hd">
                 <div className="flex items-center gap-2.5">
                   <div className="w-2 h-2 rounded-full bg-rose-500" />
-                  <h2 className="text-[14px] font-bold text-slate-900 m-0">Pagos pendientes — {MES_LABEL}</h2>
+                  <h2 className="crm-section-title">Pagos pendientes — {MES_LABEL}</h2>
                 </div>
-                <Link href="/pagos" className="text-[12px] text-slate-500 font-medium no-underline hover:text-slate-700 transition-colors">
+                <Link href="/pagos" className="crm-link-sm">
                   Ver todos →
                 </Link>
               </div>
               {pagos.length === 0 ? (
-                <div className="px-5 py-8 text-center text-slate-400 text-[13px]">
+                <div className="px-5 py-8 text-center text-[13px]" style={{ color: "var(--crm-text-muted)" }}>
                   ✓ No hay pagos pendientes este mes
                 </div>
               ) : (
@@ -330,12 +341,12 @@ export default async function DashboardPage() {
                         return (
                           <tr key={i}>
                             <td>
-                              <p className="font-semibold text-slate-900 m-0">{nombre}</p>
-                              <p className="text-[11px] text-slate-400 mt-0.5 m-0">{MES_LABEL}</p>
+                              <p className="font-semibold m-0" style={{ color: "var(--crm-text)" }}>{nombre}</p>
+                              <p className="text-[11px] mt-0.5 m-0" style={{ color: "var(--crm-text-muted)" }}>{MES_LABEL}</p>
                             </td>
                             <td><StatusBadge estado={plan} /></td>
-                            <td className="font-bold text-slate-900">{fmtUSD(p.monto_debe)}</td>
-                            <td className="text-slate-500">{fmtUSD(p.monto_pagado)}</td>
+                            <td className="font-bold" style={{ color: "var(--crm-text)" }}>{fmtUSD(p.monto_debe)}</td>
+                            <td style={{ color: "var(--crm-text-muted)" }}>{fmtUSD(p.monto_pagado)}</td>
                             <td><StatusBadge estado={p.estado} /></td>
                           </tr>
                         )
@@ -343,18 +354,22 @@ export default async function DashboardPage() {
                     </tbody>
                   </table>
                   {/* Mobile card list */}
-                  <div className="md:hidden divide-y divide-slate-100">
+                  <div className="md:hidden">
                     {pagos.map((p, i) => {
                       const agentesField = p.agentes as { nombre: string } | null
                       const nombre = agentesField?.nombre ?? "—"
                       const plan   = extractPlan(p.concepto)
                       return (
-                        <div key={i} className="flex items-center justify-between px-4 py-3 gap-3">
+                        <div
+                          key={i}
+                          className="flex items-center justify-between px-4 py-3 gap-3"
+                          style={i < pagos.length - 1 ? { borderBottom: "1px solid var(--crm-divider)" } : {}}
+                        >
                           <div className="min-w-0">
-                            <p className="text-[13px] font-semibold text-slate-900 m-0 truncate">{nombre}</p>
+                            <p className="text-[13px] font-semibold m-0 truncate" style={{ color: "var(--crm-text)" }}>{nombre}</p>
                             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                               <StatusBadge estado={plan} />
-                              <span className="text-[11px] text-slate-500">{fmtUSD(p.monto_debe)}</span>
+                              <span className="text-[11px]" style={{ color: "var(--crm-text-muted)" }}>{fmtUSD(p.monto_debe)}</span>
                             </div>
                           </div>
                           <StatusBadge estado={p.estado} />
@@ -367,19 +382,25 @@ export default async function DashboardPage() {
             </div>
 
             {/* Mini stats */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-100">
-                <div className="w-2 h-2 rounded-full bg-blue-500" />
-                <h2 className="text-[14px] font-bold text-slate-900 m-0">Resumen rápido — {MES_LABEL}</h2>
+            <div className="crm-glass-section">
+              <div className="crm-section-hd">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-2 h-2 rounded-full bg-blue-400" />
+                  <h2 className="crm-section-title">Resumen rápido — {MES_LABEL}</h2>
+                </div>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4">
                 {[
-                  { n: cartelesData?.total_entregados  ?? 0, label: "Carteles entregados",  cls: "bg-rose-50 text-rose-600" },
-                  { n: cartelesData?.total_recuperados ?? 0, label: "Carteles recuperados", cls: "bg-emerald-50 text-emerald-600" },
-                  { n: encuestasData?.total_enviadas   ?? 0, label: "Encuestas enviadas",   cls: "bg-blue-50 text-blue-600" },
-                  { n: encuestasData?.total_respondidas ?? 0, label: "Encuestas resp.",     cls: "bg-amber-50 text-amber-600" },
+                  { n: cartelesData?.total_entregados  ?? 0, label: "Carteles entregados",  cls: "bg-rose-500/[0.12] text-rose-400" },
+                  { n: cartelesData?.total_recuperados ?? 0, label: "Carteles recuperados", cls: "bg-emerald-500/[0.12] text-emerald-400" },
+                  { n: encuestasData?.total_enviadas   ?? 0, label: "Encuestas enviadas",   cls: "bg-blue-500/[0.12] text-blue-400" },
+                  { n: encuestasData?.total_respondidas ?? 0, label: "Encuestas resp.",     cls: "bg-amber-500/[0.12] text-amber-400" },
                 ].map(({ n, label, cls }) => (
-                  <div key={label} className={`${cls} rounded-xl p-4 text-center`}>
+                  <div
+                    key={label}
+                    className={`${cls} rounded-xl p-4 text-center`}
+                    style={{ border: "1px solid rgba(255,255,255,0.08)" }}
+                  >
                     <p className="text-[22px] font-bold leading-none m-0">{n}</p>
                     <p className="text-[10.5px] font-semibold mt-1.5 m-0 opacity-80">{label}</p>
                   </div>
@@ -389,19 +410,19 @@ export default async function DashboardPage() {
           </div>
 
           {/* Right — Operaciones feed */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <div className="crm-glass-section flex flex-col" style={{ overflow: "hidden" }}>
+            <div className="crm-section-hd">
               <div className="flex items-center gap-2.5">
-                <div className="w-2 h-2 rounded-full bg-teal-500" />
-                <h2 className="text-[14px] font-bold text-slate-900 m-0">Últimas operaciones</h2>
+                <div className="w-2 h-2 rounded-full bg-teal-400" />
+                <h2 className="crm-section-title">Últimas operaciones</h2>
               </div>
-              <Link href="/operaciones" className="text-[12px] text-slate-500 font-medium no-underline hover:text-slate-700 transition-colors">
+              <Link href="/operaciones" className="crm-link-sm">
                 Ver todas
               </Link>
             </div>
             <div className="flex-1">
               {opsFeed.length === 0 ? (
-                <div className="px-5 py-8 text-center text-slate-400 text-[13px]">
+                <div className="px-5 py-8 text-center text-[13px]" style={{ color: "var(--crm-text-muted)" }}>
                   No hay operaciones registradas
                 </div>
               ) : (
@@ -409,15 +430,19 @@ export default async function DashboardPage() {
                   const isLast = i === opsFeed.length - 1
                   const color  = tipoColor(op.tipo)
                   return (
-                    <div key={i} className={`flex gap-3 px-5 py-3.5 ${!isLast ? "border-b border-slate-100" : ""} hover:bg-slate-50/60 transition-colors duration-150`}>
+                    <div
+                      key={i}
+                      className="crm-row flex gap-3 px-5 py-3.5"
+                      style={!isLast ? { borderBottom: "1px solid var(--crm-divider)" } : {}}
+                    >
                       <div className="flex flex-col items-center pt-1">
                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
-                        {!isLast && <div className="w-px flex-1 bg-slate-200 mt-1" />}
+                        {!isLast && <div className="w-px flex-1 mt-1" style={{ background: "var(--crm-divider)" }} />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[12.5px] font-semibold text-slate-900 truncate m-0">{op.direccion}</p>
-                        <p className="text-[11px] text-slate-500 mt-0.5 truncate m-0">{op.tipo} · {op.agentes}</p>
-                        <p className="text-[10.5px] text-slate-400 mt-1 m-0">
+                        <p className="text-[12.5px] font-semibold truncate m-0" style={{ color: "var(--crm-text)" }}>{op.direccion}</p>
+                        <p className="text-[11px] mt-0.5 truncate m-0" style={{ color: "var(--crm-text-muted)" }}>{op.tipo} · {op.agentes}</p>
+                        <p className="text-[10.5px] mt-1 m-0" style={{ color: "var(--crm-text-muted)" }}>
                           {fmtFecha(op.fecha)} ·{" "}
                           <span className="font-semibold" style={{ color }}>{fmtUSD(op.comision_neta)}</span>
                         </p>
