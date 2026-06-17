@@ -74,23 +74,23 @@ const TIPOS_MOVIMIENTO = [
 ] as const
 
 const ESTADO_STYLE: Record<string, { bg: string; color: string }> = {
-  "Espera rta. vendedor":    { bg: "#EFF6FF", color: "#2563EB" },
-  "Espera rta. comprador":   { bg: "#FEFCE8", color: "#A16207" },
-  "Aceptadas / Pre cierre":  { bg: "#FFF7ED", color: "#C2410C" },
-  "Cerradas":                { bg: "#ECFDF5", color: "#059669" },
-  "Caídas":                  { bg: "#F8FAFC", color: "#64748B" },
+  "Espera rta. vendedor":    { bg: "rgba(96,165,250,0.12)", color: "#60a5fa" },
+  "Espera rta. comprador":   { bg: "rgba(250,204,21,0.12)", color: "#facc15" },
+  "Aceptadas / Pre cierre":  { bg: "rgba(251,146,60,0.12)", color: "#fb923c" },
+  "Cerradas":                { bg: "rgba(74,222,128,0.12)", color: "#4ade80" },
+  "Caídas":                  { bg: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" },
 }
 
 const TIPO_MOV_STYLE: Record<string, { bg: string; color: string }> = {
-  Alta:             { bg: "#ECFDF5", color: "#059669" },
-  "Cambio de estado":{ bg: "#EFF6FF", color: "#2563EB" },
-  Contraoferta:     { bg: "#FEFCE8", color: "#A16207" },
-  Rechazo:          { bg: "#FFF1F2", color: "#E11D48" },
-  Aceptación:       { bg: "#ECFDF5", color: "#059669" },
-  Seña:             { bg: "#F0FDFA", color: "#0D9488" },
-  Refuerzo:         { bg: "#F0FDFA", color: "#0D9488" },
-  Nota:             { bg: "#F5F3FF", color: "#7C3AED" },
-  Otro:             { bg: "#F1F5F9", color: "#64748B" },
+  Alta:             { bg: "rgba(74,222,128,0.12)", color: "#4ade80" },
+  "Cambio de estado":{ bg: "rgba(96,165,250,0.12)", color: "#60a5fa" },
+  Contraoferta:     { bg: "rgba(250,204,21,0.12)", color: "#facc15" },
+  Rechazo:          { bg: "rgba(248,113,113,0.12)", color: "#f87171" },
+  Aceptación:       { bg: "rgba(74,222,128,0.12)", color: "#4ade80" },
+  Seña:             { bg: "rgba(45,212,191,0.12)", color: "#2dd4bf" },
+  Refuerzo:         { bg: "rgba(45,212,191,0.12)", color: "#2dd4bf" },
+  Nota:             { bg: "rgba(167,139,250,0.12)", color: "#a78bfa" },
+  Otro:             { bg: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" },
 }
 
 const CHECKLIST_CATS: Array<{ id: "pre_sena" | "documentacion" | "post_cierre"; label: string; from: number; to: number }> = [
@@ -128,7 +128,7 @@ function pctNeg(ofertado: number | null, publicacion: number | null): string {
 
 // ── Sub-components ────────────────────────────────────
 function EstadoBadge({ estado, large }: { estado: string; large?: boolean }) {
-  const s = ESTADO_STYLE[estado] ?? { bg: "#F1F5F9", color: "#64748B" }
+  const s = ESTADO_STYLE[estado] ?? { bg: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" }
   return (
     <span style={{
       ...s,
@@ -144,11 +144,11 @@ function EstadoBadge({ estado, large }: { estado: string; large?: boolean }) {
 
 function DataRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", padding: "10px 0", borderBottom: "1px solid #F3F4F6" }}>
-      <span style={{ fontSize: "12px", color: "#94A3B8", fontWeight: 600, minWidth: "180px", flexShrink: 0 }}>
+    <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+      <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", fontWeight: 600, minWidth: "180px", flexShrink: 0 }}>
         {label}
       </span>
-      <span style={{ fontSize: "13px", color: "#0F172A", fontWeight: 500 }}>
+      <span style={{ fontSize: "13px", color: "#f1f5f9", fontWeight: 500 }}>
         {value}
       </span>
     </div>
@@ -158,13 +158,13 @@ function DataRow({ label, value }: { label: string; value: React.ReactNode }) {
 function SectionCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div style={{
-      background: "white", borderRadius: "14px",
-      border: "1.5px solid #EAECF2", overflow: "hidden",
+      background: "#13131a", borderRadius: "14px",
+      border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
       marginBottom: "16px",
     }}>
       <div style={{
         display: "flex", alignItems: "center", gap: "8px",
-        padding: "14px 20px", borderBottom: "1px solid #EAECF2",
+        padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)",
       }}>
         <div style={{
           width: "28px", height: "28px", borderRadius: "8px",
@@ -174,7 +174,7 @@ function SectionCard({ title, icon, children }: { title: string; icon: React.Rea
         }}>
           {icon}
         </div>
-        <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>{title}</span>
+        <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>{title}</span>
       </div>
       <div style={{ padding: "0 20px 4px" }}>
         {children}
@@ -189,7 +189,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label style={{
         display: "block", fontSize: "11px", fontWeight: 700,
         letterSpacing: "0.8px", textTransform: "uppercase" as const,
-        color: "#64748B", marginBottom: "5px",
+        color: "rgba(255,255,255,0.45)", marginBottom: "5px",
       }}>
         {label}
       </label>
@@ -200,9 +200,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const inp: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
-  borderRadius: "8px", border: "1.5px solid #EAECF2",
+  borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
   fontSize: "13px", fontFamily: "inherit",
-  color: "#0F172A", outline: "none", background: "white",
+  color: "#f1f5f9", outline: "none", background: "#1e1e2e",
   boxSizing: "border-box",
 }
 
@@ -320,33 +320,33 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
         minHeight: "70px", padding: "0 24px",
-        background: "white", borderBottom: "1px solid #EAECF2", flexShrink: 0,
+        background: "rgba(10,10,26,0.8)", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0,
         gap: "16px",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
           <Link href="/ofertas" style={{
             display: "flex", alignItems: "center", justifyContent: "center",
             width: "34px", height: "34px", borderRadius: "9px",
-            border: "1.5px solid #EAECF2", background: "white",
-            color: "#64748B", textDecoration: "none",
+            border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+            color: "rgba(255,255,255,0.5)", textDecoration: "none",
           }}
-            className="hover:bg-[#F8F9FC]"
+            className="hover:bg-[rgba(255,255,255,0.05)]"
           >
             <ArrowLeft size={16} />
           </Link>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#94A3B8", fontSize: "12px" }}>
-            <Link href="/ofertas" style={{ color: "#94A3B8", textDecoration: "none" }}>Ofertas</Link>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "rgba(255,255,255,0.35)", fontSize: "12px" }}>
+            <Link href="/ofertas" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none" }}>Ofertas</Link>
             <ChevronRight size={12} />
-            <span style={{ color: "#0F172A", fontWeight: 600 }}>#{oferta.numero}</span>
+            <span style={{ color: "#f1f5f9", fontWeight: 600 }}>#{oferta.numero}</span>
           </div>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0 }}>
+              <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
                 Oferta #{oferta.numero}
               </h1>
               <EstadoBadge estado={oferta.estado} large />
             </div>
-            <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
+            <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
               {oferta.direccion}
             </p>
           </div>
@@ -378,13 +378,13 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
           <DataRow label="Tipología" value={
             <span style={{
               padding: "2px 8px", borderRadius: "20px", fontSize: "12px", fontWeight: 600,
-              background: "#EFF6FF", color: "#2563EB",
+              background: "rgba(96,165,250,0.12)", color: "#60a5fa",
             }}>{oferta.tipologia}</span>
           } />
           <DataRow label="Tipo de operación" value={oferta.tipo_operacion} />
 
-          <div style={{ padding: "12px 0", borderBottom: "1px solid #F3F4F6" }}>
-            <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" as const, color: "#94A3B8", marginBottom: "10px" }}>
+          <div style={{ padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)", marginBottom: "10px" }}>
               Montos
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "10px" }}>
@@ -396,10 +396,10 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                 { label: "Valor escritura",    val: oferta.valor_escritura_usd },
               ].map(({ label, val, text }) => (
                 <div key={label} style={{
-                  background: "#F8F9FC", borderRadius: "10px", padding: "10px 12px",
+                  background: "rgba(255,255,255,0.06)", borderRadius: "10px", padding: "10px 12px",
                 }}>
-                  <div style={{ fontSize: "10.5px", color: "#94A3B8", fontWeight: 600, marginBottom: "4px" }}>{label}</div>
-                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
+                  <div style={{ fontSize: "10.5px", color: "rgba(255,255,255,0.35)", fontWeight: 600, marginBottom: "4px" }}>{label}</div>
+                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>
                     {text ?? fmtUSD(val)}
                   </div>
                 </div>
@@ -408,8 +408,8 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
           </div>
 
           {oferta.tiene_reserva && (
-            <div style={{ padding: "12px 0", borderBottom: "1px solid #F3F4F6" }}>
-              <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" as const, color: "#94A3B8", marginBottom: "10px" }}>
+            <div style={{ padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)", marginBottom: "10px" }}>
                 Seña / Reserva
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "10px" }}>
@@ -419,10 +419,10 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                   { label: "Seña total",     val: seniaTotal || null },
                 ].map(({ label, val }) => (
                   <div key={label} style={{
-                    background: "#ECFDF5", borderRadius: "10px", padding: "10px 12px",
+                    background: "rgba(74,222,128,0.12)", borderRadius: "10px", padding: "10px 12px",
                   }}>
-                    <div style={{ fontSize: "10.5px", color: "#059669", fontWeight: 600, marginBottom: "4px" }}>{label}</div>
-                    <div style={{ fontSize: "14px", fontWeight: 700, color: "#059669" }}>
+                    <div style={{ fontSize: "10.5px", color: "#4ade80", fontWeight: 600, marginBottom: "4px" }}>{label}</div>
+                    <div style={{ fontSize: "14px", fontWeight: 700, color: "#4ade80" }}>
                       {fmtUSD(val)}
                     </div>
                   </div>
@@ -437,7 +437,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
           <DataRow label="Comisión cobrada" value={oferta.comision_cobrada ? "Sí" : "No"} />
           {oferta.notas && (
             <DataRow label="Notas" value={
-              <span style={{ whiteSpace: "pre-wrap", fontSize: "13px", color: "#0F172A" }}>
+              <span style={{ whiteSpace: "pre-wrap", fontSize: "13px", color: "#f1f5f9" }}>
                 {oferta.notas}
               </span>
             } />
@@ -448,12 +448,12 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
         <SectionCard title="Historial de movimientos" icon={<Clock size={14} color="white" />}>
           <div style={{ padding: "8px 0" }}>
             {historial.length === 0 ? (
-              <p style={{ fontSize: "13px", color: "#94A3B8", padding: "16px 0" }}>Sin movimientos registrados.</p>
+              <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.35)", padding: "16px 0" }}>Sin movimientos registrados.</p>
             ) : (
               <div style={{ position: "relative" }}>
                 <div style={{
                   position: "absolute", left: "11px", top: 0, bottom: 0,
-                  width: "2px", background: "#F1F5F9",
+                  width: "2px", background: "rgba(255,255,255,0.08)",
                 }} />
                 {historial.map(h => {
                   const s = TIPO_MOV_STYLE[h.tipo] ?? TIPO_MOV_STYLE.Otro
@@ -475,14 +475,14 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                           }}>
                             {h.tipo}
                           </span>
-                          <span style={{ fontSize: "11px", color: "#94A3B8" }}>{fmtDateTime(h.created_at)}</span>
+                          <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)" }}>{fmtDateTime(h.created_at)}</span>
                           {h.monto_usd != null && (
-                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#059669" }}>
+                            <span style={{ fontSize: "12px", fontWeight: 700, color: "#4ade80" }}>
                               {fmtUSD(h.monto_usd)}
                             </span>
                           )}
                         </div>
-                        <p style={{ fontSize: "13px", color: "#0F172A", margin: 0 }}>{h.descripcion}</p>
+                        <p style={{ fontSize: "13px", color: "#f1f5f9", margin: 0 }}>{h.descripcion}</p>
                       </div>
                     </div>
                   )
@@ -490,13 +490,13 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               </div>
             )}
           </div>
-          <div style={{ borderTop: "1px solid #F1F5F9", padding: "12px 0 8px" }}>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", padding: "12px 0 8px" }}>
             <button
               onClick={() => { setDescMov(""); setMontoMov(""); setTipoMov("Nota"); setModalMov(true) }}
               style={{
                 display: "flex", alignItems: "center", gap: "6px",
                 padding: "7px 16px", borderRadius: "8px",
-                border: "1.5px solid #E31837", background: "white",
+                border: "1.5px solid #E31837", background: "rgba(227,24,55,0.08)",
                 fontSize: "12px", fontWeight: 700, color: "#E31837",
                 cursor: "pointer", fontFamily: "inherit",
               }}
@@ -512,16 +512,16 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
             {/* Progreso */}
             <div style={{ padding: "14px 0 10px" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                <span style={{ fontSize: "13px", fontWeight: 600, color: "#0F172A" }}>
+                <span style={{ fontSize: "13px", fontWeight: 600, color: "#f1f5f9" }}>
                   {doneItems} / {totalItems} completados
                 </span>
-                <span style={{ fontSize: "12px", color: "#94A3B8" }}>
+                <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>
                   {totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0}%
                 </span>
               </div>
               <div style={{
                 width: "100%", height: "8px", borderRadius: "4px",
-                background: "#F1F5F9", overflow: "hidden",
+                background: "rgba(255,255,255,0.1)", overflow: "hidden",
               }}>
                 <div style={{
                   width: `${totalItems > 0 ? (doneItems / totalItems) * 100 : 0}%`,
@@ -540,7 +540,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                 <div key={cat.id} style={{ marginBottom: "16px" }}>
                   <div style={{
                     fontSize: "10.5px", fontWeight: 700, letterSpacing: "1px",
-                    textTransform: "uppercase" as const, color: "#94A3B8",
+                    textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)",
                     marginBottom: "8px", marginTop: "4px",
                   }}>
                     {cat.label}
@@ -555,8 +555,8 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                           style={{
                             display: "flex", alignItems: "center", gap: "10px",
                             padding: "8px 10px", borderRadius: "8px",
-                            background: done ? "#ECFDF5" : "#F8F9FC",
-                            border: `1.5px solid ${done ? "#A7F3D0" : "#EAECF2"}`,
+                            background: done ? "rgba(74,222,128,0.1)" : "rgba(255,255,255,0.04)",
+                            border: `1.5px solid ${done ? "rgba(74,222,128,0.3)" : "rgba(255,255,255,0.1)"}`,
                             cursor: "pointer", fontFamily: "inherit",
                             textAlign: "left" as const, width: "100%",
                             transition: "all 0.15s",
@@ -564,15 +564,15 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                         >
                           <div style={{
                             width: "18px", height: "18px", borderRadius: "5px",
-                            border: `2px solid ${done ? "#059669" : "#CBD5E1"}`,
-                            background: done ? "#059669" : "white",
+                            border: `2px solid ${done ? "#059669" : "rgba(255,255,255,0.2)"}`,
+                            background: done ? "#059669" : "rgba(255,255,255,0.06)",
                             display: "flex", alignItems: "center", justifyContent: "center",
                             flexShrink: 0, transition: "all 0.15s",
                           }}>
                             {done && <span style={{ color: "white", fontSize: "11px", fontWeight: 700 }}>✓</span>}
                           </div>
                           <span style={{
-                            fontSize: "12.5px", color: done ? "#059669" : "#0F172A",
+                            fontSize: "12.5px", color: done ? "#4ade80" : "#f1f5f9",
                             fontWeight: done ? 600 : 400,
                             textDecoration: done ? "line-through" : "none",
                           }}>
@@ -597,7 +597,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
           onClick={closeAll}
           style={{
             position: "fixed", inset: 0,
-            background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)",
+            background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)",
             display: "flex", alignItems: "center", justifyContent: "center",
             zIndex: 1000, padding: "20px",
           }}
@@ -605,27 +605,28 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: "white", borderRadius: "16px",
+              background: "rgba(12,12,36,0.97)", borderRadius: "16px",
               width: "100%", maxWidth: "480px",
+              border: "1px solid rgba(255,255,255,0.1)",
               boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
               overflow: "hidden",
             }}
           >
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "18px 20px", borderBottom: "1px solid #EAECF2",
+              padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
             }}>
               <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>Cambiar estado</h2>
-                <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>Cambiar estado</h2>
+                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
                   Oferta #{oferta.numero} — {oferta.direccion}
                 </p>
               </div>
               <button onClick={closeAll} style={{
-                background: "#F8F9FC", border: "none", borderRadius: "8px",
+                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
                 width: "32px", height: "32px", display: "flex",
                 alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "#64748B",
+                cursor: "pointer", color: "rgba(255,255,255,0.5)",
               }}>
                 <X size={16} />
               </button>
@@ -647,9 +648,9 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               </Field>
               {errEstado && (
                 <div style={{
-                  background: "#FFF1F2", border: "1px solid #FECDD3",
+                  background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#E11D48", marginBottom: "14px",
+                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
                 }}>
                   ⚠️ {errEstado}
                 </div>
@@ -658,8 +659,8 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                 <button type="button" onClick={closeAll} disabled={isPending}
                   style={{
                     padding: "9px 20px", borderRadius: "8px",
-                    border: "1.5px solid #EAECF2", background: "white",
-                    fontSize: "13px", fontWeight: 600, color: "#64748B",
+                    border: "1.5px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                    fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
                     cursor: "pointer", fontFamily: "inherit",
                   }}>
                   Cancelar
@@ -690,7 +691,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
           onClick={closeAll}
           style={{
             position: "fixed", inset: 0,
-            background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)",
+            background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)",
             display: "flex", alignItems: "center", justifyContent: "center",
             zIndex: 1000, padding: "20px",
           }}
@@ -698,27 +699,28 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: "white", borderRadius: "16px",
+              background: "rgba(12,12,36,0.97)", borderRadius: "16px",
               width: "100%", maxWidth: "480px",
+              border: "1px solid rgba(255,255,255,0.1)",
               boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
               overflow: "hidden",
             }}
           >
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "18px 20px", borderBottom: "1px solid #EAECF2",
+              padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
             }}>
               <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>Agregar movimiento</h2>
-                <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>Agregar movimiento</h2>
+                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
                   Registrá un evento en el historial de la oferta
                 </p>
               </div>
               <button onClick={closeAll} style={{
-                background: "#F8F9FC", border: "none", borderRadius: "8px",
+                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
                 width: "32px", height: "32px", display: "flex",
                 alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "#64748B",
+                cursor: "pointer", color: "rgba(255,255,255,0.5)",
               }}>
                 <X size={16} />
               </button>
@@ -740,9 +742,9 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               </Field>
               {errMov && (
                 <div style={{
-                  background: "#FFF1F2", border: "1px solid #FECDD3",
+                  background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#E11D48", marginBottom: "14px",
+                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
                 }}>
                   ⚠️ {errMov}
                 </div>
@@ -751,8 +753,8 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                 <button type="button" onClick={closeAll} disabled={isPending}
                   style={{
                     padding: "9px 20px", borderRadius: "8px",
-                    border: "1.5px solid #EAECF2", background: "white",
-                    fontSize: "13px", fontWeight: 600, color: "#64748B",
+                    border: "1.5px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                    fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
                     cursor: "pointer", fontFamily: "inherit",
                   }}>
                   Cancelar

@@ -8,13 +8,13 @@ interface PageHeaderProps {
 
 export default function PageHeader({ title, description, children }: PageHeaderProps) {
   return (
-    <div className="flex items-center justify-between min-h-[62px] px-6 bg-white border-b border-slate-200 flex-shrink-0">
+    <div className="crm-page-header">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight leading-tight m-0">
+        <h1 className="text-[18px] font-extrabold tracking-tight leading-tight m-0" style={{ color: "#f1f5f9", letterSpacing: "-0.3px" }}>
           {title}
         </h1>
         {description && (
-          <p className="text-sm text-slate-500 m-0 mt-0.5">{description}</p>
+          <p className="text-[12px] m-0 mt-0.5" style={{ color: "rgba(255,255,255,0.45)" }}>{description}</p>
         )}
       </div>
       {children && (

@@ -51,9 +51,9 @@ function diasColor(d: number): string {
 }
 
 function diasBg(d: number): string {
-  if (d > 30)  return "#ECFDF5"
-  if (d >= 10) return "#FFFBEB"
-  return "#FFF1F2"
+  if (d > 30)  return "rgba(74,222,128,0.12)"
+  if (d >= 10) return "rgba(251,191,36,0.12)"
+  return "rgba(248,113,113,0.12)"
 }
 
 function fmtDate(iso: string): string {
@@ -65,9 +65,9 @@ function fmtDate(iso: string): string {
 // ── Shared styles ─────────────────────────────────────
 const inp: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
-  borderRadius: "8px", border: "1.5px solid #EAECF2",
+  borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
   fontSize: "13px", fontFamily: "inherit",
-  color: "#0F172A", outline: "none", background: "white",
+  color: "#f1f5f9", outline: "none", background: "#1e1e2e",
   boxSizing: "border-box",
 }
 
@@ -77,7 +77,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label style={{
         display: "block", fontSize: "11px", fontWeight: 700,
         letterSpacing: "0.8px", textTransform: "uppercase" as const,
-        color: "#64748B", marginBottom: "5px",
+        color: "rgba(255,255,255,0.45)", marginBottom: "5px",
       }}>
         {label}
       </label>
@@ -235,8 +235,8 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
 
   // ── Styles ─────────────────────────────────────────
   const cardStyle: React.CSSProperties = {
-    background: "white", borderRadius: "14px",
-    border: "1.5px solid #EAECF2", overflow: "hidden",
+    background: "#13131a", borderRadius: "14px",
+    border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
   }
 
   const hasFilters = busqueda || filtroAgente || filtroTipo
@@ -247,10 +247,10 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
       {/* ── Page Header ──────────────────────────── */}
       <div className="crm-page-header flex-shrink-0">
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
             Cartelería
           </h1>
-          <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "1px" }}>
+          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
             {stats.total} carteles activos · datos en tiempo real desde Airtable
           </p>
         </div>
@@ -279,24 +279,24 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
             title="Total carteles activos"
             value={stats.total}
             badge="En Airtable"
-            iconBg="bg-teal-50"
-            iconColor="text-teal-600"
+            iconBg="bg-teal-500/15"
+            iconColor="text-teal-400"
             icon={<MapPin size={18} />}
           />
           <KpiCard
             title="Vencen en menos de 10 días"
             value={stats.urgentes}
             badge={stats.urgentes > 0 ? "Atención requerida" : "Sin urgencias"}
-            iconBg={stats.urgentes > 0 ? "bg-rose-50" : "bg-emerald-50"}
-            iconColor={stats.urgentes > 0 ? "text-rose-600" : "text-emerald-600"}
+            iconBg={stats.urgentes > 0 ? "bg-rose-500/15" : "bg-emerald-500/15"}
+            iconColor={stats.urgentes > 0 ? "text-rose-400" : "text-emerald-400"}
             icon={<AlertTriangle size={18} />}
           />
           <KpiCard
             title="Agente con más carteles"
             value={stats.top ? stats.top[0].split(" ")[0] : "—"}
             badge={stats.top ? `${stats.top[1]} cartel${stats.top[1] !== 1 ? "es" : ""}` : "Sin datos"}
-            iconBg="bg-rose-50"
-            iconColor="text-rose-600"
+            iconBg="bg-rose-500/15"
+            iconColor="text-rose-400"
             icon={<Award size={18} />}
           />
         </div>
@@ -304,12 +304,12 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
         {/* ── Alerta de vencimiento próximo ────────── */}
         {carteles.filter(c => c.diasRestantes <= 10).length > 0 && (
           <div style={{
-            background: "#FFF7ED", border: "1.5px solid #FED7AA",
+            background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.25)",
             borderRadius: "12px", padding: "14px 18px", marginBottom: "16px",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-              <AlertTriangle size={14} color="#EA580C" />
-              <span style={{ fontSize: "13px", fontWeight: 700, color: "#EA580C" }}>
+              <AlertTriangle size={14} color="#fb923c" />
+              <span style={{ fontSize: "13px", fontWeight: 700, color: "#fb923c" }}>
                 Carteles próximos a vencer (≤10 días)
               </span>
               <span style={{
@@ -323,21 +323,21 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
             <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
               {carteles.filter(c => c.diasRestantes <= 10).map(c => (
                 <div key={c.id} style={{
-                  background: "white", border: "1.5px solid #FED7AA",
+                  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(251,146,60,0.2)",
                   borderRadius: "10px", padding: "8px 12px",
                   display: "flex", alignItems: "center", gap: "10px",
                 }}>
                   <span style={{
-                    background: c.diasRestantes <= 0 ? "#FFF1F2" : "#FFFBEB",
-                    color: c.diasRestantes <= 0 ? "#E11D48" : "#D97706",
+                    background: c.diasRestantes <= 0 ? "rgba(248,113,113,0.12)" : "rgba(251,191,36,0.12)",
+                    color: c.diasRestantes <= 0 ? "#f87171" : "#fbbf24",
                     padding: "2px 8px", borderRadius: "6px",
                     fontSize: "11px", fontWeight: 700,
                   }}>
                     #{c.numero}
                   </span>
                   <div>
-                    <div style={{ fontSize: "12px", fontWeight: 600, color: "#0F172A" }}>{c.direccion || "—"}</div>
-                    <div style={{ fontSize: "11px", color: "#64748B" }}>
+                    <div style={{ fontSize: "12px", fontWeight: 600, color: "#f1f5f9" }}>{c.direccion || "—"}</div>
+                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)" }}>
                       {c.agente} · {c.diasRestantes <= 0 ? "Vencido" : `${c.diasRestantes}d`}
                     </div>
                   </div>
@@ -391,8 +391,8 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
               onClick={() => { setBusqueda(""); setFiltroAgente(""); setFiltroTipo("") }}
               style={{
                 padding: "9px 14px", borderRadius: "8px",
-                border: "1.5px solid #EAECF2", background: "white",
-                fontSize: "12px", fontWeight: 600, color: "#64748B",
+                border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.45)",
                 cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
               }}
             >
@@ -405,15 +405,15 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
         <div style={cardStyle}>
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "14px 20px", borderBottom: "1px solid #EAECF2",
+            padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-              <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
+              <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>
                 Carteles activos
               </span>
             </div>
-            <span style={{ fontSize: "12px", color: "#94A3B8", fontWeight: 600 }}>
+            <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", fontWeight: 600 }}>
               {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
             </span>
           </div>
@@ -421,13 +421,13 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
+                <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                   {["Nº","Dirección","MLS-ID","Tipo","Agente","Vencimiento","Días restantes",""].map(h => (
                     <th key={h} style={{
                       padding: "10px 16px", textAlign: "left",
                       fontSize: "10.5px", fontWeight: 700,
                       textTransform: "uppercase" as const,
-                      letterSpacing: "0.8px", color: "#94A3B8",
+                      letterSpacing: "0.8px", color: "rgba(255,255,255,0.35)",
                       whiteSpace: "nowrap",
                     }}>
                       {h}
@@ -441,7 +441,7 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
                   <tr>
                     <td colSpan={8} style={{
                       padding: "48px", textAlign: "center",
-                      color: "#94A3B8", fontSize: "13px",
+                      color: "rgba(255,255,255,0.35)", fontSize: "13px",
                     }}>
                       No se encontraron carteles con los filtros aplicados
                     </td>
@@ -455,19 +455,19 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
                     <tr
                       key={c.id}
                       style={{
-                        borderBottom: isLast ? "none" : "1px solid #F3F4F6",
-                        background: urgente ? "rgba(225,29,72,0.025)" : undefined,
+                        borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)",
+                        background: urgente ? "rgba(225,29,72,0.04)" : undefined,
                       }}
                     >
                       {/* Nº */}
-                      <td style={{ padding: "13px 16px", fontSize: "13px", fontWeight: 700, color: "#64748B", whiteSpace: "nowrap" }}>
+                      <td style={{ padding: "13px 16px", fontSize: "13px", fontWeight: 700, color: "rgba(255,255,255,0.5)", whiteSpace: "nowrap" }}>
                         {c.numero || "—"}
                       </td>
 
                       {/* Dirección */}
                       <td style={{ padding: "13px 16px", maxWidth: "240px" }}>
                         <span style={{
-                          fontSize: "13px", fontWeight: 600, color: "#0F172A",
+                          fontSize: "13px", fontWeight: 600, color: "#f1f5f9",
                           display: "block", overflow: "hidden",
                           textOverflow: "ellipsis", whiteSpace: "nowrap",
                         }}>
@@ -476,8 +476,8 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
                       </td>
 
                       {/* MLS-ID */}
-                      <td style={{ padding: "13px 16px", fontSize: "12px", color: "#64748B", fontFamily: "monospace", whiteSpace: "nowrap" }}>
-                        {c.mlsId || <span style={{ color: "#CBD5E1" }}>—</span>}
+                      <td style={{ padding: "13px 16px", fontSize: "12px", color: "rgba(255,255,255,0.45)", fontFamily: "monospace", whiteSpace: "nowrap" }}>
+                        {c.mlsId || <span style={{ color: "rgba(255,255,255,0.2)" }}>—</span>}
                       </td>
 
                       {/* Tipo */}
@@ -486,20 +486,20 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
                           <span style={{
                             padding: "2px 10px", borderRadius: "20px",
                             fontSize: "11px", fontWeight: 700,
-                            background: "#F1F5F9", color: "#475569",
+                            background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)",
                           }}>
                             {c.tipo}
                           </span>
-                        ) : <span style={{ color: "#CBD5E1", fontSize: "13px" }}>—</span>}
+                        ) : <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "13px" }}>—</span>}
                       </td>
 
                       {/* Agente */}
-                      <td style={{ padding: "13px 16px", fontSize: "13px", color: "#0F172A", whiteSpace: "nowrap" }}>
-                        {c.agente || <span style={{ color: "#CBD5E1" }}>—</span>}
+                      <td style={{ padding: "13px 16px", fontSize: "13px", color: "#f1f5f9", whiteSpace: "nowrap" }}>
+                        {c.agente || <span style={{ color: "rgba(255,255,255,0.2)" }}>—</span>}
                       </td>
 
                       {/* Vencimiento */}
-                      <td style={{ padding: "13px 16px", fontSize: "13px", color: "#64748B", whiteSpace: "nowrap" }}>
+                      <td style={{ padding: "13px 16px", fontSize: "13px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
                         {fmtDate(c.vencimiento)}
                       </td>
 
@@ -528,8 +528,8 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
                             onClick={() => openEditar(c)}
                             style={{
                               padding: "5px 14px", borderRadius: "7px",
-                              border: "1.5px solid #EAECF2", background: "white",
-                              fontSize: "12px", fontWeight: 600, color: "#0F172A",
+                              border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                              fontSize: "12px", fontWeight: 600, color: "#f1f5f9",
                               cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
                             }}
                           >
@@ -540,8 +540,8 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
                             title="Registrar devolución"
                             style={{
                               padding: "5px 10px", borderRadius: "7px",
-                              border: "1.5px solid #FECDD3", background: "white",
-                              fontSize: "12px", fontWeight: 600, color: "#E11D48",
+                              border: "1px solid rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.08)",
+                              fontSize: "12px", fontWeight: 600, color: "#f87171",
                               cursor: "pointer", fontFamily: "inherit",
                               display: "flex", alignItems: "center", gap: "4px",
                             }}
@@ -573,17 +573,17 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
             {/* Header */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "16px 20px", borderBottom: "1px solid #EAECF2",
+              padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div className="bg-teal-50 rounded-xl p-2.5 flex-shrink-0">
-                  <MapPin size={20} className="text-teal-600" />
+                <div className="bg-teal-500/[0.12] rounded-xl p-2.5 flex-shrink-0">
+                  <MapPin size={20} className="text-teal-400" />
                 </div>
                 <div>
-                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
+                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>
                     {modalMode === "nuevo" ? "Nuevo cartel" : "Editar cartel"}
                   </h2>
-                  <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
+                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
                     {modalMode === "nuevo"
                       ? "Se creará un registro en Airtable"
                       : `Cartel #${editTarget?.numero} · ${editTarget?.direccion}`
@@ -592,10 +592,10 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
                 </div>
               </div>
               <button onClick={closeModal} style={{
-                background: "#F8F9FC", border: "none", borderRadius: "8px",
+                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
                 width: "32px", height: "32px", display: "flex",
                 alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "#64748B",
+                cursor: "pointer", color: "rgba(255,255,255,0.5)",
               }}>
                 <X size={16} />
               </button>
@@ -679,9 +679,9 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
               {/* Error */}
               {error && (
                 <div style={{
-                  background: "#FFF1F2", border: "1px solid #FECDD3",
+                  background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#E11D48", marginBottom: "14px",
+                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
                 }}>
                   ⚠️ {error}
                 </div>
@@ -690,7 +690,7 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
               {/* Actions */}
               <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", alignItems: "center" }}>
                 {saveSuccess ? (
-                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400 bg-emerald-500/[0.12] px-4 py-2.5 rounded-lg">
                     <CheckCircle2 size={15} /> Guardado correctamente
                   </div>
                 ) : (
@@ -701,8 +701,8 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
                       disabled={isPending}
                       style={{
                         padding: "9px 20px", borderRadius: "8px",
-                        border: "1.5px solid #EAECF2", background: "white",
-                        fontSize: "13px", fontWeight: 600, color: "#64748B",
+                        border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                        fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
                         cursor: "pointer", fontFamily: "inherit",
                       }}
                     >
@@ -749,44 +749,44 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
           >
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "16px 20px", borderBottom: "1px solid #EAECF2",
+              padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div className="bg-rose-50 rounded-xl p-2.5 flex-shrink-0">
-                  <RotateCcw size={18} className="text-rose-600" />
+                <div className="bg-rose-500/[0.12] rounded-xl p-2.5 flex-shrink-0">
+                  <RotateCcw size={18} className="text-rose-400" />
                 </div>
                 <div>
-                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
+                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>
                     Confirmar devolución
                   </h2>
-                  <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
+                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
                     Cartel #{devolverTarget.numero} · {devolverTarget.direccion}
                   </p>
                 </div>
               </div>
               <button onClick={() => { setDevolverTarget(null); setDevolverError("") }} style={{
-                background: "#F8F9FC", border: "none", borderRadius: "8px",
+                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
                 width: "32px", height: "32px", display: "flex",
                 alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "#64748B",
+                cursor: "pointer", color: "rgba(255,255,255,0.5)",
               }}>
                 <X size={16} />
               </button>
             </div>
 
             <div style={{ padding: "20px" }}>
-              <p style={{ fontSize: "13px", color: "#0F172A", marginBottom: "8px", lineHeight: 1.5 }}>
+              <p style={{ fontSize: "13px", color: "#f1f5f9", marginBottom: "8px", lineHeight: 1.5 }}>
                 ¿Registrar la devolución de este cartel? Se actualizará el vencimiento al día de hoy en Airtable.
               </p>
-              <p style={{ fontSize: "12px", color: "#64748B", marginBottom: "20px" }}>
+              <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "20px" }}>
                 Agente: <strong>{devolverTarget.agente || "—"}</strong>
               </p>
 
               {devolverError && (
                 <div style={{
-                  background: "#FFF1F2", border: "1px solid #FECDD3",
+                  background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#E11D48", marginBottom: "14px",
+                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
                 }}>
                   ⚠️ {devolverError}
                 </div>
@@ -798,8 +798,8 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
                   disabled={devolverLoading}
                   style={{
                     padding: "9px 20px", borderRadius: "8px",
-                    border: "1.5px solid #EAECF2", background: "white",
-                    fontSize: "13px", fontWeight: 600, color: "#64748B",
+                    border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                    fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
                     cursor: "pointer", fontFamily: "inherit",
                   }}
                 >

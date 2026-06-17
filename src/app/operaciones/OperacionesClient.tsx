@@ -31,11 +31,11 @@ const MONTHS_OPTIONS: Array<{ label: string; value: string }> = (() => {
 const TIPOS = ["Venta", "Alquiler", "Alquiler Temporal", "Referido", "Otro"]
 
 const TIPO_STYLES: Record<string, { bg: string; color: string }> = {
-  Venta:               { bg: "#EFF6FF", color: "#2563EB" },
-  Alquiler:            { bg: "#ECFDF5", color: "#059669" },
-  "Alquiler Temporal": { bg: "#F0FDFA", color: "#0D9488" },
-  Referido:            { bg: "#F5F3FF", color: "#7C3AED" },
-  Otro:                { bg: "#F1F5F9", color: "#64748B" },
+  Venta:               { bg: "rgba(96,165,250,0.12)",   color: "#60a5fa" },
+  Alquiler:            { bg: "rgba(74,222,128,0.12)",   color: "#4ade80" },
+  "Alquiler Temporal": { bg: "rgba(45,212,191,0.12)",   color: "#2dd4bf" },
+  Referido:            { bg: "rgba(167,139,250,0.12)",  color: "#a78bfa" },
+  Otro:                { bg: "rgba(255,255,255,0.08)",  color: "rgba(255,255,255,0.5)" },
 }
 
 // ── Types ────────────────────────────────────────────
@@ -97,8 +97,8 @@ function EncuestaIndicator({ value }: { value: boolean | null }) {
     <span style={{
       display: "inline-flex", alignItems: "center", justifyContent: "center",
       width: "26px", height: "26px", borderRadius: "50%",
-      background: done ? "#ECFDF5" : "#FFF1F2",
-      color: done ? "#059669" : "#E11D48",
+      background: done ? "rgba(74,222,128,0.12)" : "rgba(248,113,113,0.12)",
+      color: done ? "#4ade80" : "#f87171",
       fontSize: "14px", fontWeight: 700,
     }}>
       {done ? "✓" : "✗"}
@@ -112,7 +112,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label style={{
         display: "block", fontSize: "11px", fontWeight: 700,
         letterSpacing: "0.8px", textTransform: "uppercase" as const,
-        color: "#64748B", marginBottom: "5px",
+        color: "rgba(255,255,255,0.45)", marginBottom: "5px",
       }}>
         {label}
       </label>
@@ -123,9 +123,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const inp: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
-  borderRadius: "8px", border: "1.5px solid #EAECF2",
+  borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
   fontSize: "13px", fontFamily: "inherit",
-  color: "#0F172A", outline: "none", background: "white",
+  color: "#f1f5f9", outline: "none", background: "#1e1e2e",
   boxSizing: "border-box",
 }
 
@@ -144,8 +144,8 @@ function Toggle({
       style={{
         display: "flex", alignItems: "center", gap: "10px",
         padding: "9px 14px", borderRadius: "8px", width: "100%",
-        border: `1.5px solid ${value ? "#6EE7B7" : "#EAECF2"}`,
-        background: value ? "#ECFDF5" : "white",
+        border: `1.5px solid ${value ? "#6EE7B7" : "rgba(255,255,255,0.1)"}`,
+        background: value ? "#ECFDF5" : "rgba(255,255,255,0.04)",
         cursor: "pointer", fontFamily: "inherit",
         transition: "all 0.15s",
       }}
@@ -153,7 +153,7 @@ function Toggle({
       {/* pill */}
       <div style={{
         width: "36px", height: "20px", borderRadius: "10px",
-        background: value ? "#059669" : "#CBD5E1",
+        background: value ? "#059669" : "rgba(255,255,255,0.2)",
         position: "relative", transition: "background 0.2s", flexShrink: 0,
       }}>
         <div style={{
@@ -164,7 +164,7 @@ function Toggle({
           boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
         }} />
       </div>
-      <span style={{ fontSize: "13px", color: value ? "#059669" : "#64748B", fontWeight: 500 }}>
+      <span style={{ fontSize: "13px", color: value ? "#059669" : "rgba(255,255,255,0.45)", fontWeight: 500 }}>
         {label}: <strong>{value ? "Sí" : "No"}</strong>
       </span>
     </button>
@@ -304,8 +304,8 @@ export default function OperacionesClient({ operaciones }: Props) {
 
   // ── Shared styles ──────────────────────────────────
   const cardStyle: React.CSSProperties = {
-    background: "white", borderRadius: "14px",
-    border: "1.5px solid #EAECF2", overflow: "hidden",
+    background: "#13131a", borderRadius: "14px",
+    border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
   }
 
   // ═══════════════════════════════════════════════════
@@ -317,10 +317,10 @@ export default function OperacionesClient({ operaciones }: Props) {
       {/* ── Page Header ──────────────────────────── */}
       <div className="crm-page-header flex-shrink-0">
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
             Operaciones
           </h1>
-          <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "1px" }}>
+          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
             Registro de ventas y alquileres del equipo
           </p>
         </div>
@@ -348,16 +348,16 @@ export default function OperacionesClient({ operaciones }: Props) {
             title="Operaciones del período"
             value={String(stats.total)}
             badge={`${stats.ventas} ventas · ${stats.alquileres} alquileres`}
-            iconBg="bg-blue-50"
-            iconColor="text-blue-600"
+            iconBg="bg-blue-500/15"
+            iconColor="text-blue-400"
             icon={<Building2 size={18} />}
           />
           <KpiCard
             title="Comisiones brutas"
             value={fmtUSD(stats.totalComisiones)}
             badge="total del período"
-            iconBg="bg-teal-50"
-            iconColor="text-teal-600"
+            iconBg="bg-teal-500/15"
+            iconColor="text-teal-400"
             icon={<DollarSign size={18} />}
           />
         </div>
@@ -369,14 +369,14 @@ export default function OperacionesClient({ operaciones }: Props) {
           padding: "12px 18px", marginBottom: "16px",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{ fontSize: "12px", fontWeight: 600, color: "#94A3B8" }}>MES</span>
+            <span style={{ fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.35)" }}>MES</span>
             <select
               value={selectedMonth}
               onChange={e => setSelectedMonth(e.target.value)}
               style={{
                 padding: "6px 10px", borderRadius: "8px",
-                border: "1.5px solid #EAECF2", fontSize: "12.5px",
-                fontWeight: 500, color: "#0F172A", background: "white",
+                border: "1px solid rgba(255,255,255,0.1)", fontSize: "12.5px",
+                fontWeight: 500, color: "#f1f5f9", background: "#1e1e2e",
                 cursor: "pointer", fontFamily: "inherit", outline: "none",
               }}
             >
@@ -385,7 +385,7 @@ export default function OperacionesClient({ operaciones }: Props) {
               ))}
             </select>
           </div>
-          <span style={{ fontSize: "12px", color: "#94A3B8" }}>
+          <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>
             {filteredOps.length} operación{filteredOps.length !== 1 ? "es" : ""}
           </span>
         </div>
@@ -394,10 +394,10 @@ export default function OperacionesClient({ operaciones }: Props) {
         <div style={cardStyle}>
           <div style={{
             display: "flex", alignItems: "center", gap: "8px",
-            padding: "14px 20px", borderBottom: "1px solid #EAECF2",
+            padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)",
           }}>
             <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-            <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
+            <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>
               Historial de operaciones
             </span>
           </div>
@@ -405,13 +405,13 @@ export default function OperacionesClient({ operaciones }: Props) {
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
+                <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                   {["Fecha","Dirección","Agente(s)","Tipo","Comisión Bruta",""].map(h => (
                     <th key={h} style={{
                       padding: "10px 16px", textAlign: "left",
                       fontSize: "10.5px", fontWeight: 700,
                       textTransform: "uppercase" as const,
-                      letterSpacing: "0.8px", color: "#94A3B8",
+                      letterSpacing: "0.8px", color: "rgba(255,255,255,0.35)",
                       whiteSpace: "nowrap",
                     }}>
                       {h}
@@ -424,10 +424,10 @@ export default function OperacionesClient({ operaciones }: Props) {
                   <tr>
                     <td colSpan={6} style={{ padding: "48px 40px", textAlign: "center" }}>
                       <div style={{ fontSize: "28px", marginBottom: "10px", opacity: 0.4 }}>🏠</div>
-                      <div style={{ fontWeight: 600, fontSize: "14px", color: "#64748B", marginBottom: "4px" }}>
+                      <div style={{ fontWeight: 600, fontSize: "14px", color: "rgba(255,255,255,0.45)", marginBottom: "4px" }}>
                         Sin operaciones en este período
                       </div>
-                      <div style={{ fontSize: "12px", color: "#94A3B8" }}>
+                      <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>
                         Cambiá el mes o registrá la primera operación con el botón &quot;+ Nueva Operación&quot;.
                       </div>
                     </td>
@@ -438,18 +438,18 @@ export default function OperacionesClient({ operaciones }: Props) {
                     return (
                       <tr
                         key={o.id}
-                        style={{ borderBottom: isLast ? "none" : "1px solid #F3F4F6" }}
-                        className="hover:bg-[#FAFBFF]"
+                        style={{ borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)" }}
+                        className="hover:bg-[rgba(255,255,255,0.03)]"
                       >
-                        <td style={{ padding: "12px 16px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "12px 16px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
                           {fmtFecha(o.fecha)}
                         </td>
-                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "#0F172A", maxWidth: "200px" }}>
+                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "#f1f5f9", maxWidth: "200px" }}>
                           <span title={o.direccion} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {o.direccion}
                           </span>
                         </td>
-                        <td style={{ padding: "12px 16px", fontSize: "12px", color: "#64748B", maxWidth: "160px" }}>
+                        <td style={{ padding: "12px 16px", fontSize: "12px", color: "rgba(255,255,255,0.45)", maxWidth: "160px" }}>
                           <span title={o.agentes} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {o.agentes}
                           </span>
@@ -457,7 +457,7 @@ export default function OperacionesClient({ operaciones }: Props) {
                         <td style={{ padding: "12px 16px" }}>
                           <TipoBadge tipo={o.tipo} />
                         </td>
-                        <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: 600, color: "#0F172A", whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: 600, color: "#f1f5f9", whiteSpace: "nowrap" }}>
                           {fmtUSD(Number(o.comision_bruta))}
                         </td>
                         <td style={{ padding: "12px 16px" }}>
@@ -465,12 +465,12 @@ export default function OperacionesClient({ operaciones }: Props) {
                             onClick={() => openEditar(o)}
                             style={{
                               padding: "5px 14px", borderRadius: "7px",
-                              border: "1.5px solid #EAECF2", background: "white",
-                              fontSize: "12px", fontWeight: 600, color: "#0F172A",
+                              border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                              fontSize: "12px", fontWeight: 600, color: "#f1f5f9",
                               cursor: "pointer", fontFamily: "inherit",
                               whiteSpace: "nowrap",
                             }}
-                            className="hover:bg-[#F8F9FC]"
+                            className="hover:bg-[rgba(255,255,255,0.05)]"
                           >
                             Editar
                           </button>
@@ -498,21 +498,21 @@ export default function OperacionesClient({ operaciones }: Props) {
             {/* Header */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "18px 20px", borderBottom: "1px solid #EAECF2", flexShrink: 0,
+              padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0,
             }}>
               <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>
                   {modal === "nuevo" ? "Nueva Operación" : "Editar Operación"}
                 </h2>
-                <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
+                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
                   {modal === "nuevo" ? "Registrá una nueva venta o alquiler" : "Modificá los datos de la operación"}
                 </p>
               </div>
               <button onClick={closeModal} style={{
-                background: "#F8F9FC", border: "none", borderRadius: "8px",
+                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
                 width: "32px", height: "32px", display: "flex",
                 alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "#64748B",
+                cursor: "pointer", color: "rgba(255,255,255,0.5)",
               }}>
                 <X size={16} />
               </button>
@@ -574,9 +574,9 @@ export default function OperacionesClient({ operaciones }: Props) {
                   {(["USD", "ARS"] as const).map(m => (
                     <button key={m} type="button" onClick={() => setF("moneda", m)} style={{
                       padding: "7px 20px", borderRadius: "8px", border: "1.5px solid",
-                      borderColor: form.moneda === m ? "#E31837" : "#EAECF2",
-                      background: form.moneda === m ? "#FFF1F2" : "white",
-                      color: form.moneda === m ? "#E11D48" : "#64748B",
+                      borderColor: form.moneda === m ? "#E31837" : "rgba(255,255,255,0.1)",
+                      background: form.moneda === m ? "rgba(227,24,55,0.12)" : "rgba(255,255,255,0.06)",
+                      color: form.moneda === m ? "#E11D48" : "rgba(255,255,255,0.5)",
                       fontWeight: 700, fontSize: "13px", cursor: "pointer", fontFamily: "inherit",
                     }}>{m}</button>
                   ))}
@@ -603,7 +603,7 @@ export default function OperacionesClient({ operaciones }: Props) {
                     style={inp}
                   />
                   {form.moneda === "ARS" && form.tipo_cambio && form.comision_bruta && (
-                    <div style={{ fontSize: "11px", color: "#0D9488", marginTop: "4px", fontWeight: 600 }}>
+                    <div style={{ fontSize: "11px", color: "#2dd4bf", marginTop: "4px", fontWeight: 600 }}>
                       ≈ USD {Math.round(parseFloat(form.comision_bruta) / parseFloat(form.tipo_cambio)).toLocaleString("es-AR")}
                     </div>
                   )}
@@ -640,9 +640,9 @@ export default function OperacionesClient({ operaciones }: Props) {
               {/* Error */}
               {error && (
                 <div style={{
-                  background: "#FFF1F2", border: "1px solid #FECDD3",
+                  background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#E11D48", marginBottom: "14px",
+                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
                 }}>
                   ⚠️ {error}
                 </div>
@@ -653,8 +653,8 @@ export default function OperacionesClient({ operaciones }: Props) {
                 <button type="button" onClick={closeModal} disabled={isPending}
                   style={{
                     padding: "9px 20px", borderRadius: "8px",
-                    border: "1.5px solid #EAECF2", background: "white",
-                    fontSize: "13px", fontWeight: 600, color: "#64748B",
+                    border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                    fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
                     cursor: "pointer", fontFamily: "inherit",
                   }}>
                   Cancelar

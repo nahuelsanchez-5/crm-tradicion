@@ -58,10 +58,10 @@ const EMPTY_FORM: AgenteFormData = {
 }
 
 const PLAN_STYLES: Record<string, { bg: string; color: string }> = {
-  "PRO":   { bg: "#EFF6FF", color: "#2563EB" },
-  "PRO+":  { bg: "#FFFBEB", color: "#D97706" },
-  "B QR":  { bg: "#ECFDF5", color: "#059669" },
-  "B Ofi": { bg: "#ECFDF5", color: "#059669" },
+  "PRO":   { bg: "rgba(96,165,250,0.12)", color: "#60a5fa" },
+  "PRO+":  { bg: "rgba(251,191,36,0.12)", color: "#fbbf24" },
+  "B QR":  { bg: "rgba(74,222,128,0.12)", color: "#4ade80" },
+  "B Ofi": { bg: "rgba(74,222,128,0.12)", color: "#4ade80" },
 }
 
 const PLAN_LABELS: Record<string, string> = {
@@ -151,11 +151,11 @@ function getEfectivoPagaFee(ag: AgenteConPlan): boolean {
 // ── Sub-components ───────────────────────────────────
 function PlanBadge({ plan }: { plan: string | null }) {
   if (!plan) return (
-    <span style={{ background: "#F1F5F9", color: "#94A3B8", padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700, display: "inline-block" }}>
+    <span style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.35)", padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700, display: "inline-block" }}>
       Sin licencia
     </span>
   )
-  const s = PLAN_STYLES[plan] ?? { bg: "#F1F5F9", color: "#64748B" }
+  const s = PLAN_STYLES[plan] ?? { bg: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" }
   return (
     <span style={{ ...s, padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700, display: "inline-block" }}>
       {PLAN_LABELS[plan] ?? plan}
@@ -166,8 +166,8 @@ function PlanBadge({ plan }: { plan: string | null }) {
 function EstadoBadge({ activo }: { activo: boolean }) {
   return (
     <span style={{
-      background: activo ? "#ECFDF5" : "#FFF1F2",
-      color:      activo ? "#059669" : "#E11D48",
+      background: activo ? "rgba(74,222,128,0.12)" : "rgba(248,113,113,0.12)",
+      color:      activo ? "#4ade80" : "#f87171",
       padding: "3px 10px", borderRadius: "20px",
       fontSize: "11px", fontWeight: 700, display: "inline-block",
     }}>
@@ -178,9 +178,9 @@ function EstadoBadge({ activo }: { activo: boolean }) {
 
 const inputStyle: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
-  borderRadius: "8px", border: "1.5px solid #EAECF2",
-  fontSize: "13px", fontFamily: "inherit", color: "#0F172A",
-  outline: "none", background: "white", boxSizing: "border-box",
+  borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
+  fontSize: "13px", fontFamily: "inherit", color: "#f1f5f9",
+  outline: "none", background: "#1e1e2e", boxSizing: "border-box",
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -189,7 +189,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label style={{
         display: "block", fontSize: "11px", fontWeight: 700,
         letterSpacing: "0.8px", textTransform: "uppercase",
-        color: "#64748B", marginBottom: "5px",
+        color: "rgba(255,255,255,0.45)", marginBottom: "5px",
       }}>
         {label}
       </label>
@@ -345,9 +345,9 @@ export default function AgentesClient({
     padding: "5px 12px", borderRadius: "7px",
     fontSize: "12px", fontWeight: sortMode === mode ? 700 : 500,
     cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
-    border: sortMode === mode ? "1.5px solid #0F172A" : "1.5px solid #EAECF2",
-    background: sortMode === mode ? "#0F172A" : "white",
-    color: sortMode === mode ? "white" : "#64748B",
+    border: sortMode === mode ? "1px solid rgba(255,255,255,0.3)" : "1px solid rgba(255,255,255,0.08)",
+    background: sortMode === mode ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.04)",
+    color: sortMode === mode ? "white" : "rgba(255,255,255,0.45)",
   })
 
   // ── RENDER ─────────────────────────────────────────
@@ -357,17 +357,17 @@ export default function AgentesClient({
       {/* ── Page Header ──────────────────────────── */}
       <div className="crm-page-header flex-shrink-0">
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
             Agentes
           </h1>
-          <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "1px" }}>
+          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
             Gestión del equipo REMAX Tradición · {MONTH_NAMES[mes - 1]} {anio}
           </p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <Users size={14} color="#94A3B8" />
-            <span style={{ fontSize: "13px", fontWeight: 700, color: "#0F172A" }}>
+            <span style={{ fontSize: "13px", fontWeight: 700, color: "#f1f5f9" }}>
               {agentes.filter(a => a.activo).length} activos
             </span>
           </div>
@@ -393,17 +393,17 @@ export default function AgentesClient({
         {/* ── Próximo Mainstreet ─────────────────── */}
         {proximosMainstreet.length > 0 && (
           <div style={{
-            background: "white", borderRadius: "14px",
-            border: "1.5px solid #FCD34D",
+            background: "#13131a", borderRadius: "14px",
+            border: "1px solid rgba(251,191,36,0.3)",
             overflow: "hidden", marginBottom: "20px",
           }}>
             <div style={{
               display: "flex", alignItems: "center", gap: "8px",
-              padding: "12px 20px", borderBottom: "1px solid #FEF9C3",
-              background: "#FFFBEB",
+              padding: "12px 20px", borderBottom: "1px solid rgba(251,191,36,0.15)",
+              background: "rgba(251,191,36,0.08)",
             }}>
               <AlertCircle size={15} color="#D97706" />
-              <span style={{ fontSize: "13px", fontWeight: 700, color: "#92400E" }}>
+              <span style={{ fontSize: "13px", fontWeight: 700, color: "#fbbf24" }}>
                 Próximo Mainstreet — {proximosMainstreet.length} agente{proximosMainstreet.length !== 1 ? "s" : ""} en los próximos 30 días
               </span>
             </div>
@@ -417,18 +417,18 @@ export default function AgentesClient({
                   key={ag.id}
                   style={{
                     padding: "14px 18px",
-                    borderRight: idx < proximosMainstreet.length - 1 ? "1px solid #FEF9C3" : "none",
+                    borderRight: idx < proximosMainstreet.length - 1 ? "1px solid rgba(251,191,36,0.15)" : "none",
                     display: "flex", flexDirection: "column", gap: "4px",
                   }}
                 >
-                  <div style={{ fontSize: "13px", fontWeight: 700, color: "#0F172A" }}>{ag.nombre}</div>
-                  <div style={{ fontSize: "11.5px", color: "#64748B" }}>
+                  <div style={{ fontSize: "13px", fontWeight: 700, color: "#f1f5f9" }}>{ag.nombre}</div>
+                  <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.45)" }}>
                     {fmtFecha(ag.mainstreetDate.toISOString().split("T")[0])}
                   </div>
                   <span style={{
                     display: "inline-block", marginTop: "2px",
-                    background: ag.diasRestantes <= 7 ? "#FEF3C7" : "#F1F5F9",
-                    color: ag.diasRestantes <= 7 ? "#D97706" : "#64748B",
+                    background: ag.diasRestantes <= 7 ? "rgba(251,191,36,0.12)" : "rgba(255,255,255,0.08)",
+                    color: ag.diasRestantes <= 7 ? "#fbbf24" : "rgba(255,255,255,0.45)",
                     padding: "2px 8px", borderRadius: "10px",
                     fontSize: "11px", fontWeight: 700,
                     alignSelf: "flex-start",
@@ -443,26 +443,26 @@ export default function AgentesClient({
 
         {/* ── Tabla de agentes ─────────────────── */}
         <div style={{
-          background: "white", borderRadius: "14px",
-          border: "1.5px solid #EAECF2", overflow: "hidden",
+          background: "#13131a", borderRadius: "14px",
+          border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
         }}>
           {/* Card header with sort filters */}
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "12px 20px", borderBottom: "1px solid #EAECF2",
+            padding: "12px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)",
             flexWrap: "wrap", gap: "10px",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-              <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
+              <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>
                 Lista de agentes
               </span>
-              <span style={{ fontSize: "12px", color: "#94A3B8", marginLeft: "4px" }}>
+              <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginLeft: "4px" }}>
                 {agentes.length} registrados
               </span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ fontSize: "11px", fontWeight: 600, color: "#94A3B8", marginRight: "4px" }}>ORDEN</span>
+              <span style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.35)", marginRight: "4px" }}>ORDEN</span>
               {([
                 ["az", "A→Z"],
                 ["recientes", "Más recientes"],
@@ -477,9 +477,9 @@ export default function AgentesClient({
           </div>
 
           {/* Mobile card list */}
-          <div className="md:hidden divide-y divide-slate-100">
+          <div className="md:hidden divide-y divide-white/[0.06]">
             {sorted.length === 0 ? (
-              <div style={{ padding: "32px 20px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
+              <div style={{ padding: "32px 20px", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "13px" }}>
                 No hay agentes registrados.
               </div>
             ) : (
@@ -496,12 +496,12 @@ export default function AgentesClient({
                       {initials(ag.nombre)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div style={{ fontWeight: 600, fontSize: "13px", color: "#0F172A" }}>{ag.nombre}</div>
+                      <div style={{ fontWeight: 600, fontSize: "13px", color: "#f1f5f9" }}>{ag.nombre}</div>
                       <div className="flex flex-wrap gap-1.5 mt-1 items-center">
                         <PlanBadge plan={ag.tipo_plan ?? null} />
                         <EstadoBadge activo={ag.activo} />
                         {facturacion > 0 && (
-                          <span style={{ fontSize: "11px", fontWeight: 600, color: "#059669" }}>{fmtUSD(facturacion)}</span>
+                          <span style={{ fontSize: "11px", fontWeight: 600, color: "#4ade80" }}>{fmtUSD(facturacion)}</span>
                         )}
                       </div>
                     </div>
@@ -523,8 +523,8 @@ export default function AgentesClient({
                         onClick={() => openEditar(ag)}
                         style={{
                           padding: "6px 14px", borderRadius: "7px",
-                          border: "1.5px solid #EAECF2", background: "white",
-                          fontSize: "12px", fontWeight: 600, color: "#0F172A",
+                          border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                          fontSize: "12px", fontWeight: 600, color: "#f1f5f9",
                           cursor: "pointer", fontFamily: "inherit", minHeight: "34px",
                         }}
                       >
@@ -541,13 +541,13 @@ export default function AgentesClient({
           <div className="hidden md:block" style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
+                <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                   {["Nombre", "Antigüedad", "Próx. Mainstreet", "Licencia CRM", "Paga FEE", "Facturación año", "Estado", "WA", ""].map(h => (
                     <th key={h} style={{
                       padding: "10px 16px", textAlign: "left",
                       fontSize: "10.5px", fontWeight: 700,
                       textTransform: "uppercase" as const,
-                      letterSpacing: "0.8px", color: "#94A3B8",
+                      letterSpacing: "0.8px", color: "rgba(255,255,255,0.35)",
                       whiteSpace: "nowrap",
                     }}>
                       {h}
@@ -558,7 +558,7 @@ export default function AgentesClient({
               <tbody>
                 {sorted.length === 0 ? (
                   <tr>
-                    <td colSpan={9} style={{ padding: "40px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
+                    <td colSpan={9} style={{ padding: "40px", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "13px" }}>
                       No hay agentes registrados. Hacé clic en &quot;+ Nuevo Agente&quot; para empezar.
                     </td>
                   </tr>
@@ -568,8 +568,8 @@ export default function AgentesClient({
                     return (
                       <tr
                         key={ag.id}
-                        style={{ borderBottom: i === sorted.length - 1 ? "none" : "1px solid #F3F4F6" }}
-                        className="hover:bg-[#FAFBFF]"
+                        style={{ borderBottom: i === sorted.length - 1 ? "none" : "1px solid rgba(255,255,255,0.06)" }}
+                        className="hover:bg-[rgba(255,255,255,0.03)]"
                       >
                         {/* Nombre con avatar */}
                         <td style={{ padding: "12px 16px" }}>
@@ -582,15 +582,15 @@ export default function AgentesClient({
                             }}>
                               {initials(ag.nombre)}
                             </div>
-                            <span style={{ fontWeight: 600, fontSize: "13px", color: "#0F172A" }}>
+                            <span style={{ fontWeight: 600, fontSize: "13px", color: "#f1f5f9" }}>
                               {ag.nombre}
                             </span>
                           </div>
                         </td>
-                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "#64748B", whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
                           {antiguedad(ag.fecha_alta)}
                         </td>
-                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "#64748B", whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
                           {ag.fecha_mainstreet
                             ? fmtFecha(nextMainstreetDate(ag.fecha_mainstreet).toISOString().split("T")[0])
                             : "—"}
@@ -606,9 +606,9 @@ export default function AgentesClient({
                             onClick={e => e.stopPropagation()}
                             style={{
                               padding: "4px 8px", borderRadius: "7px",
-                              border: "1.5px solid #EAECF2", background: "white",
+                              border: "1px solid rgba(255,255,255,0.1)", background: "#1e1e2e",
                               fontSize: "12px", fontWeight: 600,
-                              color: getEfectivoPagaFee(ag) ? "#059669" : "#64748B",
+                              color: getEfectivoPagaFee(ag) ? "#4ade80" : "rgba(255,255,255,0.45)",
                               cursor: "pointer", fontFamily: "inherit",
                               opacity: feeLoading === ag.id ? 0.5 : 1,
                             }}
@@ -618,7 +618,7 @@ export default function AgentesClient({
                           </select>
                         </td>
                         <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap",
-                          color: facturacion > 0 ? "#059669" : "#CBD5E1" }}>
+                          color: facturacion > 0 ? "#4ade80" : "rgba(255,255,255,0.2)" }}>
                           {facturacion > 0 ? fmtUSD(facturacion) : "—"}
                         </td>
                         <td style={{ padding: "12px 16px" }}>
@@ -639,7 +639,7 @@ export default function AgentesClient({
                               <MessageCircle size={14} />
                             </button>
                           ) : (
-                            <span style={{ color: "#CBD5E1", fontSize: "12px" }}>—</span>
+                            <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "12px" }}>—</span>
                           )}
                         </td>
                         <td style={{ padding: "12px 16px" }}>
@@ -647,11 +647,11 @@ export default function AgentesClient({
                             onClick={() => openEditar(ag)}
                             style={{
                               padding: "5px 14px", borderRadius: "7px",
-                              border: "1.5px solid #EAECF2",
-                              background: "white", fontSize: "12px", fontWeight: 600,
-                              color: "#0F172A", cursor: "pointer", fontFamily: "inherit",
+                              border: "1px solid rgba(255,255,255,0.1)",
+                              background: "rgba(255,255,255,0.06)", fontSize: "12px", fontWeight: 600,
+                              color: "#f1f5f9", cursor: "pointer", fontFamily: "inherit",
                             }}
-                            className="hover:bg-[#F8F9FC]"
+                            className="hover:bg-[rgba(255,255,255,0.05)]"
                           >
                             Editar
                           </button>
@@ -676,23 +676,23 @@ export default function AgentesClient({
           >
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "18px 20px", borderBottom: "1px solid #EAECF2",
+              padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
             }}>
               <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>
                   {modal === "nuevo" ? "Nuevo Agente" : "Editar Agente"}
                 </h2>
-                <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
+                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
                   {modal === "nuevo"
                     ? "Completá los datos para dar de alta al agente"
                     : `Editando: ${selectedAgent?.nombre}`}
                 </p>
               </div>
               <button onClick={closeModal} style={{
-                background: "#F8F9FC", border: "none", borderRadius: "8px",
+                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
                 width: "32px", height: "32px", display: "flex",
                 alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "#64748B",
+                cursor: "pointer", color: "rgba(255,255,255,0.5)",
               }}>
                 <X size={16} />
               </button>
@@ -750,7 +750,7 @@ export default function AgentesClient({
                       onClick={() => setForm(f => ({ ...f, activo: !f.activo }))}
                       style={{
                         width: "44px", height: "24px", borderRadius: "12px", border: "none",
-                        background: form.activo ? "#059669" : "#E5E7EB",
+                        background: form.activo ? "#059669" : "rgba(255,255,255,0.15)",
                         position: "relative", cursor: "pointer", transition: "background 0.2s",
                         padding: 0, flexShrink: 0,
                       }}
@@ -764,7 +764,7 @@ export default function AgentesClient({
                         transition: "left 0.2s", display: "block",
                       }} />
                     </button>
-                    <span style={{ fontSize: "13px", fontWeight: 600, color: form.activo ? "#059669" : "#E11D48" }}>
+                    <span style={{ fontSize: "13px", fontWeight: 600, color: form.activo ? "#4ade80" : "#f87171" }}>
                       {form.activo ? "Activo" : "Inactivo — se registra fecha de baja"}
                     </span>
                   </div>
@@ -773,9 +773,9 @@ export default function AgentesClient({
 
               {error && (
                 <div style={{
-                  background: "#FFF1F2", border: "1px solid #FECDD3",
+                  background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#E11D48", marginBottom: "14px",
+                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
                 }}>
                   ⚠️ {error}
                 </div>
@@ -786,8 +786,8 @@ export default function AgentesClient({
                   className="w-full sm:w-auto min-h-[44px]"
                   style={{
                     padding: "9px 20px", borderRadius: "8px",
-                    border: "1.5px solid #EAECF2", background: "white",
-                    fontSize: "13px", fontWeight: 600, color: "#64748B",
+                    border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                    fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
                     cursor: "pointer", fontFamily: "inherit",
                   }}>
                   Cancelar

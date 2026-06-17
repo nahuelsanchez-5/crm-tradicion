@@ -33,10 +33,10 @@ interface FormState {
 
 // ── Helpers ──────────────────────────────────────────
 function npsColor(nps: number | null): string {
-  if (nps === null) return "#94A3B8"
-  if (nps >= 50)  return "#059669"
-  if (nps >= 0)   return "#D97706"
-  return "#E11D48"
+  if (nps === null) return "rgba(255,255,255,0.35)"
+  if (nps >= 50)  return "#4ade80"
+  if (nps >= 0)   return "#fbbf24"
+  return "#f87171"
 }
 
 function npsLabel(nps: number | null): string {
@@ -63,7 +63,7 @@ function mesNombre(key: string): string {
 
 function NpsBadge({ nps }: { nps: number | null }) {
   const color = npsColor(nps)
-  const bg    = nps === null ? "#F1F5F9" : nps >= 50 ? "#ECFDF5" : nps >= 0 ? "#FFFBEB" : "#FFF1F2"
+  const bg    = nps === null ? "rgba(255,255,255,0.08)" : nps >= 50 ? "rgba(74,222,128,0.12)" : nps >= 0 ? "rgba(251,191,36,0.12)" : "rgba(248,113,113,0.12)"
   return (
     <span style={{
       background: bg, color, padding: "2px 9px",
@@ -79,8 +79,8 @@ function TipoBadge({ tipo }: { tipo: string }) {
   const isMailling = tipo === "MAILING"
   return (
     <span style={{
-      background: isMailling ? "#EFF6FF" : "#F5F3FF",
-      color:      isMailling ? "#2563EB" : "#7C3AED",
+      background: isMailling ? "rgba(96,165,250,0.12)" : "rgba(167,139,250,0.12)",
+      color:      isMailling ? "#60a5fa" : "#a78bfa",
       padding: "2px 9px", borderRadius: "12px",
       fontSize: "10.5px", fontWeight: 700, display: "inline-block",
     }}>
@@ -91,9 +91,9 @@ function TipoBadge({ tipo }: { tipo: string }) {
 
 const inp: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
-  borderRadius: "8px", border: "1.5px solid #EAECF2",
+  borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
   fontSize: "13px", fontFamily: "inherit",
-  color: "#0F172A", outline: "none", background: "white",
+  color: "#f1f5f9", outline: "none", background: "#1e1e2e",
   boxSizing: "border-box",
 }
 
@@ -103,7 +103,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label style={{
         display: "block", fontSize: "11px", fontWeight: 700,
         letterSpacing: "0.8px", textTransform: "uppercase" as const,
-        color: "#64748B", marginBottom: "5px",
+        color: "rgba(255,255,255,0.45)", marginBottom: "5px",
       }}>
         {label}
       </label>
@@ -216,8 +216,8 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
   }
 
   const cardStyle: React.CSSProperties = {
-    background: "white", borderRadius: "14px",
-    border: "1.5px solid #EAECF2", overflow: "hidden",
+    background: "#13131a", borderRadius: "14px",
+    border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
   }
 
   return (
@@ -226,10 +226,10 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
       {/* ── Page Header ──────────────────────────── */}
       <div className="crm-page-header flex-shrink-0">
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
             Encuestas
           </h1>
-          <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "1px" }}>
+          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
             Satisfacción de clientes y agentes — {MONTH_NAMES[mesActual - 1]} {anio}
           </p>
         </div>
@@ -257,16 +257,16 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
             title={`Encuestas — ${MONTH_NAMES[mesActual - 1]}`}
             value={totalMes}
             badge={`${regMesActual.filter(r => r.tipo === "ESPONTANEA").length} espontáneas + ${regMesActual.filter(r => r.tipo === "MAILING").length} mailing`}
-            iconBg="bg-teal-50"
-            iconColor="text-teal-600"
+            iconBg="bg-teal-500/15"
+            iconColor="text-teal-400"
             icon={<ClipboardList size={18} />}
           />
           <KpiCardGlobal
             title="% Con NPS del mes"
             value={`${pctNpsMes}%`}
             badge={pctNpsMes >= objetivoPct ? `✓ Supera objetivo ${objetivoPct}%` : `Meta: ${objetivoPct}%`}
-            iconBg={pctNpsMes >= objetivoPct ? "bg-emerald-50" : totalMes === 0 ? "bg-slate-50" : "bg-rose-50"}
-            iconColor={pctNpsMes >= objetivoPct ? "text-emerald-600" : totalMes === 0 ? "text-slate-500" : "text-rose-600"}
+            iconBg={pctNpsMes >= objetivoPct ? "bg-emerald-500/15" : totalMes === 0 ? "bg-slate-500/15" : "bg-rose-500/15"}
+            iconColor={pctNpsMes >= objetivoPct ? "text-emerald-400" : totalMes === 0 ? "text-slate-400" : "text-rose-400"}
             icon={<TrendingUp size={18} />}
           />
           <KpiCardGlobal
@@ -278,8 +278,8 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
               : npsMes >= 40  ? "Bueno"
               :                 "Por mejorar"
             }
-            iconBg={npsMes === null ? "bg-slate-50" : npsMes >= 70 ? "bg-emerald-50" : npsMes >= 40 ? "bg-amber-50" : "bg-rose-50"}
-            iconColor={npsMes === null ? "text-slate-500" : npsMes >= 70 ? "text-emerald-600" : npsMes >= 40 ? "text-amber-600" : "text-rose-600"}
+            iconBg={npsMes === null ? "bg-slate-500/15" : npsMes >= 70 ? "bg-emerald-500/15" : npsMes >= 40 ? "bg-amber-500/15" : "bg-rose-500/15"}
+            iconColor={npsMes === null ? "text-slate-400" : npsMes >= 70 ? "text-emerald-400" : npsMes >= 40 ? "text-amber-400" : "text-rose-400"}
             icon={<Star size={18} />}
           />
         </div>
@@ -288,19 +288,19 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
         <div style={cardStyle}>
           <div style={{
             display: "flex", alignItems: "center", gap: "8px",
-            padding: "14px 20px", borderBottom: "1px solid #EAECF2",
+            padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)",
           }}>
             <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-            <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
+            <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>
               Historial de encuestas
             </span>
-            <span style={{ fontSize: "12px", color: "#94A3B8", marginLeft: "4px" }}>
+            <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginLeft: "4px" }}>
               {registros.length} registros — últimos 6 meses
             </span>
           </div>
 
           {groupedByMes.length === 0 ? (
-            <div style={{ padding: "48px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
+            <div style={{ padding: "48px", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "13px" }}>
               No hay encuestas registradas. Hacé clic en &quot;+ Registrar encuesta&quot; para empezar.
             </div>
           ) : (
@@ -322,25 +322,25 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                       style={{
                         display: "flex", alignItems: "center",
                         padding: "12px 20px",
-                        borderBottom: isOpen || (!isLast) ? "1px solid #F3F4F6" : "none",
+                        borderBottom: isOpen || (!isLast) ? "1px solid rgba(255,255,255,0.06)" : "none",
                         cursor: "pointer",
-                        background: isOpen ? "#FAFBFF" : "white",
+                        background: isOpen ? "rgba(255,255,255,0.03)" : "transparent",
                         transition: "background 0.1s",
                         userSelect: "none",
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1 }}>
                         {isOpen
-                          ? <ChevronDown size={14} color="#94A3B8" />
-                          : <ChevronRight size={14} color="#94A3B8" />
+                          ? <ChevronDown size={14} color="rgba(255,255,255,0.35)" />
+                          : <ChevronRight size={14} color="rgba(255,255,255,0.35)" />
                         }
-                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#0F172A" }}>
+                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#f1f5f9" }}>
                           {mesNombre(mesK)}
                         </span>
                         {mesK === mesActualStr && (
                           <span style={{
                             fontSize: "10px", fontWeight: 700,
-                            background: "#FFF1F2", color: "#E11D48",
+                            background: "rgba(248,113,113,0.12)", color: "#f87171",
                             padding: "1px 7px", borderRadius: "10px",
                           }}>
                             HOY
@@ -348,8 +348,8 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                         )}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                        <span style={{ fontSize: "12px", color: "#64748B" }}>
-                          <strong style={{ color: "#0F172A" }}>{regs.length}</strong> encuestas
+                        <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>
+                          <strong style={{ color: "#f1f5f9" }}>{regs.length}</strong> encuestas
                         </span>
                         {npsAvg !== null && (
                           <span style={{
@@ -360,8 +360,8 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                         )}
                         <span style={{
                           fontSize: "11px", fontWeight: 700,
-                          background: pctNps >= objetivoPct ? "#ECFDF5" : "#F1F5F9",
-                          color: pctNps >= objetivoPct ? "#059669" : "#94A3B8",
+                          background: pctNps >= objetivoPct ? "rgba(74,222,128,0.12)" : "rgba(255,255,255,0.08)",
+                          color: pctNps >= objetivoPct ? "#4ade80" : "rgba(255,255,255,0.35)",
                           padding: "2px 9px", borderRadius: "10px",
                         }}>
                           {pctNps}% NPS
@@ -372,18 +372,18 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                     {/* Expanded detail */}
                     {isOpen && (
                       <div style={{
-                        background: "#F8FAFF", borderBottom: isLast ? "none" : "1px solid #F3F4F6",
+                        background: "rgba(255,255,255,0.02)", borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)",
                         overflowX: "auto",
                       }}>
                         <table style={{ width: "100%", borderCollapse: "collapse" }}>
                           <thead>
-                            <tr style={{ background: "#F1F5F9" }}>
+                            <tr style={{ background: "rgba(255,255,255,0.04)" }}>
                               {["Fecha","Tipo","Referencia","Subtipo","NPS","Calificación","Comentario"].map(h => (
                                 <th key={h} style={{
                                   padding: "8px 16px", textAlign: "left",
                                   fontSize: "10px", fontWeight: 700,
                                   textTransform: "uppercase" as const,
-                                  letterSpacing: "0.7px", color: "#94A3B8",
+                                  letterSpacing: "0.7px", color: "rgba(255,255,255,0.35)",
                                   whiteSpace: "nowrap",
                                 }}>
                                   {h}
@@ -396,20 +396,20 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                               <tr
                                 key={r.id}
                                 style={{
-                                  borderTop: ri > 0 ? "1px solid #F3F4F6" : "none",
-                                  background: "white",
+                                  borderTop: ri > 0 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                                  background: "transparent",
                                 }}
                               >
-                                <td style={{ padding: "10px 16px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>
+                                <td style={{ padding: "10px 16px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
                                   {fmtFecha(r.fecha)}
                                 </td>
                                 <td style={{ padding: "10px 16px" }}>
                                   <TipoBadge tipo={r.tipo} />
                                 </td>
-                                <td style={{ padding: "10px 16px", fontSize: "12px", fontWeight: 600, color: "#0F172A" }}>
+                                <td style={{ padding: "10px 16px", fontSize: "12px", fontWeight: 600, color: "#f1f5f9" }}>
                                   {r.referencia}
                                 </td>
-                                <td style={{ padding: "10px 16px", fontSize: "12px", color: "#64748B" }}>
+                                <td style={{ padding: "10px 16px", fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>
                                   {r.subtipo ?? "—"}
                                 </td>
                                 <td style={{ padding: "10px 16px" }}>
@@ -418,9 +418,9 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                                 <td style={{ padding: "10px 16px", fontSize: "11.5px", color: npsColor(r.nps), fontWeight: 600 }}>
                                   {npsLabel(r.nps)}
                                 </td>
-                                <td style={{ padding: "10px 16px", fontSize: "12px", color: "#64748B",
+                                <td style={{ padding: "10px 16px", fontSize: "12px", color: "rgba(255,255,255,0.45)",
                                   maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                  {r.comentario ?? <span style={{ color: "#CBD5E1" }}>—</span>}
+                                  {r.comentario ?? <span style={{ color: "rgba(255,255,255,0.2)" }}>—</span>}
                                 </td>
                               </tr>
                             ))}
@@ -449,26 +449,26 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
             {/* Header */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "16px 20px", borderBottom: "1px solid #EAECF2",
+              padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div className="bg-violet-50 rounded-xl p-2.5 flex-shrink-0">
-                  <ClipboardList size={20} className="text-violet-600" />
+                <div className="bg-violet-500/[0.12] rounded-xl p-2.5 flex-shrink-0">
+                  <ClipboardList size={20} className="text-violet-400" />
                 </div>
                 <div>
-                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
+                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>
                     Registrar Encuesta
                   </h2>
-                  <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
+                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
                     Nueva respuesta de satisfacción
                   </p>
                 </div>
               </div>
               <button onClick={closeModal} style={{
-                background: "#F8F9FC", border: "none", borderRadius: "8px",
+                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
                 width: "32px", height: "32px", display: "flex",
                 alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "#64748B",
+                cursor: "pointer", color: "rgba(255,255,255,0.5)",
               }}>
                 <X size={16} />
               </button>
@@ -489,10 +489,10 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                         cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
                         border: form.tipo === t
                           ? `1.5px solid ${t === "ESPONTANEA" ? "#7C3AED" : "#2563EB"}`
-                          : "1.5px solid #EAECF2",
+                          : "1.5px solid rgba(255,255,255,0.1)",
                         background: form.tipo === t
-                          ? (t === "ESPONTANEA" ? "#F5F3FF" : "#EFF6FF")
-                          : "white",
+                          ? (t === "ESPONTANEA" ? "rgba(167,139,250,0.12)" : "rgba(96,165,250,0.12)")
+                          : "rgba(255,255,255,0.06)",
                         color: form.tipo === t
                           ? (t === "ESPONTANEA" ? "#7C3AED" : "#2563EB")
                           : "#64748B",
@@ -502,7 +502,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                     </button>
                   ))}
                 </div>
-                <div style={{ fontSize: "11px", color: "#94A3B8", marginTop: "5px" }}>
+                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", marginTop: "5px" }}>
                   {form.tipo === "ESPONTANEA"
                     ? "Feedback espontáneo de un cliente en una operación"
                     : "Respuesta a una campaña de mailing enviada a un agente"
@@ -534,9 +534,9 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                             flex: 1, padding: "9px 0", borderRadius: "8px",
                             fontSize: "12px", fontWeight: form.subtipo === s ? 700 : 500,
                             cursor: "pointer", fontFamily: "inherit",
-                            border: form.subtipo === s ? "1.5px solid #7C3AED" : "1.5px solid #EAECF2",
-                            background: form.subtipo === s ? "#F5F3FF" : "white",
-                            color: form.subtipo === s ? "#7C3AED" : "#64748B",
+                            border: form.subtipo === s ? "1.5px solid #7C3AED" : "1.5px solid rgba(255,255,255,0.1)",
+                            background: form.subtipo === s ? "rgba(167,139,250,0.12)" : "rgba(255,255,255,0.06)",
+                            color: form.subtipo === s ? "#7C3AED" : "rgba(255,255,255,0.45)",
                           }}
                         >
                           {s}
@@ -573,7 +573,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                 {form.nps !== "" && (
                   <div style={{ marginTop: "5px" }}>
                     <NpsBadge nps={parseInt(form.nps) || null} />
-                    <span style={{ fontSize: "11px", color: "#64748B", marginLeft: "6px" }}>
+                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginLeft: "6px" }}>
                       {npsLabel(parseInt(form.nps) || null)}
                     </span>
                   </div>
@@ -592,9 +592,9 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
 
               {error && (
                 <div style={{
-                  background: "#FFF1F2", border: "1px solid #FECDD3",
+                  background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#E11D48", marginBottom: "14px",
+                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
                 }}>
                   ⚠️ {error}
                 </div>
@@ -602,7 +602,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
 
               <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", alignItems: "center" }}>
                 {saveSuccess ? (
-                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400 bg-emerald-500/[0.12] px-4 py-2.5 rounded-lg">
                     <CheckCircle2 size={15} /> Encuesta registrada
                   </div>
                 ) : (
@@ -610,8 +610,8 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                     <button type="button" onClick={closeModal} disabled={isPending}
                       style={{
                         padding: "9px 20px", borderRadius: "8px",
-                        border: "1.5px solid #EAECF2", background: "white",
-                        fontSize: "13px", fontWeight: 600, color: "#64748B",
+                        border: "1.5px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                        fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
                         cursor: "pointer", fontFamily: "inherit",
                       }}>
                       Cancelar

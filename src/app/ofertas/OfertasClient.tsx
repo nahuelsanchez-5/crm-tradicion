@@ -73,22 +73,22 @@ const ESTADOS = [
 const TIPOLOGIAS = ["Depto", "Casa", "PH", "Terreno", "Oficina", "Cochera", "Campo", "Otro"]
 
 const ESTADO_STYLE: Record<string, { bg: string; color: string }> = {
-  "Espera rta. vendedor":    { bg: "#EFF6FF", color: "#2563EB" },
-  "Espera rta. comprador":   { bg: "#FEFCE8", color: "#A16207" },
-  "Aceptadas / Pre cierre":  { bg: "#FFF7ED", color: "#C2410C" },
-  "Cerradas":                { bg: "#ECFDF5", color: "#059669" },
-  "Caídas":                  { bg: "#F8FAFC", color: "#64748B" },
+  "Espera rta. vendedor":    { bg: "rgba(96,165,250,0.12)", color: "#60a5fa" },
+  "Espera rta. comprador":   { bg: "rgba(250,204,21,0.12)", color: "#facc15" },
+  "Aceptadas / Pre cierre":  { bg: "rgba(251,146,60,0.12)", color: "#fb923c" },
+  "Cerradas":                { bg: "rgba(74,222,128,0.12)", color: "#4ade80" },
+  "Caídas":                  { bg: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" },
 }
 
 const TIPOLOGIA_STYLE: Record<string, { bg: string; color: string }> = {
-  Depto:    { bg: "#EFF6FF", color: "#2563EB" },
-  Casa:     { bg: "#ECFDF5", color: "#059669" },
-  PH:       { bg: "#F0FDFA", color: "#0D9488" },
-  Terreno:  { bg: "#FFF7ED", color: "#C2410C" },
-  Oficina:  { bg: "#F5F3FF", color: "#7C3AED" },
-  Cochera:  { bg: "#FEFCE8", color: "#A16207" },
-  Campo:    { bg: "#FFF1F2", color: "#E11D48" },
-  Otro:     { bg: "#F1F5F9", color: "#64748B" },
+  Depto:    { bg: "rgba(96,165,250,0.12)", color: "#60a5fa" },
+  Casa:     { bg: "rgba(74,222,128,0.12)", color: "#4ade80" },
+  PH:       { bg: "rgba(45,212,191,0.12)", color: "#2dd4bf" },
+  Terreno:  { bg: "rgba(251,146,60,0.12)", color: "#fb923c" },
+  Oficina:  { bg: "rgba(167,139,250,0.12)", color: "#a78bfa" },
+  Cochera:  { bg: "rgba(250,204,21,0.12)", color: "#facc15" },
+  Campo:    { bg: "rgba(248,113,113,0.12)", color: "#f87171" },
+  Otro:     { bg: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" },
 }
 
 const MONTH_NAMES = [
@@ -152,8 +152,8 @@ function ReservaBadge({ tiene }: { tiene: boolean }) {
     <span style={{
       padding: "2px 8px", borderRadius: "20px",
       fontSize: "11px", fontWeight: 700, whiteSpace: "nowrap" as const,
-      background: tiene ? "#ECFDF5" : "#FFF1F2",
-      color: tiene ? "#059669" : "#E11D48",
+      background: tiene ? "rgba(74,222,128,0.12)" : "rgba(248,113,113,0.12)",
+      color: tiene ? "#4ade80" : "#f87171",
     }}>
       {tiene ? "Con reserva" : "SIN RESERVA"}
     </span>
@@ -166,7 +166,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label style={{
         display: "block", fontSize: "11px", fontWeight: 700,
         letterSpacing: "0.8px", textTransform: "uppercase" as const,
-        color: "#64748B", marginBottom: "5px",
+        color: "rgba(255,255,255,0.45)", marginBottom: "5px",
       }}>
         {label}
       </label>
@@ -177,9 +177,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const inp: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
-  borderRadius: "8px", border: "1.5px solid #EAECF2",
+  borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
   fontSize: "13px", fontFamily: "inherit",
-  color: "#0F172A", outline: "none", background: "white",
+  color: "#f1f5f9", outline: "none", background: "#1e1e2e",
   boxSizing: "border-box",
 }
 
@@ -191,14 +191,14 @@ function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: bool
       style={{
         display: "flex", alignItems: "center", gap: "10px",
         padding: "9px 14px", borderRadius: "8px", width: "100%",
-        border: `1.5px solid ${value ? "#6EE7B7" : "#EAECF2"}`,
-        background: value ? "#ECFDF5" : "white",
+        border: `1.5px solid ${value ? "#6EE7B7" : "rgba(255,255,255,0.1)"}`,
+        background: value ? "#ECFDF5" : "rgba(255,255,255,0.04)",
         cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
       }}
     >
       <div style={{
         width: "36px", height: "20px", borderRadius: "10px",
-        background: value ? "#059669" : "#CBD5E1",
+        background: value ? "#059669" : "rgba(255,255,255,0.2)",
         position: "relative", transition: "background 0.2s", flexShrink: 0,
       }}>
         <div style={{
@@ -209,7 +209,7 @@ function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: bool
           boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
         }} />
       </div>
-      <span style={{ fontSize: "13px", color: value ? "#059669" : "#64748B", fontWeight: 500 }}>
+      <span style={{ fontSize: "13px", color: value ? "#059669" : "rgba(255,255,255,0.45)", fontWeight: 500 }}>
         {label}: <strong>{value ? "Sí" : "No"}</strong>
       </span>
     </button>
@@ -364,14 +364,14 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
 
   // ── Styles ─────────────────────────────────────────
   const cardStyle: React.CSSProperties = {
-    background: "white", borderRadius: "14px",
-    border: "1.5px solid #EAECF2", overflow: "hidden",
+    background: "#13131a", borderRadius: "14px",
+    border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
   }
 
   const selStyle: React.CSSProperties = {
     padding: "6px 10px", borderRadius: "8px",
-    border: "1.5px solid #EAECF2", fontSize: "12.5px",
-    fontWeight: 500, color: "#0F172A", background: "white",
+    border: "1px solid rgba(255,255,255,0.1)", fontSize: "12.5px",
+    fontWeight: 500, color: "#f1f5f9", background: "#1e1e2e",
     cursor: "pointer", fontFamily: "inherit", outline: "none",
   }
 
@@ -384,20 +384,20 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
       {/* ── Header ──────────────────────────────────── */}
       <div className="crm-page-header flex-shrink-0">
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
             Ofertas
           </h1>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           {/* Kanban / Lista toggle */}
-          <div style={{ display: "flex", background: "#F1F5F9", borderRadius: "8px", padding: "3px", gap: "2px" }}>
+          <div style={{ display: "flex", background: "rgba(255,255,255,0.08)", borderRadius: "8px", padding: "3px", gap: "2px" }}>
             {(["kanban", "lista"] as const).map(mode => (
               <button key={mode} onClick={() => setViewMode(mode)} style={{
                 padding: "5px 12px", borderRadius: "6px", border: "none",
-                background: viewMode === mode ? "white" : "transparent",
+                background: viewMode === mode ? "rgba(255,255,255,0.12)" : "transparent",
                 boxShadow: viewMode === mode ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
                 fontSize: "12px", fontWeight: 600,
-                color: viewMode === mode ? "#0F172A" : "#94A3B8",
+                color: viewMode === mode ? "#f1f5f9" : "rgba(255,255,255,0.35)",
                 cursor: "pointer", fontFamily: "inherit",
                 textTransform: "capitalize" as const,
               }}>
@@ -429,31 +429,31 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
           <KpiCard
             title="Ofertas activas"
             value={String(kpis.activas)}
-            iconBg="bg-blue-50"
-            iconColor="text-blue-600"
+            iconBg="bg-blue-500/15"
+            iconColor="text-blue-400"
             icon={<Handshake size={18} />}
           />
           <KpiCard
             title="En negociación"
             value={String(kpis.negociacion)}
             badge="Espera respuesta"
-            iconBg="bg-amber-50"
-            iconColor="text-amber-600"
+            iconBg="bg-amber-500/15"
+            iconColor="text-amber-400"
             icon={<TrendingUp size={18} />}
           />
           <KpiCard
             title="Pre cierre"
             value={String(kpis.preCierre)}
             badge="Aceptadas"
-            iconBg="bg-orange-50"
-            iconColor="text-orange-600"
+            iconBg="bg-orange-500/15"
+            iconColor="text-orange-400"
             icon={<CheckCircle2 size={18} />}
           />
           <KpiCard
             title="Cerradas este mes"
             value={String(kpis.cerradasMes)}
-            iconBg="bg-teal-50"
-            iconColor="text-teal-600"
+            iconBg="bg-teal-500/15"
+            iconColor="text-teal-400"
             icon={<XCircle size={18} />}
           />
         </div>
@@ -465,10 +465,10 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
           flexWrap: "wrap" as const,
           padding: "12px 18px", marginBottom: "16px",
         }}>
-          <span style={{ fontSize: "12px", fontWeight: 600, color: "#94A3B8" }}>FILTRAR POR</span>
+          <span style={{ fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.35)" }}>FILTRAR POR</span>
 
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ fontSize: "11px", color: "#64748B" }}>Estado:</span>
+            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)" }}>Estado:</span>
             <select value={filterEstado} onChange={e => setFilterEstado(e.target.value)} style={selStyle}>
               <option value="todos">Todos</option>
               {ESTADOS.map(e => <option key={e} value={e}>{e}</option>)}
@@ -476,7 +476,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ fontSize: "11px", color: "#64748B" }}>Agente:</span>
+            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)" }}>Agente:</span>
             <select value={filterAgente} onChange={e => setFilterAgente(e.target.value)} style={selStyle}>
               <option value="todos">Todos</option>
               {agentes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
@@ -484,7 +484,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <span style={{ fontSize: "11px", color: "#64748B" }}>Tipo:</span>
+            <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)" }}>Tipo:</span>
             <select value={filterTipoOp} onChange={e => setFilterTipoOp(e.target.value)} style={selStyle}>
               <option value="todos">Todos</option>
               <option value="Venta">Venta</option>
@@ -492,7 +492,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
             </select>
           </div>
 
-          <span style={{ marginLeft: "auto", fontSize: "12px", color: "#94A3B8" }}>
+          <span style={{ marginLeft: "auto", fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>
             {filtered.length} oferta{filtered.length !== 1 ? "s" : ""}
           </span>
         </div>
@@ -512,8 +512,8 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                     className={[
                       "flex-shrink-0 px-3 py-2 rounded-lg text-[11px] font-bold border transition-all whitespace-nowrap",
                       mobileKanbanTab === estado
-                        ? "bg-slate-900 text-white border-slate-900"
-                        : "bg-white text-slate-500 border-slate-200",
+                        ? "bg-[rgba(255,255,255,0.15)] text-white border-[rgba(255,255,255,0.2)]"
+                        : "bg-[rgba(255,255,255,0.06)] text-white/40 border-[rgba(255,255,255,0.1)]",
                     ].join(" ")}
                   >
                     {estado} <span className="opacity-60 ml-1">{count}</span>
@@ -529,8 +529,8 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                 if (colOfertas.length === 0) return (
                   <div style={{
                     padding: "32px 14px", borderRadius: "10px",
-                    border: "1.5px dashed #EAECF2", background: "#F8F9FC",
-                    textAlign: "center", fontSize: "13px", color: "#CBD5E1",
+                    border: "1px dashed rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.03)",
+                    textAlign: "center", fontSize: "13px", color: "rgba(255,255,255,0.2)",
                   }}>
                     Sin ofertas en esta etapa
                   </div>
@@ -543,20 +543,20 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                   return (
                     <Link key={o.id} href={`/ofertas/${o.id}`} style={{ textDecoration: "none" }}>
                       <div style={{
-                        background: "white", borderRadius: "10px",
-                        border: "1.5px solid #EAECF2", padding: "14px 16px",
+                        background: "#13131a", borderRadius: "10px",
+                        border: "1px solid rgba(255,255,255,0.07)", padding: "14px 16px",
                         cursor: "pointer", transition: "box-shadow 0.15s",
                       }} className="hover:shadow-md">
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
-                          <span style={{ background: "#F1F5F9", color: "#64748B", padding: "1px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: 700 }}>#{o.numero}</span>
+                          <span style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)", padding: "1px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: 700 }}>#{o.numero}</span>
                           <TipologiaBadge tipo={o.tipologia} />
                         </div>
-                        <div style={{ fontSize: "13px", fontWeight: 600, color: "#0F172A", lineHeight: 1.3, marginBottom: "4px" }}>{o.direccion}</div>
-                        <div style={{ fontSize: "11px", color: "#64748B", marginBottom: "8px" }}>{vendedor}</div>
+                        <div style={{ fontSize: "13px", fontWeight: 600, color: "#f1f5f9", lineHeight: 1.3, marginBottom: "4px" }}>{o.direccion}</div>
+                        <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginBottom: "8px" }}>{vendedor}</div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: "13px", fontWeight: 700, color: "#0F172A" }}>{fmtUSD(o.monto_ofertado_usd)}</span>
+                          <span style={{ fontSize: "13px", fontWeight: 700, color: "#f1f5f9" }}>{fmtUSD(o.monto_ofertado_usd)}</span>
                           {diasAct !== null && (
-                            <span style={{ fontSize: "11px", color: diasAct >= 5 ? "#E11D48" : "#94A3B8", fontWeight: diasAct >= 5 ? 700 : 400 }}>
+                            <span style={{ fontSize: "11px", color: diasAct >= 5 ? "#f87171" : "rgba(255,255,255,0.35)", fontWeight: diasAct >= 5 ? 700 : 400 }}>
                               {diasAct === 0 ? "Hoy" : `${diasAct}d`}
                             </span>
                           )}
@@ -580,7 +580,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                         display: "flex", alignItems: "center", justifyContent: "space-between",
                         marginBottom: "10px", padding: "0 2px",
                       }}>
-                        <span style={{ fontSize: "12px", fontWeight: 700, color: "#0F172A" }}>{estado}</span>
+                        <span style={{ fontSize: "12px", fontWeight: 700, color: "#f1f5f9" }}>{estado}</span>
                         <span style={{ ...colStyle, padding: "2px 8px", borderRadius: "20px", fontSize: "11px", fontWeight: 700 }}>
                           {colOfertas.length}
                         </span>
@@ -589,8 +589,8 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                         {colOfertas.length === 0 ? (
                           <div style={{
                             padding: "20px 14px", borderRadius: "10px",
-                            border: "1.5px dashed #EAECF2", background: "#F8F9FC",
-                            textAlign: "center", fontSize: "12px", color: "#CBD5E1",
+                            border: "1px dashed rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.03)",
+                            textAlign: "center", fontSize: "12px", color: "rgba(255,255,255,0.2)",
                           }}>
                             Sin ofertas
                           </div>
@@ -603,20 +603,20 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                             return (
                               <Link key={o.id} href={`/ofertas/${o.id}`} style={{ textDecoration: "none" }}>
                                 <div style={{
-                                  background: "white", borderRadius: "10px",
-                                  border: "1.5px solid #EAECF2", padding: "12px 14px",
+                                  background: "#13131a", borderRadius: "10px",
+                                  border: "1px solid rgba(255,255,255,0.07)", padding: "12px 14px",
                                   cursor: "pointer", transition: "box-shadow 0.15s",
                                 }} className="hover:shadow-md">
                                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
-                                    <span style={{ background: "#F1F5F9", color: "#64748B", padding: "1px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: 700 }}>#{o.numero}</span>
+                                    <span style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)", padding: "1px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: 700 }}>#{o.numero}</span>
                                     <TipologiaBadge tipo={o.tipologia} />
                                   </div>
-                                  <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#0F172A", lineHeight: 1.3, marginBottom: "6px" }}>{o.direccion}</div>
-                                  <div style={{ fontSize: "11px", color: "#64748B", marginBottom: "8px" }}>{vendedor}</div>
+                                  <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#f1f5f9", lineHeight: 1.3, marginBottom: "6px" }}>{o.direccion}</div>
+                                  <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginBottom: "8px" }}>{vendedor}</div>
                                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                    <span style={{ fontSize: "12px", fontWeight: 700, color: "#0F172A" }}>{fmtUSD(o.monto_ofertado_usd)}</span>
+                                    <span style={{ fontSize: "12px", fontWeight: 700, color: "#f1f5f9" }}>{fmtUSD(o.monto_ofertado_usd)}</span>
                                     {diasAct !== null && (
-                                      <span style={{ fontSize: "10px", color: diasAct >= 5 ? "#E11D48" : "#94A3B8", fontWeight: diasAct >= 5 ? 700 : 400 }}>
+                                      <span style={{ fontSize: "10px", color: diasAct >= 5 ? "#f87171" : "rgba(255,255,255,0.35)", fontWeight: diasAct >= 5 ? 700 : 400 }}>
                                         {diasAct === 0 ? "Hoy" : `${diasAct}d`}
                                       </span>
                                     )}
@@ -640,10 +640,10 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
           <div style={cardStyle}>
             <div style={{
               display: "flex", alignItems: "center", gap: "8px",
-              padding: "14px 20px", borderBottom: "1px solid #EAECF2",
+              padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
             }}>
               <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-              <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
+              <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>
                 Ofertas en curso
               </span>
             </div>
@@ -651,13 +651,13 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
-                  <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
+                  <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                     {["N°","Dirección","Vendedor / Comprador","Tipología","Ofertado","% Neg.","Reserva","Estado","Fecha",""].map(h => (
                       <th key={h} style={{
                         padding: "10px 14px", textAlign: "left",
                         fontSize: "10.5px", fontWeight: 700,
                         textTransform: "uppercase" as const,
-                        letterSpacing: "0.8px", color: "#94A3B8",
+                        letterSpacing: "0.8px", color: "rgba(255,255,255,0.35)",
                         whiteSpace: "nowrap",
                       }}>
                         {h}
@@ -684,23 +684,23 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                       const vendedor  = agenteName(o.agente_vendedor_id, o.agente_vendedor_externo)
                       const comprador = agenteName(o.agente_comprador_id, o.agente_comprador_externo)
                       return (
-                        <tr key={o.id} style={{ borderBottom: isLast ? "none" : "1px solid #F3F4F6" }} className="hover:bg-[#FAFBFF]">
-                          <td style={{ padding: "12px 14px", fontSize: "13px", fontWeight: 700, color: "#0F172A" }}>{o.numero}</td>
-                          <td style={{ padding: "12px 14px", fontSize: "13px", color: "#0F172A", maxWidth: "180px" }}>
+                        <tr key={o.id} style={{ borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)" }} className="hover:bg-[rgba(255,255,255,0.03)]">
+                          <td style={{ padding: "12px 14px", fontSize: "13px", fontWeight: 700, color: "#f1f5f9" }}>{o.numero}</td>
+                          <td style={{ padding: "12px 14px", fontSize: "13px", color: "#f1f5f9", maxWidth: "180px" }}>
                             <span title={o.direccion} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.direccion}</span>
                           </td>
                           <td style={{ padding: "12px 14px", maxWidth: "160px" }}>
-                            <div style={{ fontSize: "12px", color: "#0F172A", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={vendedor}>{vendedor}</div>
-                            <div style={{ fontSize: "11px", color: "#94A3B8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={comprador}>{comprador}</div>
+                            <div style={{ fontSize: "12px", color: "#f1f5f9", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={vendedor}>{vendedor}</div>
+                            <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={comprador}>{comprador}</div>
                           </td>
                           <td style={{ padding: "12px 14px" }}><TipologiaBadge tipo={o.tipologia} /></td>
-                          <td style={{ padding: "12px 14px", fontSize: "13px", fontWeight: 600, color: "#0F172A", whiteSpace: "nowrap" }}>{fmtUSD(o.monto_ofertado_usd)}</td>
-                          <td style={{ padding: "12px 14px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>{pctNeg(o.monto_ofertado_usd, o.precio_publicacion_usd)}</td>
+                          <td style={{ padding: "12px 14px", fontSize: "13px", fontWeight: 600, color: "#f1f5f9", whiteSpace: "nowrap" }}>{fmtUSD(o.monto_ofertado_usd)}</td>
+                          <td style={{ padding: "12px 14px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>{pctNeg(o.monto_ofertado_usd, o.precio_publicacion_usd)}</td>
                           <td style={{ padding: "12px 14px" }}><ReservaBadge tiene={o.tiene_reserva} /></td>
                           <td style={{ padding: "12px 14px" }}><EstadoBadge estado={o.estado} /></td>
-                          <td style={{ padding: "12px 14px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>{fmtFecha(o.fecha_oferta)}</td>
+                          <td style={{ padding: "12px 14px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>{fmtFecha(o.fecha_oferta)}</td>
                           <td style={{ padding: "12px 14px" }}>
-                            <Link href={`/ofertas/${o.id}`} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "5px 12px", borderRadius: "7px", border: "1.5px solid #EAECF2", background: "white", fontSize: "12px", fontWeight: 600, color: "#0F172A", textDecoration: "none", whiteSpace: "nowrap" }} className="hover:bg-[#F8F9FC]">
+                            <Link href={`/ofertas/${o.id}`} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "5px 12px", borderRadius: "7px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)", fontSize: "12px", fontWeight: 600, color: "#f1f5f9", textDecoration: "none", whiteSpace: "nowrap" }} className="hover:bg-[rgba(255,255,255,0.05)]">
                               Ver detalle <ChevronRight size={12} />
                             </Link>
                           </td>
@@ -728,24 +728,24 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
             {/* Header */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "16px 20px", borderBottom: "1px solid #EAECF2", flexShrink: 0,
+              padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0,
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div className="bg-blue-50 rounded-xl p-2.5 flex-shrink-0">
+                <div className="bg-blue-500/[0.12] rounded-xl p-2.5 flex-shrink-0">
                   <Handshake size={20} className="text-blue-600" />
                 </div>
                 <div>
-                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>Nueva Oferta</h2>
-                  <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
+                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>Nueva Oferta</h2>
+                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
                     Registrá los datos de la operación
                   </p>
                 </div>
               </div>
               <button onClick={closeModal} style={{
-                background: "#F8F9FC", border: "none", borderRadius: "8px",
+                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
                 width: "32px", height: "32px", display: "flex",
                 alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "#64748B",
+                cursor: "pointer", color: "rgba(255,255,255,0.5)",
               }}>
                 <X size={16} />
               </button>
@@ -756,8 +756,8 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
 
               {/* SECCIÓN: Propiedad */}
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" as const, color: "#94A3B8" }}>Propiedad</span>
-                <div style={{ flex: 1, height: "1px", background: "#F1F5F9" }} />
+                <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>Propiedad</span>
+                <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.08)" }} />
               </div>
 
               {/* Número + Fecha */}
@@ -795,8 +795,8 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
 
               {/* SECCIÓN: Participantes */}
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px", marginTop: "8px" }}>
-                <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" as const, color: "#94A3B8" }}>Participantes</span>
-                <div style={{ flex: 1, height: "1px", background: "#F1F5F9" }} />
+                <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>Participantes</span>
+                <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.08)" }} />
               </div>
 
               {/* Agente vendedor */}
@@ -843,8 +843,8 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
 
               {/* SECCIÓN: Montos */}
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px", marginTop: "8px" }}>
-                <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" as const, color: "#94A3B8" }}>Montos</span>
-                <div style={{ flex: 1, height: "1px", background: "#F1F5F9" }} />
+                <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)" }}>Montos</span>
+                <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.08)" }} />
               </div>
 
               {/* Moneda + Tipo de cambio */}
@@ -853,9 +853,9 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                   {(["USD", "ARS"] as const).map(m => (
                     <button key={m} type="button" onClick={() => setF("moneda", m)} style={{
                       padding: "7px 20px", borderRadius: "8px", border: "1.5px solid",
-                      borderColor: form.moneda === m ? "#E31837" : "#EAECF2",
-                      background: form.moneda === m ? "#FFF1F2" : "white",
-                      color: form.moneda === m ? "#E11D48" : "#64748B",
+                      borderColor: form.moneda === m ? "#E31837" : "rgba(255,255,255,0.1)",
+                      background: form.moneda === m ? "rgba(227,24,55,0.12)" : "rgba(255,255,255,0.06)",
+                      color: form.moneda === m ? "#E11D48" : "rgba(255,255,255,0.45)",
                       fontWeight: 700, fontSize: "13px", cursor: "pointer", fontFamily: "inherit",
                     }}>{m}</button>
                   ))}
@@ -876,7 +876,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                     onChange={e => setF("monto_ofertado_usd", e.target.value)}
                     placeholder={form.moneda === "ARS" ? "180000000" : "150000"} style={inp} required />
                   {form.moneda === "ARS" && form.tipo_cambio && form.monto_ofertado_usd && (
-                    <div style={{ fontSize: "11px", color: "#0D9488", marginTop: "4px", fontWeight: 600 }}>
+                    <div style={{ fontSize: "11px", color: "#2dd4bf", marginTop: "4px", fontWeight: 600 }}>
                       ≈ USD {Math.round(parseFloat(form.monto_ofertado_usd) / parseFloat(form.tipo_cambio)).toLocaleString("es-AR")}
                     </div>
                   )}
@@ -925,9 +925,9 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
 
               {formError && (
                 <div style={{
-                  background: "#FFF1F2", border: "1px solid #FECDD3",
+                  background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#E11D48", marginBottom: "14px",
+                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
                 }}>
                   ⚠️ {formError}
                 </div>
@@ -935,7 +935,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
 
               <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center pt-1">
                 {saveSuccess ? (
-                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400 bg-emerald-500/[0.12] px-4 py-2.5 rounded-lg">
                     <CheckCircle2 size={15} /> Oferta creada correctamente
                   </div>
                 ) : (
@@ -944,8 +944,8 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                       className="w-full sm:w-auto min-h-[44px]"
                       style={{
                         padding: "9px 20px", borderRadius: "8px",
-                        border: "1.5px solid #EAECF2", background: "white",
-                        fontSize: "13px", fontWeight: 600, color: "#64748B",
+                        border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                        fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
                         cursor: "pointer", fontFamily: "inherit",
                       }}>
                       Cancelar

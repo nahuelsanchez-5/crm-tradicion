@@ -25,9 +25,9 @@ export default function ResumenClient({ mes, kpis, totalACobrar }: Props) {
     : "#E11D48"
 
   const totalBg =
-    totalACobrar >= 300 ? "#ECFDF5"
-    : totalACobrar >= 150 ? "#FFFBEB"
-    : "#FFF1F2"
+    totalACobrar >= 300 ? "rgba(74,222,128,0.12)"
+    : totalACobrar >= 150 ? "rgba(251,191,36,0.12)"
+    : "rgba(248,113,113,0.12)"
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -35,16 +35,16 @@ export default function ResumenClient({ mes, kpis, totalACobrar }: Props) {
       {/* Header */}
       <div className="crm-page-header flex-shrink-0">
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
             Resumen mensual
           </h1>
-          <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "1px" }}>
+          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
             {mes} · Indicadores de gestión y bonos a cobrar
           </p>
         </div>
         <div style={{
           padding: "8px 20px", borderRadius: "10px",
-          background: totalBg, border: `1.5px solid ${totalColor}33`,
+          background: totalBg, border: `1px solid ${totalColor}40`,
         }}>
           <p style={{ margin: 0, fontSize: "11px", fontWeight: 700, color: totalColor, textTransform: "uppercase", letterSpacing: "0.7px" }}>Total a cobrar</p>
           <p style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: totalColor, lineHeight: 1.2 }}>
@@ -55,23 +55,23 @@ export default function ResumenClient({ mes, kpis, totalACobrar }: Props) {
 
       {/* Content */}
       <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
-        <div style={{ background: "white", borderRadius: "14px", border: "1.5px solid #EAECF2", overflow: "hidden" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "14px 20px", borderBottom: "1px solid #EAECF2" }}>
+        <div style={{ background: "#13131a", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "14px 20px", background: "transparent", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
             <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-            <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>Indicadores clave del mes</span>
+            <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>Indicadores clave del mes</span>
           </div>
 
           {/* Desktop table */}
           <div className="hidden md:block" style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
+                <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                   {["KPI", "Objetivo", "Cumplido", "A cobrar"].map(h => (
                     <th key={h} style={{
                       padding: "10px 20px", textAlign: "left",
                       fontSize: "10.5px", fontWeight: 700,
                       textTransform: "uppercase" as const,
-                      letterSpacing: "0.8px", color: "#94A3B8",
+                      letterSpacing: "0.8px", color: "rgba(255,255,255,0.35)",
                     }}>
                       {h}
                     </th>
@@ -80,14 +80,14 @@ export default function ResumenClient({ mes, kpis, totalACobrar }: Props) {
               </thead>
               <tbody>
                 {kpis.map((kpi, i) => (
-                  <tr key={kpi.label} style={{ borderBottom: i < kpis.length - 1 ? "1px solid #F3F4F6" : "none" }}>
-                    <td style={{ padding: "16px 20px", fontWeight: 700, fontSize: "14px", color: "#0F172A" }}>
+                  <tr key={kpi.label} style={{ borderBottom: i < kpis.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
+                    <td style={{ padding: "16px 20px", fontWeight: 700, fontSize: "14px", color: "#f1f5f9" }}>
                       {kpi.label}
                     </td>
-                    <td style={{ padding: "16px 20px", fontSize: "13px", color: "#64748B" }}>
+                    <td style={{ padding: "16px 20px", fontSize: "13px", color: "rgba(255,255,255,0.45)" }}>
                       {kpi.objetivo}
                     </td>
-                    <td style={{ padding: "16px 20px", fontSize: "13px", fontWeight: 600, color: "#0F172A" }}>
+                    <td style={{ padding: "16px 20px", fontSize: "13px", fontWeight: 600, color: "#f1f5f9" }}>
                       {kpi.cumplido}
                     </td>
                     <td style={{ padding: "16px 20px" }}>
@@ -95,8 +95,8 @@ export default function ResumenClient({ mes, kpis, totalACobrar }: Props) {
                         display: "inline-flex", alignItems: "center",
                         padding: "5px 14px", borderRadius: "20px",
                         fontSize: "13px", fontWeight: 800,
-                        background: kpi.aCobrar > 0 ? "#ECFDF5" : "#FFF1F2",
-                        color:      kpi.aCobrar > 0 ? "#059669" : "#E11D48",
+                        background: kpi.aCobrar > 0 ? "rgba(74,222,128,0.12)" : "rgba(248,113,113,0.12)",
+                        color:      kpi.aCobrar > 0 ? "#4ade80" : "#f87171",
                       }}>
                         USD {kpi.aCobrar}
                       </span>
@@ -104,10 +104,10 @@ export default function ResumenClient({ mes, kpis, totalACobrar }: Props) {
                   </tr>
                 ))}
                 {/* Total row */}
-                <tr style={{ background: "#F8F9FC", borderTop: "2px solid #EAECF2" }}>
+                <tr style={{ background: "rgba(255,255,255,0.04)", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
                   <td colSpan={3} style={{
                     padding: "16px 20px", fontWeight: 800,
-                    fontSize: "14px", color: "#0F172A", textAlign: "right",
+                    fontSize: "14px", color: "#f1f5f9", textAlign: "right",
                   }}>
                     Total a cobrar
                   </td>
@@ -127,30 +127,30 @@ export default function ResumenClient({ mes, kpis, totalACobrar }: Props) {
           </div>
 
           {/* Mobile cards */}
-          <div className="md:hidden divide-y divide-slate-100">
+          <div className="md:hidden divide-y divide-white/[0.06]">
             {kpis.map(kpi => (
               <div key={kpi.label} style={{ padding: "16px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
-                  <span style={{ fontWeight: 700, fontSize: "14px", color: "#0F172A" }}>{kpi.label}</span>
+                  <span style={{ fontWeight: 700, fontSize: "14px", color: "#f1f5f9" }}>{kpi.label}</span>
                   <span style={{
                     padding: "4px 12px", borderRadius: "20px",
                     fontSize: "12px", fontWeight: 800,
-                    background: kpi.aCobrar > 0 ? "#ECFDF5" : "#FFF1F2",
-                    color:      kpi.aCobrar > 0 ? "#059669" : "#E11D48",
+                    background: kpi.aCobrar > 0 ? "rgba(74,222,128,0.12)" : "rgba(248,113,113,0.12)",
+                    color:      kpi.aCobrar > 0 ? "#4ade80" : "#f87171",
                   }}>
                     USD {kpi.aCobrar}
                   </span>
                 </div>
-                <div style={{ fontSize: "12px", color: "#64748B", marginBottom: "4px" }}>
+                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "4px" }}>
                   Objetivo: {kpi.objetivo}
                 </div>
-                <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#0F172A" }}>
+                <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#f1f5f9" }}>
                   {kpi.cumplido}
                 </div>
               </div>
             ))}
-            <div style={{ padding: "16px", background: "#F8F9FC", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontWeight: 800, fontSize: "14px", color: "#0F172A" }}>Total a cobrar</span>
+            <div style={{ padding: "16px", background: "rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontWeight: 800, fontSize: "14px", color: "#f1f5f9" }}>Total a cobrar</span>
               <span style={{
                 padding: "6px 16px", borderRadius: "20px",
                 fontSize: "15px", fontWeight: 800,
@@ -165,10 +165,10 @@ export default function ResumenClient({ mes, kpis, totalACobrar }: Props) {
         {/* Legend */}
         <div style={{
           marginTop: "16px", padding: "14px 18px",
-          background: "white", borderRadius: "12px",
-          border: "1.5px solid #EAECF2", fontSize: "12px", color: "#64748B", lineHeight: 1.6,
+          background: "#13131a", borderRadius: "12px",
+          border: "1px solid rgba(255,255,255,0.07)", fontSize: "12px", color: "rgba(255,255,255,0.45)", lineHeight: 1.6,
         }}>
-          <strong style={{ color: "#0F172A" }}>Criterio de bono:</strong>{" "}
+          <strong style={{ color: "#f1f5f9" }}>Criterio de bono:</strong>{" "}
           Cobros, Cartelería y Encuestas: USD 100 si se alcanza el objetivo, USD 0 si no.
           Facturación: proporcional al porcentaje alcanzado (máx. USD 100).
         </div>

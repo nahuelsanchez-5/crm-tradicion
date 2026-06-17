@@ -54,9 +54,9 @@ const TEXTAREA_CLAVES = new Set(["mensaje_whatsapp"])
 // ── Styles ────────────────────────────────────────────
 const inp: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
-  borderRadius: "8px", border: "1.5px solid #EAECF2",
+  borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
   fontSize: "13px", fontFamily: "inherit",
-  color: "#0F172A", outline: "none", background: "white",
+  color: "#f1f5f9", outline: "none", background: "#1e1e2e",
   boxSizing: "border-box",
 }
 
@@ -115,23 +115,23 @@ export default function ConfiguracionClient({ initialEntries }: Props) {
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
         minHeight: "62px", padding: "0 24px",
-        background: "white", borderBottom: "1px solid #EAECF2", flexShrink: 0,
+        background: "rgba(10,10,26,0.8)", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0,
       }}>
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
             Configuración
           </h1>
-          <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "1px" }}>
+          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
             Valores globales del sistema
           </p>
         </div>
         <div style={{
           display: "flex", alignItems: "center", gap: "8px",
           padding: "6px 14px", borderRadius: "8px",
-          background: "#F8F9FC", border: "1.5px solid #EAECF2",
+          background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.07)",
         }}>
-          <Settings size={14} color="#64748B" />
-          <span style={{ fontSize: "13px", fontWeight: 700, color: "#64748B" }}>Sistema</span>
+          <Settings size={14} color="rgba(255,255,255,0.5)" />
+          <span style={{ fontSize: "13px", fontWeight: 700, color: "rgba(255,255,255,0.5)" }}>Sistema</span>
         </div>
       </div>
 
@@ -144,17 +144,17 @@ export default function ConfiguracionClient({ initialEntries }: Props) {
               const items = DEFAULT_CONFIG.filter(e => e.grupo === grupo)
               return (
                 <div key={grupo} style={{
-                  background: "white", borderRadius: "14px",
-                  border: "1.5px solid #EAECF2", overflow: "hidden",
+                  background: "#13131a", borderRadius: "14px",
+                  border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
                 }}>
                   {/* Card header */}
                   <div style={{
                     display: "flex", alignItems: "center", gap: "8px",
-                    padding: "14px 20px", borderBottom: "1px solid #EAECF2",
-                    background: "#F8F9FC",
+                    padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)",
+                    background: "rgba(255,255,255,0.04)",
                   }}>
                     <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-                    <span style={{ fontSize: "13px", fontWeight: 700, color: "#0F172A" }}>
+                    <span style={{ fontSize: "13px", fontWeight: 700, color: "#f1f5f9" }}>
                       {GRUPO_LABELS[grupo] ?? grupo}
                     </span>
                   </div>
@@ -171,17 +171,17 @@ export default function ConfiguracionClient({ initialEntries }: Props) {
                         style={{
                           padding: "16px 20px",
                           borderBottom: idx < items.length - 1 && items.length > 1
-                            ? "1px solid #F3F4F6"
+                            ? "1px solid rgba(255,255,255,0.06)"
                             : "none",
                           borderRight: (idx % 2 === 0 && idx < items.length - 1)
-                            ? "1px solid #F3F4F6"
+                            ? "1px solid rgba(255,255,255,0.06)"
                             : "none",
                         }}
                       >
                         <label style={{
                           display: "block", fontSize: "11px", fontWeight: 700,
                           letterSpacing: "0.8px", textTransform: "uppercase" as const,
-                          color: "#64748B", marginBottom: "6px",
+                          color: "rgba(255,255,255,0.45)", marginBottom: "6px",
                         }}>
                           {entry.etiqueta}
                         </label>
@@ -197,7 +197,7 @@ export default function ConfiguracionClient({ initialEntries }: Props) {
                               Variables disponibles:{" "}
                               {["[nombre]", "[monto]", "[mes]"].map(v => (
                                 <code key={v} style={{
-                                  background: "#F1F5F9", color: "#0D9488",
+                                  background: "rgba(255,255,255,0.08)", color: "#2dd4bf",
                                   padding: "1px 5px", borderRadius: "4px",
                                   fontSize: "10.5px", marginRight: "4px", fontFamily: "monospace",
                                 }}>
@@ -214,7 +214,7 @@ export default function ConfiguracionClient({ initialEntries }: Props) {
                             style={inp}
                           />
                         )}
-                        <div style={{ fontSize: "10.5px", color: "#94A3B8", marginTop: "4px", fontFamily: "monospace" }}>
+                        <div style={{ fontSize: "10.5px", color: "rgba(255,255,255,0.3)", marginTop: "4px", fontFamily: "monospace" }}>
                           {entry.clave}
                         </div>
                       </div>
@@ -226,29 +226,29 @@ export default function ConfiguracionClient({ initialEntries }: Props) {
 
             {/* ── Estacionalidad (calculada desde obj_anual_usd) ── */}
             <div style={{
-              background: "white", borderRadius: "14px",
-              border: "1.5px solid #EAECF2", overflow: "hidden",
+              background: "#13131a", borderRadius: "14px",
+              border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
             }}>
               <div style={{
                 display: "flex", alignItems: "center", gap: "8px",
-                padding: "14px 20px", borderBottom: "1px solid #EAECF2",
-                background: "#F8F9FC",
+                padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)",
+                background: "rgba(255,255,255,0.04)",
               }}>
                 <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-                <span style={{ fontSize: "13px", fontWeight: 700, color: "#0F172A" }}>
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "#f1f5f9" }}>
                   Estacionalidad — Objetivos mensuales calculados
                 </span>
               </div>
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
-                    <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
+                    <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                       {["Mes", "% Estacional", "Objetivo USD"].map(h => (
                         <th key={h} style={{
                           padding: "8px 20px", textAlign: "left",
                           fontSize: "10.5px", fontWeight: 700,
                           textTransform: "uppercase" as const,
-                          letterSpacing: "0.8px", color: "#94A3B8",
+                          letterSpacing: "0.8px", color: "rgba(255,255,255,0.35)",
                         }}>
                           {h}
                         </th>
@@ -262,20 +262,20 @@ export default function ConfiguracionClient({ initialEntries }: Props) {
                       const obj    = Math.round(anual * pct / 100)
                       const isLast = idx === 11
                       return (
-                        <tr key={nombre} style={{ borderBottom: isLast ? "none" : "1px solid #F3F4F6" }}>
-                          <td style={{ padding: "10px 20px", fontSize: "13px", fontWeight: 600, color: "#0F172A" }}>
+                        <tr key={nombre} style={{ borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)" }}>
+                          <td style={{ padding: "10px 20px", fontSize: "13px", fontWeight: 600, color: "#f1f5f9" }}>
                             {nombre}
                           </td>
                           <td style={{ padding: "10px 20px" }}>
                             <span style={{
-                              background: "#EFF6FF", color: "#2563EB",
+                              background: "rgba(96,165,250,0.12)", color: "#60a5fa",
                               padding: "2px 10px", borderRadius: "20px",
                               fontSize: "12px", fontWeight: 700,
                             }}>
                               {pct}%
                             </span>
                           </td>
-                          <td style={{ padding: "10px 20px", fontSize: "13px", fontWeight: 600, color: "#0F172A" }}>
+                          <td style={{ padding: "10px 20px", fontSize: "13px", fontWeight: 600, color: "#f1f5f9" }}>
                             USD {obj.toLocaleString("es-AR")}
                           </td>
                         </tr>
@@ -289,9 +289,9 @@ export default function ConfiguracionClient({ initialEntries }: Props) {
             {/* Error */}
             {error && (
               <div style={{
-                background: "#FFF1F2", border: "1px solid #FECDD3",
+                background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                 borderRadius: "10px", padding: "12px 16px",
-                fontSize: "13px", color: "#E11D48",
+                fontSize: "13px", color: "#ff8a9a",
               }}>
                 ⚠️ {error}
               </div>
@@ -308,7 +308,7 @@ export default function ConfiguracionClient({ initialEntries }: Props) {
                   background: saved
                     ? "linear-gradient(135deg,#059669 0%,#047857 100%)"
                     : isPending
-                      ? "#CBD5E1"
+                      ? "rgba(255,255,255,0.12)"
                       : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
                   color: "white", fontSize: "14px", fontWeight: 700,
                   cursor: isPending ? "not-allowed" : "pointer",
