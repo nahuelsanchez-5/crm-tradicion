@@ -3,9 +3,9 @@
 import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import KpiCard from "@/components/KpiCard"
-import { crearOperacion, actualizarOperacion } from "./actions"
+import { crearOperacion, actualizarOperacion, eliminarOperacion } from "./actions"
 import type { OperacionFormData } from "./actions"
-import { Building2, DollarSign, BarChart2, X, Loader2 } from "lucide-react"
+import { Building2, DollarSign, BarChart2, X, Loader2, Trash2 } from "lucide-react"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -207,6 +207,7 @@ export default function OperacionesClient({ operaciones }: Props) {
   const [selectedOp,  setSelectedOp] = useState<OperacionRow | null>(null)
   const [form,        setForm]       = useState<FormData>(EMPTY_FORM)
   const [error,       setError]      = useState("")
+  const [deleteId,    setDeleteId]   = useState<string | null>(null)
 
   // ── Computed ───────────────────────────────────────
   const filteredOps = useMemo(() => {
@@ -228,10 +229,12 @@ export default function OperacionesClient({ operaciones }: Props) {
   const closeModal = useCallback(() => { setModal("none"); setError("") }, [])
 
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") closeModal() }
-    if (modal !== "none") document.addEventListener("keydown", h)
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { closeModal(); setDeleteId(null) }
+    }
+    if (modal !== "none" || deleteId !== null) document.addEventListener("keydown", h)
     return () => document.removeEventListener("keydown", h)
-  }, [modal, closeModal])
+  }, [modal, closeModal, deleteId])
 
   // ── Open modals ────────────────────────────────────
   function openNuevo() {
@@ -256,6 +259,15 @@ export default function OperacionesClient({ operaciones }: Props) {
     })
     setError("")
     setModal("editar")
+  }
+
+  function handleDelete() {
+    if (!deleteId) return
+    startTransition(async () => {
+      await eliminarOperacion(deleteId)
+      setDeleteId(null)
+      router.refresh()
+    })
   }
 
   // ── Field updater ──────────────────────────────────
@@ -458,19 +470,34 @@ export default function OperacionesClient({ operaciones }: Props) {
                           {fmtUSD(Number(o.comision_bruta))}
                         </td>
                         <td style={{ padding: "12px 16px" }}>
-                          <button
-                            onClick={() => openEditar(o)}
-                            style={{
-                              padding: "5px 14px", borderRadius: "7px",
-                              border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
-                              fontSize: "12px", fontWeight: 600, color: "#f1f5f9",
-                              cursor: "pointer", fontFamily: "inherit",
-                              whiteSpace: "nowrap",
-                            }}
-                            className="hover:bg-[rgba(255,255,255,0.05)]"
-                          >
-                            Editar
-                          </button>
+                          <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                            <button
+                              onClick={() => openEditar(o)}
+                              style={{
+                                padding: "5px 14px", borderRadius: "7px",
+                                border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                                fontSize: "12px", fontWeight: 600, color: "#f1f5f9",
+                                cursor: "pointer", fontFamily: "inherit",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => setDeleteId(o.id)}
+                              title="Eliminar operación"
+                              style={{
+                                width: "30px", height: "30px", borderRadius: "7px",
+                                border: "1px solid rgba(248,113,113,0.2)",
+                                background: "rgba(248,113,113,0.08)",
+                                color: "#f87171", cursor: "pointer",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                flexShrink: 0,
+                              }}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     )
@@ -671,6 +698,68 @@ export default function OperacionesClient({ operaciones }: Props) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════
+          MODAL — CONFIRMAR ELIMINACIÓN
+      ════════════════════════════════════════════ */}
+      {deleteId !== null && (
+        <div onClick={() => { if (!isPending) setDeleteId(null) }} className="crm-modal-backdrop">
+          <div
+            onClick={e => e.stopPropagation()}
+            className="crm-modal"
+            style={{ maxWidth: "420px" }}
+          >
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0,
+            }}>
+              <div>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>
+                  Eliminar operación
+                </h2>
+                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
+                  Esta acción no se puede deshacer.
+                </p>
+              </div>
+              <button onClick={() => setDeleteId(null)} disabled={isPending} style={{
+                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
+                width: "32px", height: "32px", display: "flex",
+                alignItems: "center", justifyContent: "center",
+                cursor: isPending ? "not-allowed" : "pointer", color: "rgba(255,255,255,0.5)",
+              }}>
+                <X size={16} />
+              </button>
+            </div>
+            <div style={{ padding: "20px" }}>
+              <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.65)", margin: "0 0 20px" }}>
+                ¿Eliminar esta operación? Esta acción no se puede deshacer.
+              </p>
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button type="button" onClick={() => setDeleteId(null)} disabled={isPending} style={{
+                  padding: "9px 20px", borderRadius: "8px",
+                  border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                  fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
+                  cursor: "pointer", fontFamily: "inherit",
+                }}>
+                  Cancelar
+                </button>
+                <button type="button" onClick={handleDelete} disabled={isPending} style={{
+                  padding: "9px 24px", borderRadius: "8px", border: "none",
+                  background: isPending ? "#CBD5E1" : "#dc2626",
+                  color: "white", fontSize: "13px", fontWeight: 700,
+                  cursor: isPending ? "not-allowed" : "pointer",
+                  fontFamily: "inherit",
+                  display: "flex", alignItems: "center", gap: "6px",
+                  boxShadow: isPending ? "none" : "0 2px 8px rgba(220,38,38,0.3)",
+                }}>
+                  {isPending && <Loader2 size={14} className="animate-spin" />}
+                  {isPending ? "Eliminando..." : "Sí, eliminar"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

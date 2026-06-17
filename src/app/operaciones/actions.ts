@@ -62,3 +62,15 @@ export async function actualizarOperacion(id: string, data: OperacionFormData) {
   revalidatePath("/operaciones")
   return { success: true }
 }
+
+// ─────────────────────────────────────────────────────
+//  ELIMINAR OPERACIÓN
+// ─────────────────────────────────────────────────────
+export async function eliminarOperacion(id: string): Promise<{ error?: string }> {
+  const supabase = createServerClient()
+  const { error } = await supabase.from("operaciones").delete().eq("id", id)
+  if (error) return { error: error.message }
+  revalidatePath("/operaciones")
+  revalidatePath("/")
+  return {}
+}
