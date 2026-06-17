@@ -5,6 +5,26 @@ import { revalidatePath } from "next/cache"
 import { CHECKLIST_ITEMS } from "./checklist-items"
 
 // ── Types ─────────────────────────────────────────────
+export interface EditarOfertaData {
+  direccion:                string
+  tipologia:                string
+  tipo_operacion:           string
+  agente_vendedor_id:       string | null
+  agente_comprador_id:      string | null
+  agente_vendedor_externo:  string | null
+  agente_comprador_externo: string | null
+  monto_ofertado_usd:       number | null
+  precio_publicacion_usd:   number | null
+  precio_acordado_usd:      number | null
+  valor_escritura_usd:      number | null
+  monto_reserva_usd:        number | null
+  monto_refuerzo_usd:       number | null
+  tiene_reserva:            boolean
+  es_bis:                   boolean
+  numero_padre:             number | null
+  notas:                    string | null
+}
+
 export interface OfertaFormData {
   numero: number
   direccion: string
@@ -191,5 +211,41 @@ export async function registrarCierre(
   revalidatePath(`/ofertas/${ofertaId}`)
   revalidatePath("/operaciones")
   revalidatePath("/")
+  return {}
+}
+
+// ─────────────────────────────────────────────────────
+//  EDITAR OFERTA
+// ─────────────────────────────────────────────────────
+export async function editarOferta(id: string, data: EditarOfertaData): Promise<{ error?: string }> {
+  const supabase = createServerClient()
+
+  const { error } = await supabase
+    .from("ofertas")
+    .update({
+      direccion:                data.direccion,
+      tipologia:                data.tipologia,
+      tipo_operacion:           data.tipo_operacion,
+      agente_vendedor_id:       data.agente_vendedor_id,
+      agente_comprador_id:      data.agente_comprador_id,
+      agente_vendedor_externo:  data.agente_vendedor_externo,
+      agente_comprador_externo: data.agente_comprador_externo,
+      monto_ofertado_usd:       data.monto_ofertado_usd,
+      precio_publicacion_usd:   data.precio_publicacion_usd,
+      precio_acordado_usd:      data.precio_acordado_usd,
+      valor_escritura_usd:      data.valor_escritura_usd,
+      monto_reserva_usd:        data.monto_reserva_usd,
+      monto_refuerzo_usd:       data.monto_refuerzo_usd,
+      tiene_reserva:            data.tiene_reserva,
+      es_bis:                   data.es_bis,
+      numero_padre:             data.numero_padre,
+      notas:                    data.notas,
+    })
+    .eq("id", id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/ofertas/${id}`)
+  revalidatePath("/ofertas")
   return {}
 }

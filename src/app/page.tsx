@@ -116,7 +116,7 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     supabase.from("agentes").select("id").eq("activo", true),
     supabase.from("agentes").select("id, nombre").eq("activo", true).order("nombre"),
-    supabase.from("operaciones").select("id")
+    supabase.from("operaciones").select("id, comision_bruta")
       .gte("fecha", `${ANIO}-${mesStr}-01`)
       .lt("fecha",  `${anioSig}-${mesSiguiente}-01`),
     supabase.from("facturacion")
@@ -165,10 +165,10 @@ export default async function DashboardPage() {
   const ofertasSinActividad = (ofertasSinActividadRaw ?? []) as OfertaSinActividad[]
   const ofertasActivas      = (ofertasActivasRaw ?? []) as OfertaActiva[]
 
-  const factReal  = Number(facturacionData?.real_usd  ?? 0)
+  const factReal  = ((opsMesData ?? []) as Array<{ comision_bruta: number }>).reduce((s, o) => s + (Number(o.comision_bruta) || 0), 0)
   const factObj   = Number(facturacionData?.objetivo_usd ?? 1)
   const factLabel = fmtUSD(factReal)
-  const factPct   = facturacionData ? Math.round((factReal / factObj) * 100) : null
+  const factPct   = facturacionData?.objetivo_usd ? Math.round((factReal / factObj) * 100) : null
 
   const opsFeed   = (opsFeedRaw ?? []) as OperacionRow[]
   const pagos     = ((pagosRaw  ?? []) as unknown) as PagoRow[]

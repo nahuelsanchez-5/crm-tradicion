@@ -3,10 +3,11 @@
 import { useState, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { cambiarEstado, agregarMovimiento, toggleChecklist, registrarCierre } from "../actions"
+import { cambiarEstado, agregarMovimiento, toggleChecklist, registrarCierre, editarOferta } from "../actions"
+import type { EditarOfertaData } from "../actions"
 import {
   ArrowLeft, X, Loader2, ChevronRight,
-  DollarSign, Calendar, User, FileText, CheckSquare, Clock,
+  DollarSign, Calendar, User, FileText, CheckSquare, Clock, Pencil,
 } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────
@@ -91,6 +92,29 @@ const TIPO_MOV_STYLE: Record<string, { bg: string; color: string }> = {
   Refuerzo:         { bg: "rgba(45,212,191,0.12)", color: "#2dd4bf" },
   Nota:             { bg: "rgba(167,139,250,0.12)", color: "#a78bfa" },
   Otro:             { bg: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" },
+}
+
+const TIPOLOGIAS_OPS = ["Depto", "Casa", "PH", "Terreno", "Oficina", "Cochera", "Campo", "Otro"]
+const TIPOS_OP       = ["Venta", "Alquiler", "Alquiler Temporario"]
+
+interface EditForm {
+  direccion:                string
+  tipologia:                string
+  tipo_operacion:           string
+  agente_vendedor_id:       string
+  agente_comprador_id:      string
+  agente_vendedor_externo:  string
+  agente_comprador_externo: string
+  monto_ofertado_usd:       string
+  precio_publicacion_usd:   string
+  precio_acordado_usd:      string
+  valor_escritura_usd:      string
+  monto_reserva_usd:        string
+  monto_refuerzo_usd:       string
+  tiene_reserva:            boolean
+  es_bis:                   boolean
+  numero_padre:             string
+  notas:                    string
 }
 
 const CHECKLIST_CATS: Array<{ id: "pre_sena" | "documentacion" | "post_cierre"; label: string; from: number; to: number }> = [
@@ -265,20 +289,34 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
   const [cierreComision, setCierreComision] = useState("")
   const [errCierre,      setErrCierre]      = useState("")
 
+  // ── Modal: Editar oferta ───────────────────────────
+  const [modalEditar,  setModalEditar]  = useState(false)
+  const [editForm,     setEditForm]     = useState<EditForm>({
+    direccion: "", tipologia: "Depto", tipo_operacion: "Venta",
+    agente_vendedor_id: "", agente_comprador_id: "",
+    agente_vendedor_externo: "", agente_comprador_externo: "",
+    monto_ofertado_usd: "", precio_publicacion_usd: "", precio_acordado_usd: "",
+    valor_escritura_usd: "", monto_reserva_usd: "", monto_refuerzo_usd: "",
+    tiene_reserva: false, es_bis: false, numero_padre: "", notas: "",
+  })
+  const [errEditar,    setErrEditar]    = useState("")
+
   const closeAll = useCallback(() => {
     setModalEstado(false)
     setModalMov(false)
     setModalCierre(false)
+    setModalEditar(false)
     setErrEstado("")
     setErrMov("")
     setErrCierre("")
+    setErrEditar("")
   }, [])
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") closeAll() }
-    if (modalEstado || modalMov || modalCierre) document.addEventListener("keydown", h)
+    if (modalEstado || modalMov || modalCierre || modalEditar) document.addEventListener("keydown", h)
     return () => document.removeEventListener("keydown", h)
-  }, [modalEstado, modalMov, modalCierre, closeAll])
+  }, [modalEstado, modalMov, modalCierre, modalEditar, closeAll])
 
   // ── Submit: cambiar estado ─────────────────────────
   function handleSubmitEstado(e: React.FormEvent) {
@@ -320,6 +358,65 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
       if (result.error) { setErrMov(result.error); return }
       setDescMov("")
       setMontoMov("")
+      closeAll()
+      router.refresh()
+    })
+  }
+
+  // ── Open editar oferta ─────────────────────────────
+  function openEditar() {
+    setEditForm({
+      direccion:                oferta.direccion,
+      tipologia:                oferta.tipologia,
+      tipo_operacion:           oferta.tipo_operacion,
+      agente_vendedor_id:       oferta.agente_vendedor_id  ?? "",
+      agente_comprador_id:      oferta.agente_comprador_id ?? "",
+      agente_vendedor_externo:  oferta.agente_vendedor_externo  ?? "",
+      agente_comprador_externo: oferta.agente_comprador_externo ?? "",
+      monto_ofertado_usd:       oferta.monto_ofertado_usd     != null ? String(oferta.monto_ofertado_usd)     : "",
+      precio_publicacion_usd:   oferta.precio_publicacion_usd  != null ? String(oferta.precio_publicacion_usd)  : "",
+      precio_acordado_usd:      oferta.precio_acordado_usd    != null ? String(oferta.precio_acordado_usd)    : "",
+      valor_escritura_usd:      oferta.valor_escritura_usd    != null ? String(oferta.valor_escritura_usd)    : "",
+      monto_reserva_usd:        oferta.monto_reserva_usd      != null ? String(oferta.monto_reserva_usd)      : "",
+      monto_refuerzo_usd:       oferta.monto_refuerzo_usd     != null ? String(oferta.monto_refuerzo_usd)     : "",
+      tiene_reserva:            oferta.tiene_reserva,
+      es_bis:                   oferta.es_bis,
+      numero_padre:             oferta.numero_padre != null ? String(oferta.numero_padre) : "",
+      notas:                    oferta.notas ?? "",
+    })
+    setErrEditar("")
+    setModalEditar(true)
+  }
+
+  function setEF<K extends keyof EditForm>(k: K, v: EditForm[K]) {
+    setEditForm(f => ({ ...f, [k]: v }))
+  }
+
+  function handleSubmitEditar(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editForm.direccion.trim()) { setErrEditar("La dirección es obligatoria"); return }
+    const payload: EditarOfertaData = {
+      direccion:                editForm.direccion.trim(),
+      tipologia:                editForm.tipologia,
+      tipo_operacion:           editForm.tipo_operacion,
+      agente_vendedor_id:       editForm.agente_vendedor_id  || null,
+      agente_comprador_id:      editForm.agente_comprador_id || null,
+      agente_vendedor_externo:  editForm.agente_vendedor_externo.trim()  || null,
+      agente_comprador_externo: editForm.agente_comprador_externo.trim() || null,
+      monto_ofertado_usd:       editForm.monto_ofertado_usd     ? parseFloat(editForm.monto_ofertado_usd)     : null,
+      precio_publicacion_usd:   editForm.precio_publicacion_usd  ? parseFloat(editForm.precio_publicacion_usd)  : null,
+      precio_acordado_usd:      editForm.precio_acordado_usd    ? parseFloat(editForm.precio_acordado_usd)    : null,
+      valor_escritura_usd:      editForm.valor_escritura_usd    ? parseFloat(editForm.valor_escritura_usd)    : null,
+      monto_reserva_usd:        editForm.monto_reserva_usd      ? parseFloat(editForm.monto_reserva_usd)      : null,
+      monto_refuerzo_usd:       editForm.monto_refuerzo_usd     ? parseFloat(editForm.monto_refuerzo_usd)     : null,
+      tiene_reserva:            editForm.tiene_reserva,
+      es_bis:                   editForm.es_bis,
+      numero_padre:             editForm.numero_padre ? parseInt(editForm.numero_padre) : null,
+      notas:                    editForm.notas.trim() || null,
+    }
+    startTransition(async () => {
+      const result = await editarOferta(oferta.id, payload)
+      if (result.error) { setErrEditar(result.error); return }
       closeAll()
       router.refresh()
     })
@@ -396,19 +493,34 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
             </p>
           </div>
         </div>
-        <button
-          onClick={() => { setNuevoEstado(oferta.estado); setDescEstado(""); setMontoEstado(""); setModalEstado(true) }}
-          style={{
-            background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
-            color: "white", border: "none",
-            padding: "8px 18px", borderRadius: "9px",
-            fontSize: "13px", fontWeight: 700, cursor: "pointer",
-            boxShadow: "0 2px 10px rgba(227,24,55,0.35)",
-            fontFamily: "inherit", flexShrink: 0,
-          }}
-        >
-          Cambiar estado
-        </button>
+        <div style={{ display: "flex", gap: "10px", flexShrink: 0 }}>
+          <button
+            onClick={openEditar}
+            style={{
+              background: "rgba(255,255,255,0.06)", color: "#f1f5f9",
+              border: "1px solid rgba(255,255,255,0.12)",
+              padding: "8px 18px", borderRadius: "9px",
+              fontSize: "13px", fontWeight: 700, cursor: "pointer",
+              fontFamily: "inherit",
+              display: "flex", alignItems: "center", gap: "6px",
+            }}
+          >
+            <Pencil size={14} /> Editar oferta
+          </button>
+          <button
+            onClick={() => { setNuevoEstado(oferta.estado); setDescEstado(""); setMontoEstado(""); setModalEstado(true) }}
+            style={{
+              background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+              color: "white", border: "none",
+              padding: "8px 18px", borderRadius: "9px",
+              fontSize: "13px", fontWeight: 700, cursor: "pointer",
+              boxShadow: "0 2px 10px rgba(227,24,55,0.35)",
+              fontFamily: "inherit",
+            }}
+          >
+            Cambiar estado
+          </button>
+        </div>
       </div>
 
       {/* ── Content ─────────────────────────────────── */}
@@ -815,6 +927,218 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                   }}>
                   {isPending && <Loader2 size={14} className="animate-spin" />}
                   {isPending ? "Guardando..." : "Registrar movimiento"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════
+          MODAL — EDITAR OFERTA
+      ══════════════════════════════════════════════ */}
+      {modalEditar && (
+        <div
+          onClick={closeAll}
+          style={{
+            position: "fixed", inset: 0,
+            background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 1000, padding: "20px",
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: "rgba(12,12,36,0.97)", borderRadius: "16px",
+              width: "100%", maxWidth: "580px", maxHeight: "90vh",
+              border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+              display: "flex", flexDirection: "column", overflow: "hidden",
+            }}
+          >
+            {/* Header */}
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0,
+            }}>
+              <div>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>Editar oferta</h2>
+                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
+                  Oferta #{oferta.numero} — {oferta.direccion}
+                </p>
+              </div>
+              <button onClick={closeAll} style={{
+                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
+                width: "32px", height: "32px", display: "flex",
+                alignItems: "center", justifyContent: "center",
+                cursor: "pointer", color: "rgba(255,255,255,0.5)", flexShrink: 0,
+              }}>
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Form — scrollable */}
+            <form onSubmit={handleSubmitEditar} style={{ overflowY: "auto", padding: "20px", flex: 1 }}>
+
+              {/* Datos básicos */}
+              <Field label="Dirección *">
+                <input type="text" value={editForm.direccion}
+                  onChange={e => setEF("direccion", e.target.value)}
+                  placeholder="Av. San Martín 1250, Resistencia" style={inp} required />
+              </Field>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <Field label="Tipología *">
+                  <select value={editForm.tipologia} onChange={e => setEF("tipologia", e.target.value)} style={inp} required>
+                    {TIPOLOGIAS_OPS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </Field>
+                <Field label="Tipo de operación *">
+                  <select value={editForm.tipo_operacion} onChange={e => setEF("tipo_operacion", e.target.value)} style={inp} required>
+                    {TIPOS_OP.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </Field>
+              </div>
+
+              {/* Agentes */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <Field label="Agente vendedor">
+                  <select value={editForm.agente_vendedor_id} onChange={e => setEF("agente_vendedor_id", e.target.value)} style={inp}>
+                    <option value="">Sin agente</option>
+                    {agentes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                  </select>
+                </Field>
+                <Field label="Agente comprador">
+                  <select value={editForm.agente_comprador_id} onChange={e => setEF("agente_comprador_id", e.target.value)} style={inp}>
+                    <option value="">Sin agente</option>
+                    {agentes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                  </select>
+                </Field>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <Field label="Vendedor externo (opcional)">
+                  <input type="text" value={editForm.agente_vendedor_externo}
+                    onChange={e => setEF("agente_vendedor_externo", e.target.value)}
+                    placeholder="Nombre y apellido" style={inp} />
+                </Field>
+                <Field label="Comprador externo (opcional)">
+                  <input type="text" value={editForm.agente_comprador_externo}
+                    onChange={e => setEF("agente_comprador_externo", e.target.value)}
+                    placeholder="Nombre y apellido" style={inp} />
+                </Field>
+              </div>
+
+              {/* Montos */}
+              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.35)", marginBottom: "10px" }}>
+                Montos (USD)
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <Field label="Monto ofertado">
+                  <input type="number" min="0" step="100" value={editForm.monto_ofertado_usd}
+                    onChange={e => setEF("monto_ofertado_usd", e.target.value)} placeholder="0" style={inp} />
+                </Field>
+                <Field label="Precio publicación">
+                  <input type="number" min="0" step="100" value={editForm.precio_publicacion_usd}
+                    onChange={e => setEF("precio_publicacion_usd", e.target.value)} placeholder="0" style={inp} />
+                </Field>
+                <Field label="Precio acordado">
+                  <input type="number" min="0" step="100" value={editForm.precio_acordado_usd}
+                    onChange={e => setEF("precio_acordado_usd", e.target.value)} placeholder="0" style={inp} />
+                </Field>
+                <Field label="Valor escritura">
+                  <input type="number" min="0" step="100" value={editForm.valor_escritura_usd}
+                    onChange={e => setEF("valor_escritura_usd", e.target.value)} placeholder="0" style={inp} />
+                </Field>
+              </div>
+
+              {/* Reserva */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <Field label="Monto reserva">
+                  <input type="number" min="0" step="100" value={editForm.monto_reserva_usd}
+                    onChange={e => setEF("monto_reserva_usd", e.target.value)} placeholder="0" style={inp} />
+                </Field>
+                <Field label="Monto refuerzo">
+                  <input type="number" min="0" step="100" value={editForm.monto_refuerzo_usd}
+                    onChange={e => setEF("monto_refuerzo_usd", e.target.value)} placeholder="0" style={inp} />
+                </Field>
+              </div>
+
+              {/* Toggles */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
+                {([
+                  { key: "tiene_reserva" as const, label: "Tiene reserva" },
+                  { key: "es_bis" as const,        label: "Es BIS" },
+                ] as const).map(({ key, label }) => (
+                  <button key={key} type="button" onClick={() => setEF(key, !editForm[key])} style={{
+                    display: "flex", alignItems: "center", gap: "10px",
+                    padding: "9px 14px", borderRadius: "8px", width: "100%",
+                    border: `1.5px solid ${editForm[key] ? "rgba(96,165,250,0.4)" : "rgba(255,255,255,0.1)"}`,
+                    background: editForm[key] ? "rgba(96,165,250,0.1)" : "rgba(255,255,255,0.04)",
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}>
+                    <div style={{
+                      width: "36px", height: "20px", borderRadius: "10px",
+                      background: editForm[key] ? "#2563EB" : "rgba(255,255,255,0.2)",
+                      position: "relative", flexShrink: 0,
+                    }}>
+                      <div style={{
+                        position: "absolute", top: "3px",
+                        left: editForm[key] ? "19px" : "3px",
+                        width: "14px", height: "14px", borderRadius: "50%",
+                        background: "white", transition: "left 0.2s",
+                      }} />
+                    </div>
+                    <span style={{ fontSize: "13px", color: editForm[key] ? "#93c5fd" : "rgba(255,255,255,0.45)", fontWeight: 500 }}>
+                      {label}: <strong>{editForm[key] ? "Sí" : "No"}</strong>
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {editForm.es_bis && (
+                <Field label="Número oferta padre">
+                  <input type="number" min="1" step="1" value={editForm.numero_padre}
+                    onChange={e => setEF("numero_padre", e.target.value)} placeholder="123" style={inp} />
+                </Field>
+              )}
+
+              {/* Notas */}
+              <Field label="Notas">
+                <textarea value={editForm.notas} onChange={e => setEF("notas", e.target.value)}
+                  rows={3} placeholder="Observaciones adicionales..."
+                  style={{ ...inp, resize: "vertical" as const }} />
+              </Field>
+
+              {errEditar && (
+                <div style={{
+                  background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
+                  borderRadius: "8px", padding: "10px 12px",
+                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
+                }}>
+                  ⚠️ {errEditar}
+                </div>
+              )}
+
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button type="button" onClick={closeAll} disabled={isPending} style={{
+                  padding: "9px 20px", borderRadius: "8px",
+                  border: "1.5px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                  fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
+                  cursor: "pointer", fontFamily: "inherit",
+                }}>
+                  Cancelar
+                </button>
+                <button type="submit" disabled={isPending} style={{
+                  padding: "9px 24px", borderRadius: "8px", border: "none",
+                  background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                  color: "white", fontSize: "13px", fontWeight: 700,
+                  cursor: isPending ? "not-allowed" : "pointer",
+                  fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
+                  boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
+                }}>
+                  {isPending && <Loader2 size={14} className="animate-spin" />}
+                  {isPending ? "Guardando..." : "Guardar cambios"}
                 </button>
               </div>
             </form>

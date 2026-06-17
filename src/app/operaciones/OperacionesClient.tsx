@@ -217,7 +217,7 @@ export default function OperacionesClient({ operaciones }: Props) {
 
   const stats = useMemo(() => {
     const total            = filteredOps.length
-    const totalComisiones  = filteredOps.reduce((s, o) => s + Number(o.comision_bruta), 0)
+    const totalComisiones  = filteredOps.reduce((s, o) => s + (Number(o.comision_bruta) || 0), 0)
     const withBoth         = filteredOps.filter(o => o.encuesta_comprador && o.encuesta_vendedor).length
     const pctEncuestas     = total > 0 ? Math.round((withBoth / total) * 100) : 0
     const ventas           = filteredOps.filter(o => o.tipo === "Venta").length
