@@ -50,12 +50,13 @@ export default async function AgentesPage() {
   // hace un select básico para que los agentes sigan visibles.
   let agentes = agentesResult.data
   if (agentesResult.error?.code === '42703') {
+    // 42703 = columna inexistente — intentar sin tipo_plan que puede ser la ausente
     const { data: basic } = await supabase
       .from("agentes")
-      .select("id, nombre, email, telefono, fecha_alta, fecha_baja, activo")
+      .select("id, nombre, email, telefono, fecha_alta, fecha_mainstreet, fecha_baja, activo, paga_fee")
       .order("nombre")
     agentes = (basic ?? []).map((a: Record<string, unknown>) => ({
-      ...a, fecha_mainstreet: null, paga_fee: null, tipo_plan: null,
+      ...a, tipo_plan: null,
     })) as typeof agentes
   }
 

@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { cambiarEstado, agregarMovimiento, toggleChecklist } from "../actions"
+import { cambiarEstado, agregarMovimiento, toggleChecklist, registrarCierre } from "../actions"
 import {
   ArrowLeft, X, Loader2, ChevronRight,
   DollarSign, Calendar, User, FileText, CheckSquare, Clock,
@@ -258,22 +258,54 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
   const [montoMov,   setMontoMov]    = useState("")
   const [errMov,     setErrMov]      = useState("")
 
+  // ── Modal: Registrar cierre ────────────────────────
+  const [modalCierre,         setModalCierre]         = useState(false)
+  const [cierreFecha,         setCierreFecha]         = useState("")
+  const [cierreDireccion,     setCierreDireccion]     = useState("")
+  const [cierreTipo,          setCierreTipo]          = useState("Venta")
+  const [cierreAgentes,       setCierreAgentes]       = useState("")
+  const [cierreComisionBruta, setCierreComisionBruta] = useState("")
+  const [cierreComisionNeta,  setCierreComisionNeta]  = useState("")
+  const [errCierre,           setErrCierre]           = useState("")
+
   const closeAll = useCallback(() => {
     setModalEstado(false)
     setModalMov(false)
+    setModalCierre(false)
     setErrEstado("")
     setErrMov("")
+    setErrCierre("")
   }, [])
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") closeAll() }
-    if (modalEstado || modalMov) document.addEventListener("keydown", h)
+    if (modalEstado || modalMov || modalCierre) document.addEventListener("keydown", h)
     return () => document.removeEventListener("keydown", h)
-  }, [modalEstado, modalMov, closeAll])
+  }, [modalEstado, modalMov, modalCierre, closeAll])
 
   // ── Submit: cambiar estado ─────────────────────────
   function handleSubmitEstado(e: React.FormEvent) {
     e.preventDefault()
+    if (nuevoEstado === "Cerradas") {
+      const today = new Date().toISOString().split("T")[0]
+      const vName = agenteName(oferta.agente_vendedor_id, oferta.agente_vendedor_externo)
+      const cName = agenteName(oferta.agente_comprador_id, oferta.agente_comprador_externo)
+      const parts: string[] = []
+      if (vName !== "Sin agente") parts.push(vName)
+      if (cName !== "Sin agente" && cName !== vName) parts.push(cName)
+      const tipoInicial = ["Venta", "Alquiler", "Alquiler Temporario"].includes(oferta.tipo_operacion)
+        ? oferta.tipo_operacion : "Venta"
+      setCierreFecha(today)
+      setCierreDireccion(oferta.direccion)
+      setCierreTipo(tipoInicial)
+      setCierreAgentes(parts.join(" / "))
+      setCierreComisionBruta("")
+      setCierreComisionNeta("")
+      setErrCierre("")
+      setModalEstado(false)
+      setModalCierre(true)
+      return
+    }
     if (!descEstado.trim()) { setErrEstado("La descripción es obligatoria"); return }
     startTransition(async () => {
       const result = await cambiarEstado(
@@ -302,6 +334,28 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
       if (result.error) { setErrMov(result.error); return }
       setDescMov("")
       setMontoMov("")
+      closeAll()
+      router.refresh()
+    })
+  }
+
+  // ── Submit: registrar cierre ───────────────────────
+  function handleSubmitCierre(e: React.FormEvent) {
+    e.preventDefault()
+    const bruta = parseFloat(cierreComisionBruta)
+    const neta  = parseFloat(cierreComisionNeta)
+    if (isNaN(bruta) || isNaN(neta)) { setErrCierre("Las comisiones son obligatorias"); return }
+    startTransition(async () => {
+      const result = await registrarCierre(
+        oferta.id,
+        cierreFecha,
+        cierreDireccion,
+        cierreTipo,
+        cierreAgentes,
+        bruta,
+        neta,
+      )
+      if (result.error) { setErrCierre(result.error); return }
       closeAll()
       router.refresh()
     })
@@ -770,6 +824,117 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                   }}>
                   {isPending && <Loader2 size={14} className="animate-spin" />}
                   {isPending ? "Guardando..." : "Registrar movimiento"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════
+          MODAL — REGISTRAR CIERRE
+      ══════════════════════════════════════════════ */}
+      {modalCierre && (
+        <div
+          onClick={closeAll}
+          style={{
+            position: "fixed", inset: 0,
+            background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 1000, padding: "20px",
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: "rgba(12,12,36,0.97)", borderRadius: "16px",
+              width: "100%", maxWidth: "520px",
+              border: "1px solid rgba(255,255,255,0.1)",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+              overflow: "hidden",
+            }}
+          >
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
+            }}>
+              <div>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>Registrar cierre</h2>
+                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
+                  Oferta #{oferta.numero} — completá los datos de la operación
+                </p>
+              </div>
+              <button onClick={closeAll} style={{
+                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
+                width: "32px", height: "32px", display: "flex",
+                alignItems: "center", justifyContent: "center",
+                cursor: "pointer", color: "rgba(255,255,255,0.5)",
+              }}>
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={handleSubmitCierre} style={{ padding: "20px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                <Field label="Fecha de cierre *">
+                  <input type="date" value={cierreFecha} onChange={e => setCierreFecha(e.target.value)}
+                    style={{ ...inp, colorScheme: "dark" as const }} required />
+                </Field>
+                <Field label="Tipo *">
+                  <select value={cierreTipo} onChange={e => setCierreTipo(e.target.value)} style={inp} required>
+                    <option value="Venta">Venta</option>
+                    <option value="Alquiler">Alquiler</option>
+                    <option value="Alquiler Temporario">Alquiler Temporario</option>
+                  </select>
+                </Field>
+              </div>
+              <Field label="Dirección *">
+                <input type="text" value={cierreDireccion} onChange={e => setCierreDireccion(e.target.value)}
+                  style={inp} required />
+              </Field>
+              <Field label="Agentes">
+                <input type="text" value={cierreAgentes} onChange={e => setCierreAgentes(e.target.value)}
+                  placeholder="Ej: Romina Prieto / Cecilia Frigerio" style={inp} />
+              </Field>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                <Field label="Comisión bruta (USD) *">
+                  <input type="number" value={cierreComisionBruta} onChange={e => setCierreComisionBruta(e.target.value)}
+                    min="0" step="100" placeholder="0" style={inp} required />
+                </Field>
+                <Field label="Comisión neta (USD) *">
+                  <input type="number" value={cierreComisionNeta} onChange={e => setCierreComisionNeta(e.target.value)}
+                    min="0" step="100" placeholder="0" style={inp} required />
+                </Field>
+              </div>
+              {errCierre && (
+                <div style={{
+                  background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
+                  borderRadius: "8px", padding: "10px 12px",
+                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
+                }}>
+                  ⚠️ {errCierre}
+                </div>
+              )}
+              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                <button type="button" onClick={closeAll} disabled={isPending}
+                  style={{
+                    padding: "9px 20px", borderRadius: "8px",
+                    border: "1.5px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                    fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
+                    cursor: "pointer", fontFamily: "inherit",
+                  }}>
+                  Cancelar
+                </button>
+                <button type="submit" disabled={isPending}
+                  style={{
+                    padding: "9px 24px", borderRadius: "8px", border: "none",
+                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#4ade80 0%,#22c55e 100%)",
+                    color: isPending ? "#666" : "#0a1a0a", fontSize: "13px", fontWeight: 700,
+                    cursor: isPending ? "not-allowed" : "pointer",
+                    fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
+                    boxShadow: isPending ? "none" : "0 2px 8px rgba(74,222,128,0.3)",
+                  }}>
+                  {isPending && <Loader2 size={14} className="animate-spin" />}
+                  {isPending ? "Guardando..." : "Registrar cierre"}
                 </button>
               </div>
             </form>

@@ -147,3 +147,44 @@ export async function toggleChecklist(
   revalidatePath(`/ofertas/${ofertaId}`)
   return {}
 }
+
+export async function registrarCierre(
+  ofertaId: string,
+  fecha: string,
+  direccion: string,
+  tipo: string,
+  agentesText: string,
+  comision_bruta: number,
+  comision_neta: number,
+): Promise<{ error?: string }> {
+  const supabase = createServerClient()
+
+  const tipoDb = tipo === "Alquiler Temporario" ? "Alquiler Temporal" : tipo
+
+  const { error: opError } = await supabase.from("operaciones").insert({
+    fecha,
+    direccion,
+    agentes: agentesText,
+    tipo:    tipoDb,
+    comision_bruta,
+    comision_neta,
+  })
+  if (opError) return { error: opError.message }
+
+  const { error: ofertaError } = await supabase
+    .from("ofertas")
+    .update({ estado: "Cerradas", fecha_cierre: fecha })
+    .eq("id", ofertaId)
+  if (ofertaError) return { error: ofertaError.message }
+
+  await supabase.from("ofertas_historial").insert({
+    oferta_id:   ofertaId,
+    tipo:        "Cambio de estado",
+    descripcion: `Cerradas — Comisión bruta: USD ${Math.round(comision_bruta).toLocaleString("es-AR")}`,
+    monto_usd:   comision_bruta,
+  })
+
+  revalidatePath("/ofertas")
+  revalidatePath(`/ofertas/${ofertaId}`)
+  return {}
+}
