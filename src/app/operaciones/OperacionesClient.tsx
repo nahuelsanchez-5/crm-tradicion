@@ -13,21 +13,6 @@ const MONTH_NAMES = [
   "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
 ]
 
-const MONTHS_OPTIONS: Array<{ label: string; value: string }> = (() => {
-  const opts: Array<{ label: string; value: string }> = [
-    { label: "Todos los meses", value: "todos" },
-  ]
-  const now = new Date()
-  for (let i = 0; i < 6; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    opts.push({
-      label: `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`,
-      value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
-    })
-  }
-  return opts
-})()
-
 const TIPOS = ["Venta", "Alquiler", "Alquiler Temporal", "Referido", "Otro"]
 
 const TIPO_STYLES: Record<string, { bg: string; color: string }> = {
@@ -178,14 +163,8 @@ interface Props {
   operaciones: OperacionRow[]
 }
 
-const todayStr = new Date().toISOString().split("T")[0]
-const currentMonth = (() => {
-  const now = new Date()
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
-})()
-
 const EMPTY_FORM: FormData = {
-  fecha:              todayStr,
+  fecha:              "",
   direccion:          "",
   agentes:            "",
   tipo:               "Venta",
@@ -202,7 +181,25 @@ export default function OperacionesClient({ operaciones }: Props) {
   const [isPending, startTransition] = useTransition()
 
   // ── Filters ────────────────────────────────────────
-  const [selectedMonth, setSelectedMonth] = useState(currentMonth)
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const n = new Date()
+    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}`
+  })
+
+  const MONTHS_OPTIONS = useMemo<Array<{ label: string; value: string }>>(() => {
+    const opts: Array<{ label: string; value: string }> = [
+      { label: "Todos los meses", value: "todos" },
+    ]
+    const n = new Date()
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(n.getFullYear(), n.getMonth() - i, 1)
+      opts.push({
+        label: `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`,
+        value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+      })
+    }
+    return opts
+  }, [])
 
   // ── Modal ──────────────────────────────────────────
   type ModalT = "none" | "nuevo" | "editar"

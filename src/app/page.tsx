@@ -6,12 +6,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { Users, Building2, DollarSign, Handshake, Clock } from "lucide-react"
 
-const _now      = new Date()
-const MES       = _now.getMonth() + 1
-const ANIO      = _now.getFullYear()
 const MES_NAMES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
                    "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
-const MES_LABEL = `${MES_NAMES[MES - 1]} ${ANIO}`
 
 function fmtUSD(n: number): string {
   const rounded = Math.round(n * 100) / 100
@@ -94,7 +90,11 @@ function StatusBadge({ estado }: { estado: string }) {
 }
 
 export default async function DashboardPage() {
-  const supabase = createServerClient()
+  const supabase  = createServerClient()
+  const now       = new Date()
+  const MES       = now.getMonth() + 1
+  const ANIO      = now.getFullYear()
+  const MES_LABEL = `${MES_NAMES[MES - 1]} ${ANIO}`
 
   const mesStr       = String(MES).padStart(2, "0")
   const mesSiguiente = String(MES === 12 ? 1 : MES + 1).padStart(2, "0")

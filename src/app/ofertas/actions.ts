@@ -189,5 +189,7 @@ export async function registrarCierre(
 
   revalidatePath("/ofertas")
   revalidatePath(`/ofertas/${ofertaId}`)
+  revalidatePath("/operaciones")
+  revalidatePath("/")
   return {}
 }
