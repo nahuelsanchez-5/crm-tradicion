@@ -37,6 +37,7 @@ export default async function ResumenPage() {
     { data: encuestas },
     { data: operaciones },
     { data: configs },
+    { data: carteles },
   ] = await Promise.all([
     supabase.from("pagos")
       .select("agente_id, monto_debe, monto_pagado, estado, concepto")
@@ -53,20 +54,13 @@ export default async function ResumenPage() {
     supabase.from("config")
       .select("clave, valor")
       .in("clave", ["obj_facturacion_anual", "obj_encuestas_nps", "obj_carteles"]),
+    supabase.from("carteles")
+      .select("total_entregados")
+      .eq("mes", month).eq("anio", year)
+      .maybeSingle(),
   ])
 
-  // Airtable: count active carteles (max 100 per request)
-  let cartelesCount = 0
-  try {
-    const res = await fetch(
-      `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${process.env.AIRTABLE_CARTELERIA_TABLE_ID}?pageSize=100&fields[]=fldsAoewlr0711e3s`,
-      { headers: { Authorization: `Bearer ${process.env.AIRTABLE_TOKEN}` }, cache: "no-store" },
-    )
-    if (res.ok) {
-      const json = await res.json() as { records?: unknown[] }
-      cartelesCount = (json.records ?? []).length
-    }
-  } catch { /* silently skip */ }
+  const cartelesCount = carteles?.total_entregados ?? 0
 
   // ── Config values ────────────────────────────────────────
   const configMap = Object.fromEntries((configs ?? []).map(c => [c.clave, c.valor]))
