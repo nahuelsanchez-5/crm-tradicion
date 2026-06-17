@@ -14,6 +14,7 @@ interface KpiCardProps {
   icon: ReactNode
   trend?: string
   trendUp?: boolean
+  trendDown?: boolean
   /** Animate numeric value counting up from 0 on mount */
   animate?: boolean
   /** Adds red top border accent (for primary KPI) */
@@ -49,6 +50,7 @@ export default function KpiCard({
   icon,
   trend,
   trendUp,
+  trendDown,
   animate,
   primary,
 }: KpiCardProps) {
@@ -59,11 +61,17 @@ export default function KpiCard({
   )
   const displayValue = shouldAnimate ? count : value
 
+  const trendColor = trendUp
+    ? "text-[#4ade80]"
+    : trendDown
+    ? "text-[#f87171]"
+    : "text-white/35"
+
   return (
     <div className={`crm-kpi-card${primary ? " crm-kpi-card--primary" : ""}`}>
       {/* Top row */}
       <div className="flex items-start justify-between">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg} ${iconColor}`}>
+        <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${iconBg} ${iconColor}`}>
           {icon}
         </div>
         {badge && <span className="crm-kpi-badge">{badge}</span>}
@@ -74,7 +82,7 @@ export default function KpiCard({
         <p className="crm-kpi-title">{title}</p>
         <p className="crm-kpi-value">{displayValue}</p>
         {trend && (
-          <p className={`text-[11px] font-medium mt-1.5 ${trendUp ? "text-emerald-400" : "text-white/35"}`}>
+          <p className={`text-[11px] font-medium mt-1.5 ${trendColor}`}>
             {trend}
           </p>
         )}

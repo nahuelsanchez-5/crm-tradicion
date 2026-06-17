@@ -182,14 +182,14 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
 
   const QUICK_BTNS: Array<{
     icon: LucideIcon; label: string; sublabel: string; m: ModalT
-    iconBg: string; iconColor: string; cardBg: string; cardBorder: string
+    iconBg: string; iconColor: string
   }> = [
-    { icon: DollarSign,    label: "Registrar",  sublabel: "Pago",       m: "pago",             iconBg: "bg-emerald-500/15",  iconColor: "text-emerald-400", cardBg: "bg-emerald-500/[0.08]",  cardBorder: "border-emerald-500/25" },
-    { icon: MapPin,        label: "Devolución", sublabel: "Cartelería", m: "carteleria",       iconBg: "bg-amber-500/15",    iconColor: "text-amber-400",   cardBg: "bg-amber-500/[0.08]",    cardBorder: "border-amber-500/25" },
-    { icon: ClipboardList, label: "Registrar",  sublabel: "Encuesta",   m: "encuesta",         iconBg: "bg-blue-500/15",     iconColor: "text-blue-400",    cardBg: "bg-blue-500/[0.08]",     cardBorder: "border-blue-500/25" },
-    { icon: Building2,     label: "Registrar",  sublabel: "Operación",  m: "operacion",        iconBg: "bg-orange-500/15",   iconColor: "text-orange-400",  cardBg: "bg-orange-500/[0.08]",   cardBorder: "border-orange-500/25" },
-    { icon: Handshake,     label: "Registrar",  sublabel: "Oferta",     m: "oferta",           iconBg: "bg-violet-500/15",   iconColor: "text-violet-400",  cardBg: "bg-violet-500/[0.08]",   cardBorder: "border-violet-500/25" },
-    { icon: RefreshCw,     label: "Actualizar", sublabel: "Oferta",     m: "actualizar_oferta",iconBg: "bg-sky-500/15",      iconColor: "text-sky-400",     cardBg: "bg-sky-500/[0.08]",      cardBorder: "border-sky-500/25" },
+    { icon: DollarSign,    label: "Registrar",  sublabel: "Pago",       m: "pago",             iconBg: "bg-emerald-500/[0.12]", iconColor: "text-emerald-400" },
+    { icon: MapPin,        label: "Devolución", sublabel: "Cartelería", m: "carteleria",       iconBg: "bg-amber-500/[0.12]",   iconColor: "text-amber-400"   },
+    { icon: ClipboardList, label: "Registrar",  sublabel: "Encuesta",   m: "encuesta",         iconBg: "bg-blue-500/[0.12]",    iconColor: "text-blue-400"    },
+    { icon: Building2,     label: "Registrar",  sublabel: "Operación",  m: "operacion",        iconBg: "bg-orange-500/[0.12]",  iconColor: "text-orange-400"  },
+    { icon: Handshake,     label: "Registrar",  sublabel: "Oferta",     m: "oferta",           iconBg: "bg-violet-500/[0.12]",  iconColor: "text-violet-400"  },
+    { icon: RefreshCw,     label: "Actualizar", sublabel: "Oferta",     m: "actualizar_oferta",iconBg: "bg-sky-500/[0.12]",     iconColor: "text-sky-400"     },
   ]
 
   const ErrorBox = () => error ? (
@@ -207,19 +207,19 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
     <>
       {/* Quick action buttons */}
       <div className="grid grid-cols-3 md:grid-cols-6 gap-2.5 md:gap-3 mb-5 md:mb-6">
-        {QUICK_BTNS.map(({ icon: Icon, label, sublabel, m, iconBg, iconColor, cardBg, cardBorder }) => (
+        {QUICK_BTNS.map(({ icon: Icon, label, sublabel, m, iconBg, iconColor }) => (
           <button
             key={m}
             onClick={() => m === "encuesta" ? router.push("/encuestas") : openModal(m)}
-            className={`flex flex-col items-center justify-center gap-2 md:gap-3 p-3 md:p-5 rounded-2xl border ${cardBorder} ${cardBg} cursor-pointer hover:-translate-y-0.5 hover:brightness-110 transition-all duration-200 min-h-[88px] md:min-h-[110px] backdrop-blur-[4px]`}
+            className="crm-quick-btn flex flex-col items-center justify-center gap-2 md:gap-3 p-3 md:p-5 cursor-pointer min-h-[88px] md:min-h-[110px] backdrop-blur-[4px]"
             style={{ fontFamily: "inherit" }}
           >
-            <div className={`w-9 h-9 md:w-11 md:h-11 rounded-xl ${iconBg} flex items-center justify-center flex-shrink-0`}>
+            <div className={`w-11 h-11 rounded-full ${iconBg} flex items-center justify-center flex-shrink-0`}>
               <Icon size={18} className={iconColor} strokeWidth={1.75} />
             </div>
             <div className="text-center leading-tight">
-              <p className={`text-[9.5px] md:text-[10.5px] font-medium ${iconColor} opacity-70 m-0`}>{label}</p>
-              <p className={`text-[12px] md:text-[13px] font-bold ${iconColor} mt-0.5 m-0`}>{sublabel}</p>
+              <p className="text-[9.5px] md:text-[10.5px] font-medium text-white/50 m-0">{label}</p>
+              <p className="text-[12px] md:text-[13px] font-bold text-white m-0 mt-0.5">{sublabel}</p>
             </div>
           </button>
         ))}
