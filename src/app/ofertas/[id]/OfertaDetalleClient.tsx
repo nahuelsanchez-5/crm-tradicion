@@ -259,14 +259,11 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
   const [errMov,     setErrMov]      = useState("")
 
   // ── Modal: Registrar cierre ────────────────────────
-  const [modalCierre,         setModalCierre]         = useState(false)
-  const [cierreFecha,         setCierreFecha]         = useState("")
-  const [cierreDireccion,     setCierreDireccion]     = useState("")
-  const [cierreTipo,          setCierreTipo]          = useState("Venta")
-  const [cierreAgentes,       setCierreAgentes]       = useState("")
-  const [cierreComisionBruta, setCierreComisionBruta] = useState("")
-  const [cierreComisionNeta,  setCierreComisionNeta]  = useState("")
-  const [errCierre,           setErrCierre]           = useState("")
+  const [modalCierre,    setModalCierre]    = useState(false)
+  const [cierreFecha,    setCierreFecha]    = useState("")
+  const [cierrePrecio,   setCierrePrecio]   = useState("")
+  const [cierreComision, setCierreComision] = useState("")
+  const [errCierre,      setErrCierre]      = useState("")
 
   const closeAll = useCallback(() => {
     setModalEstado(false)
@@ -287,20 +284,9 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
   function handleSubmitEstado(e: React.FormEvent) {
     e.preventDefault()
     if (nuevoEstado === "Cerradas") {
-      const today = new Date().toISOString().split("T")[0]
-      const vName = agenteName(oferta.agente_vendedor_id, oferta.agente_vendedor_externo)
-      const cName = agenteName(oferta.agente_comprador_id, oferta.agente_comprador_externo)
-      const parts: string[] = []
-      if (vName !== "Sin agente") parts.push(vName)
-      if (cName !== "Sin agente" && cName !== vName) parts.push(cName)
-      const tipoInicial = ["Venta", "Alquiler", "Alquiler Temporario"].includes(oferta.tipo_operacion)
-        ? oferta.tipo_operacion : "Venta"
-      setCierreFecha(today)
-      setCierreDireccion(oferta.direccion)
-      setCierreTipo(tipoInicial)
-      setCierreAgentes(parts.join(" / "))
-      setCierreComisionBruta("")
-      setCierreComisionNeta("")
+      setCierreFecha(new Date().toISOString().split("T")[0])
+      setCierrePrecio("")
+      setCierreComision("")
       setErrCierre("")
       setModalEstado(false)
       setModalCierre(true)
@@ -342,18 +328,23 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
   // ── Submit: registrar cierre ───────────────────────
   function handleSubmitCierre(e: React.FormEvent) {
     e.preventDefault()
-    const bruta = parseFloat(cierreComisionBruta)
-    const neta  = parseFloat(cierreComisionNeta)
-    if (isNaN(bruta) || isNaN(neta)) { setErrCierre("Las comisiones son obligatorias"); return }
+    const precio   = parseFloat(cierrePrecio)
+    const comision = parseFloat(cierreComision)
+    if (isNaN(precio) || isNaN(comision)) { setErrCierre("Precio y comisión son obligatorios"); return }
+    const vName = agenteName(oferta.agente_vendedor_id, oferta.agente_vendedor_externo)
+    const cName = agenteName(oferta.agente_comprador_id, oferta.agente_comprador_externo)
+    const parts: string[] = []
+    if (vName !== "Sin agente") parts.push(vName)
+    if (cName !== "Sin agente" && cName !== vName) parts.push(cName)
     startTransition(async () => {
       const result = await registrarCierre(
         oferta.id,
         cierreFecha,
-        cierreDireccion,
-        cierreTipo,
-        cierreAgentes,
-        bruta,
-        neta,
+        precio,
+        comision,
+        oferta.direccion,
+        oferta.tipo_operacion,
+        parts.join(" / "),
       )
       if (result.error) { setErrCierre(result.error); return }
       closeAll()
@@ -874,37 +865,18 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               </button>
             </div>
             <form onSubmit={handleSubmitCierre} style={{ padding: "20px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-                <Field label="Fecha de cierre *">
-                  <input type="date" value={cierreFecha} onChange={e => setCierreFecha(e.target.value)}
-                    style={{ ...inp, colorScheme: "dark" as const }} required />
-                </Field>
-                <Field label="Tipo *">
-                  <select value={cierreTipo} onChange={e => setCierreTipo(e.target.value)} style={inp} required>
-                    <option value="Venta">Venta</option>
-                    <option value="Alquiler">Alquiler</option>
-                    <option value="Alquiler Temporario">Alquiler Temporario</option>
-                  </select>
-                </Field>
-              </div>
-              <Field label="Dirección *">
-                <input type="text" value={cierreDireccion} onChange={e => setCierreDireccion(e.target.value)}
-                  style={inp} required />
+              <Field label="Fecha de cierre *">
+                <input type="date" value={cierreFecha} onChange={e => setCierreFecha(e.target.value)}
+                  style={{ ...inp, colorScheme: "dark" as const }} required />
               </Field>
-              <Field label="Agentes">
-                <input type="text" value={cierreAgentes} onChange={e => setCierreAgentes(e.target.value)}
-                  placeholder="Ej: Romina Prieto / Cecilia Frigerio" style={inp} />
+              <Field label="Precio de cierre (USD) *">
+                <input type="number" value={cierrePrecio} onChange={e => setCierrePrecio(e.target.value)}
+                  min="0" placeholder="0" style={inp} required />
               </Field>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-                <Field label="Comisión bruta (USD) *">
-                  <input type="number" value={cierreComisionBruta} onChange={e => setCierreComisionBruta(e.target.value)}
-                    min="0" step="100" placeholder="0" style={inp} required />
-                </Field>
-                <Field label="Comisión neta (USD) *">
-                  <input type="number" value={cierreComisionNeta} onChange={e => setCierreComisionNeta(e.target.value)}
-                    min="0" step="100" placeholder="0" style={inp} required />
-                </Field>
-              </div>
+              <Field label="Comisión total (USD) *">
+                <input type="number" value={cierreComision} onChange={e => setCierreComision(e.target.value)}
+                  min="0" placeholder="0" style={inp} required />
+              </Field>
               {errCierre && (
                 <div style={{
                   background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",

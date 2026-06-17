@@ -6,6 +6,7 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
+  CalendarDays,
   Users,
   CreditCard,
   MapPin,
@@ -30,6 +31,7 @@ interface NavItem {
 
 const BASE_NAV: NavItem[] = [
   { href: "/",            label: "Dashboard",   icon: LayoutDashboard },
+  { href: "/calendario",  label: "Calendario",  icon: CalendarDays },
   { href: "/ofertas",     label: "Ofertas",     icon: Handshake },
   { href: "/pagos",       label: "Cuentas",     icon: CreditCard },
   { href: "/carteleria",  label: "Cartelería",  icon: MapPin },
