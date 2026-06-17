@@ -10,7 +10,7 @@ export default async function AgentesPage() {
   const anioStr = String(anio)
 
   const [
-    { data: agentes },
+    agentesResult,
     { data: planes },
     { data: operaciones },
     { data: pagosMesRaw },
@@ -45,6 +45,19 @@ export default async function AgentesPage() {
       .neq("estado", "Cerradas")
       .neq("estado", "Caídas"),
   ])
+
+  // Fallback: si las columnas nuevas no existen aún en Supabase (migración pendiente),
+  // hace un select básico para que los agentes sigan visibles.
+  let agentes = agentesResult.data
+  if (agentesResult.error?.code === '42703') {
+    const { data: basic } = await supabase
+      .from("agentes")
+      .select("id, nombre, email, telefono, fecha_alta, fecha_baja, activo")
+      .order("nombre")
+    agentes = (basic ?? []).map((a: Record<string, unknown>) => ({
+      ...a, fecha_mainstreet: null, paga_fee: null, tipo_plan: null,
+    })) as typeof agentes
+  }
 
   const agentesConPlan = (agentes ?? []).map(a => ({
     ...a,

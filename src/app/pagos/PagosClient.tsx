@@ -37,9 +37,9 @@ const CONCEPTO_CONFIG_KEY: Record<string, string> = {
 }
 
 const ESTADO_STYLES: Record<string, { bg: string; color: string }> = {
-  Pagado:    { bg: "#ECFDF5", color: "#059669" },
-  Parcial:   { bg: "#FFFBEB", color: "#D97706" },
-  Pendiente: { bg: "#FFF1F2", color: "#E11D48" },
+  Pagado:    { bg: "rgba(74,222,128,0.12)",  color: "#4ade80" },
+  Parcial:   { bg: "rgba(251,191,36,0.12)",  color: "#fbbf24" },
+  Pendiente: { bg: "rgba(248,113,113,0.12)", color: "#f87171" },
 }
 
 // ── Types ────────────────────────────────────────────
@@ -138,7 +138,7 @@ function mesLabel(monthVal: string): string {
 
 // ── Sub-components ───────────────────────────────────
 function EstadoBadge({ estado }: { estado: string }) {
-  const s = ESTADO_STYLES[estado] ?? { bg: "#F1F5F9", color: "#64748B" }
+  const s = ESTADO_STYLES[estado] ?? { bg: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)" }
   return (
     <span style={{ ...s, padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700 }}>
       {estado}
@@ -149,7 +149,7 @@ function EstadoBadge({ estado }: { estado: string }) {
 function ProgressBar({ pct }: { pct: number }) {
   const color = pct >= 80 ? "#059669" : pct >= 50 ? "#D97706" : "#E11D48"
   return (
-    <div style={{ width: "100%", height: "5px", borderRadius: "3px", background: "#F1F5F9", overflow: "hidden", marginTop: "6px" }}>
+    <div style={{ width: "100%", height: "5px", borderRadius: "3px", background: "rgba(255,255,255,0.06)", overflow: "hidden", marginTop: "6px" }}>
       <div style={{ width: `${Math.min(pct, 100)}%`, height: "100%", background: color, borderRadius: "3px", transition: "width 0.4s" }} />
     </div>
   )
@@ -161,7 +161,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label style={{
         display: "block", fontSize: "11px", fontWeight: 700,
         letterSpacing: "0.8px", textTransform: "uppercase" as const,
-        color: "#64748B", marginBottom: "5px",
+        color: "rgba(255,255,255,0.45)", marginBottom: "5px",
       }}>
         {label}
       </label>
@@ -175,8 +175,8 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
     <Field label={label}>
       <div style={{
         padding: "9px 12px", borderRadius: "8px",
-        border: "1.5px solid #F1F5F9", background: "#F8F9FC",
-        fontSize: "13px", color: "#64748B",
+        border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)",
+        fontSize: "13px", color: "rgba(255,255,255,0.45)",
       }}>
         {value}
       </div>
@@ -186,9 +186,9 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 
 const inp: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
-  borderRadius: "8px", border: "1.5px solid #EAECF2",
+  borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)",
   fontSize: "13px", fontFamily: "inherit",
-  color: "#0F172A", outline: "none", background: "white",
+  color: "#f1f5f9", outline: "none", background: "rgba(255,255,255,0.06)",
   boxSizing: "border-box",
 }
 
@@ -199,12 +199,12 @@ function filterBtnStyle(key: string, selected: boolean): React.CSSProperties {
     cursor: "pointer", fontFamily: "inherit",
     transition: "all 0.15s",
   }
-  if (!selected) return { ...base, border: "1.5px solid #EAECF2", background: "white", color: "#64748B" }
+  if (!selected) return { ...base, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.45)" }
   const active: Record<string, React.CSSProperties> = {
-    todos:     { border: "1.5px solid #0F172A",  background: "#0F172A",  color: "white" },
-    Pagado:    { border: "1.5px solid #6EE7B7",  background: "#ECFDF5",  color: "#059669" },
-    Parcial:   { border: "1.5px solid #FCD34D",  background: "#FFFBEB",  color: "#D97706" },
-    Pendiente: { border: "1.5px solid #FECDD3",  background: "#FFF1F2",  color: "#E11D48" },
+    todos:     { border: "1px solid rgba(255,255,255,0.3)",   background: "rgba(255,255,255,0.12)", color: "#f1f5f9" },
+    Pagado:    { border: "1px solid rgba(74,222,128,0.4)",    background: "rgba(74,222,128,0.12)",  color: "#4ade80" },
+    Parcial:   { border: "1px solid rgba(251,191,36,0.4)",    background: "rgba(251,191,36,0.12)",  color: "#fbbf24" },
+    Pendiente: { border: "1px solid rgba(248,113,113,0.4)",   background: "rgba(248,113,113,0.12)", color: "#f87171" },
   }
   return { ...base, fontWeight: 700, ...(active[key] ?? active.todos) }
 }
@@ -216,27 +216,27 @@ function KpiConcepto({
   label: string; x: number; y?: number; pct?: number; color: string; gradient: string
 }) {
   const colorMap: Record<string, { bg: string; text: string; bar: string }> = {
-    "#E31837": { bg: "bg-rose-50",   text: "text-rose-600",   bar: "bg-rose-500" },
-    "#7C3AED": { bg: "bg-violet-50", text: "text-violet-600", bar: "bg-violet-500" },
-    "#0D9488": { bg: "bg-teal-50",   text: "text-teal-600",   bar: "bg-teal-500" },
-    "#D97706": { bg: "bg-amber-50",  text: "text-amber-600",  bar: "bg-amber-500" },
+    "#E31837": { bg: "rgba(248,113,113,0.08)", text: "#f87171",  bar: "#f87171" },
+    "#7C3AED": { bg: "rgba(167,139,250,0.08)", text: "#a78bfa",  bar: "#a78bfa" },
+    "#0D9488": { bg: "rgba(45,212,191,0.08)",  text: "#2dd4bf",  bar: "#2dd4bf" },
+    "#D97706": { bg: "rgba(251,191,36,0.08)",  text: "#fbbf24",  bar: "#fbbf24" },
   }
-  const { bg, text, bar } = colorMap[color] ?? { bg: "bg-slate-50", text: "text-slate-600", bar: "bg-slate-400" }
+  const { bg, text, bar } = colorMap[color] ?? { bg: "rgba(255,255,255,0.06)", text: "rgba(255,255,255,0.6)", bar: "rgba(255,255,255,0.3)" }
   return (
-    <div className={`${bg} rounded-2xl border border-slate-200 p-5 flex flex-col gap-2.5 hover:shadow-md transition-shadow duration-200 min-h-[110px]`}>
-      <p className={`text-[10.5px] font-bold uppercase tracking-wider ${text} m-0`}>{label}</p>
+    <div style={{ background: bg, borderRadius: "16px", border: "1px solid rgba(255,255,255,0.08)", padding: "20px", display: "flex", flexDirection: "column", gap: "10px", minHeight: "110px" }}>
+      <p style={{ fontSize: "10.5px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: text, margin: 0 }}>{label}</p>
       <div>
-        <p className={`text-3xl font-bold ${text} leading-none tracking-tight m-0`}>
+        <p style={{ fontSize: "30px", fontWeight: 700, color: text, lineHeight: 1, letterSpacing: "-0.025em", margin: 0 }}>
           {y !== undefined ? `${x}/${y}` : String(x)}
         </p>
-        <p className={`text-[11px] font-medium ${text} opacity-70 mt-0.5 m-0`}>cobrados</p>
+        <p style={{ fontSize: "11px", fontWeight: 500, color: text, opacity: 0.7, marginTop: "2px", margin: 0 }}>cobrados</p>
       </div>
       {pct !== undefined && (
         <div>
-          <div className="h-1.5 rounded-full bg-white/60 overflow-hidden mt-1">
-            <div className={`h-full rounded-full ${bar}`} style={{ width: `${Math.min(100, pct)}%` }} />
+          <div style={{ height: "6px", borderRadius: "3px", background: "rgba(255,255,255,0.08)", overflow: "hidden", marginTop: "4px" }}>
+            <div style={{ height: "100%", borderRadius: "3px", background: bar, width: `${Math.min(100, pct)}%` }} />
           </div>
-          <p className={`text-[11px] font-bold mt-1 m-0 ${text}`}>{pct}% cobranza</p>
+          <p style={{ fontSize: "11px", fontWeight: 700, marginTop: "4px", margin: 0, color: text }}>{pct}% cobranza</p>
         </div>
       )}
     </div>
@@ -257,7 +257,7 @@ function ModalHeader({ title, subtitle, onClose, icon, iconBg }: { title: string
   return (
     <div style={{
       display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "18px 20px", borderBottom: "1px solid #EAECF2",
+      padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         {icon && (
@@ -266,15 +266,15 @@ function ModalHeader({ title, subtitle, onClose, icon, iconBg }: { title: string
           </div>
         )}
         <div>
-          <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>{title}</h2>
-          {subtitle && <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>{subtitle}</p>}
+          <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>{title}</h2>
+          {subtitle && <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>{subtitle}</p>}
         </div>
       </div>
       <button onClick={onClose} style={{
-        background: "#F8F9FC", border: "none", borderRadius: "8px",
+        background: "rgba(255,255,255,0.04)", border: "none", borderRadius: "8px",
         width: "32px", height: "32px", display: "flex",
         alignItems: "center", justifyContent: "center",
-        cursor: "pointer", color: "#64748B",
+        cursor: "pointer", color: "rgba(255,255,255,0.45)",
       }}>
         <X size={16} />
       </button>
@@ -693,8 +693,8 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
   }
 
   const cardStyle: React.CSSProperties = {
-    background: "white", borderRadius: "14px",
-    border: "1.5px solid #EAECF2", overflow: "hidden",
+    background: "#13131a", borderRadius: "14px",
+    border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden",
   }
 
   const btnSave: React.CSSProperties = {
@@ -709,8 +709,8 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
 
   const btnCancel: React.CSSProperties = {
     padding: "9px 20px", borderRadius: "8px",
-    border: "1.5px solid #EAECF2", background: "white",
-    fontSize: "13px", fontWeight: 600, color: "#64748B",
+    border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.06)",
+    fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.45)",
     cursor: "pointer", fontFamily: "inherit",
   }
 
@@ -718,9 +718,9 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
     if (!error) return null
     return (
       <div style={{
-        background: "#FFF1F2", border: "1px solid #FECDD3",
+        background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)",
         borderRadius: "8px", padding: "10px 12px",
-        fontSize: "12.5px", color: "#E11D48", marginBottom: "14px",
+        fontSize: "12.5px", color: "#f87171", marginBottom: "14px",
       }}>
         ⚠️ {error}
       </div>
@@ -736,10 +736,10 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
       {/* ── Page Header ──────────────────────────── */}
       <div className="crm-page-header flex-shrink-0">
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
             Cuentas
           </h1>
-          <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "1px" }}>
+          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
             Control de cobros por concepto — REMAX Tradición
           </p>
         </div>
@@ -747,8 +747,8 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
           <button
             onClick={() => openSaldoFavor()}
             style={{
-              background: "#F0FDF4", color: "#059669",
-              border: "1.5px solid #6EE7B7",
+              background: "rgba(74,222,128,0.1)", color: "#4ade80",
+              border: "1px solid rgba(74,222,128,0.3)",
               padding: "8px 16px", borderRadius: "9px",
               fontSize: "13px", fontWeight: 700, cursor: "pointer",
               fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
@@ -759,8 +759,8 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
           <button
             onClick={() => openGasto()}
             style={{
-              background: "white", color: "#0F172A",
-              border: "1.5px solid #EAECF2",
+              background: "#13131a", color: "#f1f5f9",
+              border: "1px solid rgba(255,255,255,0.08)",
               padding: "8px 16px", borderRadius: "9px",
               fontSize: "13px", fontWeight: 700, cursor: "pointer",
               fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
@@ -829,7 +829,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1 }}>
             <DollarSign size={14} color="#E31837" />
-            <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#0F172A" }}>
+            <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#f1f5f9" }}>
               Cobranza general: <strong style={{
                 color: kpiStats.pctGeneral >= 80 ? "#059669" : kpiStats.pctGeneral >= 50 ? "#D97706" : "#E11D48"
               }}>{kpiStats.pctGeneral}%</strong>
@@ -870,8 +870,8 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
               onChange={e => setSelectedMonth(e.target.value)}
               style={{
                 padding: "6px 10px", borderRadius: "8px",
-                border: "1.5px solid #EAECF2", fontSize: "12.5px",
-                fontWeight: 500, color: "#0F172A", background: "white",
+                border: "1px solid rgba(255,255,255,0.08)", fontSize: "12.5px",
+                fontWeight: 500, color: "#f1f5f9", background: "rgba(255,255,255,0.06)",
                 cursor: "pointer", fontFamily: "inherit", outline: "none",
               }}
             >
@@ -889,11 +889,11 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
         <div style={cardStyle}>
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "14px 20px", borderBottom: "1px solid #EAECF2",
+            padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-              <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
+              <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>
                 Estado de cobros por agente
               </span>
             </div>
@@ -903,7 +903,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
           </div>
 
           {/* Mobile card list */}
-          <div className="md:hidden divide-y divide-slate-100">
+          <div className="md:hidden divide-y divide-white/[0.06]">
             {agentesPagos.length === 0 ? (
               <div style={{ padding: "32px 20px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
                 No hay registros para el filtro seleccionado.
@@ -916,20 +916,20 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                   <div key={ag.agente_id}>
                     <div
                       onClick={() => setExpandedAgent(isExpanded ? null : ag.agente_id)}
-                      className="flex items-center gap-3 px-4 py-3.5 cursor-pointer active:bg-slate-50"
+                      className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-white/[0.03]"
                     >
                       <span style={{
-                        fontSize: "11px", color: "#64748B",
+                        fontSize: "11px", color: "rgba(255,255,255,0.45)",
                         transform: isExpanded ? "rotate(90deg)" : "none",
                         display: "inline-block", transition: "transform 0.15s",
                       }}>▶</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span style={{ fontWeight: 600, fontSize: "13px", color: "#0F172A" }}>{ag.nombre}</span>
+                          <span style={{ fontWeight: 600, fontSize: "13px", color: "#f1f5f9" }}>{ag.nombre}</span>
                           {enMora && (
                             <span style={{
-                              background: "#FFF1F2", color: "#E11D48",
-                              border: "1px solid #FECDD3",
+                              background: "rgba(248,113,113,0.12)", color: "#f87171",
+                              border: "1px solid rgba(248,113,113,0.3)",
                               padding: "1px 7px", borderRadius: "12px",
                               fontSize: "10px", fontWeight: 700,
                             }}>EN MORA</span>
@@ -945,27 +945,27 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                       </div>
                     </div>
                     {isExpanded && (
-                      <div style={{ background: "#F8FAFF", borderTop: "1px solid #EEF0F8", padding: "12px 16px" }}>
+                      <div style={{ background: "rgba(255,255,255,0.04)", borderTop: "1px solid rgba(255,255,255,0.06)", padding: "12px 16px" }}>
                         <div className="flex gap-3 mb-3 flex-wrap" style={{ fontSize: "12px" }}>
-                          <span><span style={{ color: "#64748B" }}>Pagado: </span><strong style={{ color: "#059669" }}>{fmtUSD(ag.totalPagado)}</strong></span>
-                          <span><span style={{ color: "#64748B" }}>Pendiente: </span><strong style={{ color: "#E11D48" }}>{fmtUSD(Math.max(0, ag.saldo))}</strong></span>
+                          <span><span style={{ color: "rgba(255,255,255,0.45)" }}>Pagado: </span><strong style={{ color: "#059669" }}>{fmtUSD(ag.totalPagado)}</strong></span>
+                          <span><span style={{ color: "rgba(255,255,255,0.45)" }}>Pendiente: </span><strong style={{ color: "#E11D48" }}>{fmtUSD(Math.max(0, ag.saldo))}</strong></span>
                         </div>
                         {ag.pagos.map((p, pi) => (
                           <div key={p.id} style={{
-                            background: p.concepto === "Saldo a favor" ? "#F0FDF4" : p.concepto === "Crédito aplicado" ? "#EFF6FF" : "white",
-                            borderRadius: "8px", border: "1px solid #EAECF2",
+                            background: p.concepto === "Saldo a favor" ? "rgba(74,222,128,0.06)" : p.concepto === "Crédito aplicado" ? "rgba(59,130,246,0.06)" : "rgba(255,255,255,0.03)",
+                            borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)",
                             padding: "10px 12px", marginBottom: pi < ag.pagos.length - 1 ? "8px" : 0,
                           }}>
                             <div className="flex items-start justify-between gap-2">
                               <div>
                                 {p.concepto === "Saldo a favor" ? (
-                                  <span style={{ background: "#ECFDF5", color: "#059669", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>Saldo a favor</span>
+                                  <span style={{ background: "rgba(74,222,128,0.12)", color: "#4ade80", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>Saldo a favor</span>
                                 ) : p.concepto === "Crédito aplicado" ? (
-                                  <span style={{ background: "#EFF6FF", color: "#2563EB", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>Crédito aplicado</span>
+                                  <span style={{ background: "rgba(59,130,246,0.12)", color: "#60a5fa", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>Crédito aplicado</span>
                                 ) : (
-                                  <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#0F172A" }}>{p.concepto}</div>
+                                  <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#f1f5f9" }}>{p.concepto}</div>
                                 )}
-                                <div style={{ fontSize: "11px", color: "#64748B", marginTop: "2px" }}>{fmtFecha(p.fecha)}</div>
+                                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginTop: "2px" }}>{fmtFecha(p.fecha)}</div>
                               </div>
                               <div className="flex flex-col items-end gap-1">
                                 <EstadoBadge estado={p.estado} />
@@ -982,8 +982,8 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                   className="flex-1 min-h-[38px]"
                                   style={{
                                     padding: "6px 12px", borderRadius: "7px",
-                                    border: "1.5px solid #EAECF2", background: "white",
-                                    fontSize: "12px", fontWeight: 600, color: "#0F172A",
+                                    border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.06)",
+                                    fontSize: "12px", fontWeight: 600, color: "#f1f5f9",
                                     cursor: "pointer", fontFamily: "inherit",
                                   }}
                                 >
@@ -995,9 +995,9 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                 title="Eliminar registro"
                                 style={{
                                   width: "38px", height: "38px", borderRadius: "7px",
-                                  border: "1.5px solid #FECDD3", background: "white",
+                                  border: "1px solid rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.08)",
                                   display: "flex", alignItems: "center", justifyContent: "center",
-                                  cursor: "pointer", color: "#E11D48", flexShrink: 0,
+                                  cursor: "pointer", color: "#f87171", flexShrink: 0,
                                 }}
                               >
                                 <Trash2 size={15} />
@@ -1024,8 +1024,8 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                               onClick={() => openNuevo(ag.agente_id)}
                               style={{
                                 padding: "8px 16px", borderRadius: "8px",
-                                border: "1.5px solid #EAECF2", background: "white",
-                                fontSize: "12px", fontWeight: 600, color: "#0F172A",
+                                border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.06)",
+                                fontSize: "12px", fontWeight: 600, color: "#f1f5f9",
                                 cursor: "pointer", fontFamily: "inherit",
                               }}
                             >
@@ -1045,7 +1045,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
           <div className="hidden md:block" style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
+                <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
                   {["Agente", "Último movimiento", "Saldo del mes", "Estado", "WhatsApp", ""].map(h => (
                     <th key={h} style={{
                       padding: "10px 16px", textAlign: "left",
@@ -1077,24 +1077,24 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                         <tr
                           onClick={() => setExpandedAgent(isExpanded ? null : ag.agente_id)}
                           style={{
-                            borderBottom: (isLast && !isExpanded) ? "none" : "1px solid #F3F4F6",
+                            borderBottom: (isLast && !isExpanded) ? "none" : "1px solid rgba(255,255,255,0.06)",
                             cursor: "pointer",
-                            background: isExpanded ? "#FAFBFF" : "white",
+                            background: isExpanded ? "rgba(255,255,255,0.05)" : "#13131a",
                             transition: "background 0.1s",
                           }}
                         >
-                          <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: "13px", color: "#0F172A", whiteSpace: "nowrap" }}>
+                          <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: "13px", color: "#f1f5f9", whiteSpace: "nowrap" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                               <span style={{
-                                fontSize: "11px", color: "#64748B", fontWeight: 400,
+                                fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: 400,
                                 transform: isExpanded ? "rotate(90deg)" : "none",
                                 display: "inline-block", transition: "transform 0.15s",
                               }}>▶</span>
                               {ag.nombre}
                               {enMora && (
                                 <span style={{
-                                  background: "#FFF1F2", color: "#E11D48",
-                                  border: "1px solid #FECDD3",
+                                  background: "rgba(248,113,113,0.12)", color: "#f87171",
+                                  border: "1px solid rgba(248,113,113,0.3)",
                                   padding: "1px 7px", borderRadius: "12px",
                                   fontSize: "10px", fontWeight: 700, marginLeft: "4px",
                                 }}>
@@ -1103,7 +1103,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                               )}
                             </div>
                           </td>
-                          <td style={{ padding: "12px 16px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>
+                          <td style={{ padding: "12px 16px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
                             {fmtFecha(ag.ultimoMov)}
                           </td>
                           <td style={{
@@ -1139,8 +1139,8 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                 onClick={e => { e.stopPropagation(); openNuevo(ag.agente_id) }}
                                 style={{
                                   padding: "5px 14px", borderRadius: "7px",
-                                  border: "1.5px solid #EAECF2", background: "white",
-                                  fontSize: "12px", fontWeight: 600, color: "#0F172A",
+                                  border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.06)",
+                                  fontSize: "12px", fontWeight: 600, color: "#f1f5f9",
                                   cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
                                 }}
                               >
@@ -1152,10 +1152,10 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
 
                         {/* ── Expanded detail ── */}
                         {isExpanded && (
-                          <tr style={{ borderBottom: isLast ? "none" : "1px solid #F3F4F6" }}>
+                          <tr style={{ borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)" }}>
                             <td colSpan={6} style={{ padding: 0 }}>
                               <div style={{
-                                background: "#F8FAFF", borderTop: "1px solid #EEF0F8",
+                                background: "rgba(255,255,255,0.04)", borderTop: "1px solid rgba(255,255,255,0.06)",
                                 padding: "16px 24px",
                               }}>
                                 {/* Summary strip */}
@@ -1164,23 +1164,23 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                   fontSize: "12.5px",
                                 }}>
                                   <span>
-                                    <span style={{ color: "#64748B" }}>Total pagado: </span>
+                                    <span style={{ color: "rgba(255,255,255,0.45)" }}>Total pagado: </span>
                                     <strong style={{ color: "#059669" }}>{fmtUSD(ag.totalPagado)}</strong>
                                   </span>
                                   <span>
-                                    <span style={{ color: "#64748B" }}>Total pendiente: </span>
+                                    <span style={{ color: "rgba(255,255,255,0.45)" }}>Total pendiente: </span>
                                     <strong style={{ color: "#E11D48" }}>{fmtUSD(Math.max(0, ag.saldo))}</strong>
                                   </span>
                                   <span>
-                                    <span style={{ color: "#64748B" }}>Estado: </span>
+                                    <span style={{ color: "rgba(255,255,255,0.45)" }}>Estado: </span>
                                     <EstadoBadge estado={ag.estadoGral} />
                                   </span>
                                 </div>
 
                                 {/* Movement detail */}
-                                <table style={{ width: "100%", borderCollapse: "collapse", background: "white", borderRadius: "10px", overflow: "hidden", border: "1px solid #EAECF2" }}>
+                                <table style={{ width: "100%", borderCollapse: "collapse", background: "rgba(255,255,255,0.02)", borderRadius: "10px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)" }}>
                                   <thead>
-                                    <tr style={{ background: "#F1F5F9" }}>
+                                    <tr style={{ background: "rgba(255,255,255,0.06)" }}>
                                       {["Fecha", "Concepto", "Cargo", "Pagado", "Estado", ""].map(h => (
                                         <th key={h} style={{
                                           padding: "8px 14px", textAlign: "left",
@@ -1198,22 +1198,22 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                       const isSaldoFavor = p.concepto === "Saldo a favor"
                                       const isCreditoAplicado = p.concepto === "Crédito aplicado"
                                       const rowBg = isSaldoFavor
-                                        ? "#F0FDF4"
+                                        ? "rgba(74,222,128,0.05)"
                                         : isCreditoAplicado
-                                          ? "#EFF6FF"
-                                          : p.estado === "Pagado" ? "#F0FDF4" : p.estado === "Parcial" ? "#FFFBEB" : "#FFF8F8"
+                                          ? "rgba(59,130,246,0.05)"
+                                          : p.estado === "Pagado" ? "rgba(74,222,128,0.04)" : p.estado === "Parcial" ? "rgba(251,191,36,0.04)" : "rgba(248,113,113,0.04)"
                                       return (
-                                        <tr key={p.id} style={{ borderTop: pi > 0 ? "1px solid #F3F4F6" : "none", background: rowBg }}>
-                                          <td style={{ padding: "10px 14px", fontSize: "12px", color: "#64748B", whiteSpace: "nowrap" }}>
+                                        <tr key={p.id} style={{ borderTop: pi > 0 ? "1px solid rgba(255,255,255,0.06)" : "none", background: rowBg }}>
+                                          <td style={{ padding: "10px 14px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
                                             {fmtFecha(p.fecha)}
                                           </td>
-                                          <td style={{ padding: "10px 14px", fontSize: "12px", color: "#0F172A" }}>
+                                          <td style={{ padding: "10px 14px", fontSize: "12px", color: "#f1f5f9" }}>
                                             {isSaldoFavor ? (
-                                              <span style={{ background: "#ECFDF5", color: "#059669", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>
+                                              <span style={{ background: "rgba(74,222,128,0.12)", color: "#4ade80", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>
                                                 Saldo a favor
                                               </span>
                                             ) : isCreditoAplicado ? (
-                                              <span style={{ background: "#EFF6FF", color: "#2563EB", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>
+                                              <span style={{ background: "rgba(59,130,246,0.12)", color: "#60a5fa", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>
                                                 Crédito aplicado
                                               </span>
                                             ) : p.concepto}
@@ -1236,8 +1236,8 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                                   onClick={() => openEditar(p)}
                                                   style={{
                                                     padding: "3px 10px", borderRadius: "6px",
-                                                    border: "1.5px solid #EAECF2", background: "white",
-                                                    fontSize: "11px", fontWeight: 600, color: "#0F172A",
+                                                    border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.06)",
+                                                    fontSize: "11px", fontWeight: 600, color: "#f1f5f9",
                                                     cursor: "pointer", fontFamily: "inherit",
                                                   }}
                                                 >
@@ -1249,9 +1249,9 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                                 title="Eliminar registro"
                                                 style={{
                                                   width: "28px", height: "28px", borderRadius: "6px",
-                                                  border: "1.5px solid #FECDD3", background: "white",
+                                                  border: "1px solid rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.08)",
                                                   display: "flex", alignItems: "center", justifyContent: "center",
-                                                  cursor: "pointer", color: "#E11D48", flexShrink: 0,
+                                                  cursor: "pointer", color: "#f87171", flexShrink: 0,
                                                 }}
                                               >
                                                 <Trash2 size={13} />
@@ -1342,10 +1342,10 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
               <div style={{
                 display: "flex", alignItems: "center", gap: "8px",
                 padding: "10px 12px", borderRadius: "8px",
-                background: "#F8F9FC", border: "1px solid #EAECF2",
+                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
                 marginBottom: "14px",
               }}>
-                <span style={{ fontSize: "12px", color: "#64748B", fontWeight: 500 }}>Estado calculado:</span>
+                <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>Estado calculado:</span>
                 <EstadoBadge estado={nuevoEstado} />
               </div>
               <ErrorBox />
@@ -1415,7 +1415,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                           flex: 1, padding: "9px 0", borderRadius: "8px", fontSize: "12px",
                           fontWeight: gastoForm.tipo === t ? 700 : 500,
                           cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
-                          border: gastoForm.tipo === t ? "1.5px solid #E31837" : "1.5px solid #EAECF2",
+                          border: gastoForm.tipo === t ? "1.5px solid #E31837" : "1px solid rgba(255,255,255,0.08)",
                           background: gastoForm.tipo === t ? "#FFF1F2" : "white",
                           color: gastoForm.tipo === t ? "#E11D48" : "#64748B",
                         }}
@@ -1444,10 +1444,10 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
               {saldoGastoAgente > 0 && (
                 <div style={{
                   padding: "12px 14px", borderRadius: "10px",
-                  background: "#F0FDF4", border: "1.5px solid #6EE7B7",
+                  background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.25)",
                   marginBottom: "14px",
                 }}>
-                  <div style={{ fontSize: "12.5px", fontWeight: 700, color: "#065F46", marginBottom: "8px" }}>
+                  <div style={{ fontSize: "12.5px", fontWeight: 700, color: "#4ade80", marginBottom: "8px" }}>
                     Este agente tiene {fmtUSD(saldoGastoAgente)} a favor. ¿Cómo lo aplicás?
                   </div>
                   <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
@@ -1459,9 +1459,9 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                           padding: "5px 12px", borderRadius: "7px", fontSize: "12px",
                           fontWeight: creditoOpcion === op ? 700 : 500,
                           cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
-                          border: creditoOpcion === op ? "1.5px solid #059669" : "1.5px solid #A7F3D0",
-                          background: creditoOpcion === op ? "#059669" : "white",
-                          color: creditoOpcion === op ? "white" : "#059669",
+                          border: creditoOpcion === op ? "1px solid #4ade80" : "1px solid rgba(74,222,128,0.25)",
+                          background: creditoOpcion === op ? "rgba(74,222,128,0.2)" : "rgba(74,222,128,0.05)",
+                          color: "#4ade80",
                         }}
                       >
                         {op === "todo" ? "Aplicar todo" : op === "parcial" ? "Aplicar parcialmente" : "No aplicar"}
@@ -1484,14 +1484,14 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
               <div style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 padding: "10px 14px", borderRadius: "10px",
-                background: "#F8F9FC", border: "1.5px dashed #CBD5E1",
+                background: "rgba(255,255,255,0.04)", border: "1.5px dashed #CBD5E1",
                 marginBottom: "14px",
               }}>
                 <div>
-                  <div style={{ fontSize: "12.5px", fontWeight: 700, color: "#0F172A" }}>
+                  <div style={{ fontSize: "12.5px", fontWeight: 700, color: "#f1f5f9" }}>
                     ¿Aplicar a múltiples agentes?
                   </div>
-                  <div style={{ fontSize: "11px", color: "#64748B", marginTop: "2px" }}>
+                  <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginTop: "2px" }}>
                     FEE mensual, CRM PRO o PRO+ — monto desde config
                   </div>
                 </div>
@@ -1501,8 +1501,8 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                   style={{
                     display: "flex", alignItems: "center", gap: "6px",
                     padding: "7px 14px", borderRadius: "8px",
-                    border: "1.5px solid #7C3AED", background: "#F5F3FF",
-                    fontSize: "12px", fontWeight: 700, color: "#7C3AED",
+                    border: "1px solid rgba(167,139,250,0.4)", background: "rgba(167,139,250,0.1)",
+                    fontSize: "12px", fontWeight: 700, color: "#a78bfa",
                     cursor: "pointer", fontFamily: "inherit",
                   }}
                 >
@@ -1564,10 +1564,10 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
               <div style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 padding: "10px 14px", borderRadius: "8px",
-                background: "#F0FDF4", border: "1px solid #6EE7B7",
+                background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.25)",
                 marginBottom: "14px",
               }}>
-                <span style={{ fontSize: "12px", color: "#065F46", fontWeight: 600 }}>
+                <span style={{ fontSize: "12px", color: "#4ade80", fontWeight: 600 }}>
                   Monto por agente (desde config):
                 </span>
                 <span style={{ fontSize: "16px", fontWeight: 800, color: "#059669" }}>
@@ -1578,12 +1578,12 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
               {/* Multi-select agentes */}
               <Field label={`Agentes (${selectedAgentesRec.size} seleccionados) *`}>
                 <div style={{
-                  border: "1.5px solid #EAECF2", borderRadius: "8px",
+                  border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px",
                   overflow: "auto", maxHeight: "200px",
                 }}>
                   <div style={{
                     display: "flex", alignItems: "center", gap: "8px",
-                    padding: "8px 12px", borderBottom: "1px solid #F1F5F9",
+                    padding: "8px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)",
                   }}>
                     <button
                       type="button"
@@ -1596,7 +1596,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                     <button
                       type="button"
                       onClick={() => setSelectedAgentesRec(new Set())}
-                      style={{ fontSize: "11px", color: "#64748B", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", padding: 0 }}
+                      style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", padding: 0 }}
                     >
                       Limpiar
                     </button>
@@ -1624,7 +1624,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                         }}
                         style={{ accentColor: "#7C3AED", width: "14px", height: "14px" }}
                       />
-                      <span style={{ fontSize: "13px", fontWeight: 500, color: "#0F172A" }}>{a.nombre}</span>
+                      <span style={{ fontSize: "13px", fontWeight: 500, color: "#f1f5f9" }}>{a.nombre}</span>
                     </label>
                   ))}
                 </div>
@@ -1682,12 +1682,12 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
               <div style={{
                 display: "flex", alignItems: "center", gap: "8px",
                 padding: "10px 12px", borderRadius: "8px",
-                background: "#F8F9FC", border: "1px solid #EAECF2",
+                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
                 marginBottom: "14px",
               }}>
-                <span style={{ fontSize: "12px", color: "#64748B", fontWeight: 500 }}>Nuevo estado:</span>
+                <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>Nuevo estado:</span>
                 <EstadoBadge estado={editEstado} />
-                <span style={{ marginLeft: "auto", fontSize: "12px", color: "#64748B" }}>
+                <span style={{ marginLeft: "auto", fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>
                   Saldo: <strong style={{ color: editEstado === "Pagado" ? "#059669" : "#E11D48" }}>
                     {fmtUSD(Math.max(0, Number(selectedPago.monto_debe) - (parseFloat(editForm.monto_pagado) || 0)))}
                   </strong>
@@ -1776,25 +1776,25 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
               subtitle="Esta acción no se puede deshacer"
               onClose={() => !deleteLoading && setDeleteTarget(null)}
               icon={<Trash2 size={20} className="text-red-500" />}
-              iconBg="bg-red-50"
+              iconBg="bg-red-500/10"
             />
             <div style={{ padding: "20px" }}>
               <div style={{
                 padding: "14px 16px", borderRadius: "10px",
-                background: "#FFF1F2", border: "1px solid #FECDD3",
+                background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)",
                 marginBottom: "18px",
               }}>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "#0F172A", marginBottom: "4px" }}>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "#f1f5f9", marginBottom: "4px" }}>
                   {deleteTarget.concepto}
                 </div>
-                <div style={{ fontSize: "12px", color: "#64748B" }}>
+                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>
                   {fmtUSD(Number(deleteTarget.monto_debe))} · {fmtFecha(deleteTarget.fecha)}
                 </div>
               </div>
               {deleteError && (
                 <div style={{
                   padding: "10px 12px", borderRadius: "8px",
-                  background: "#FFF1F2", border: "1px solid #FECDD3",
+                  background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)",
                   fontSize: "12px", color: "#E11D48", marginBottom: "14px",
                 }}>
                   {deleteError}
