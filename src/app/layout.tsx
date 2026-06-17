@@ -4,7 +4,6 @@ import "./globals.css"
 import Sidebar from "@/components/Sidebar"
 import AIAssistant from "@/components/AIAssistant"
 import { createServerClient } from "@/lib/supabase"
-import { auth } from "@/auth"
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -21,19 +20,16 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const supabase = createServerClient()
-  const [{ count }, session] = await Promise.all([
-    supabase
-      .from("agentes")
-      .select("*", { count: "exact", head: true })
-      .eq("activo", true),
-    auth(),
-  ])
+  const { count } = await supabase
+    .from("agentes")
+    .select("*", { count: "exact", head: true })
+    .eq("activo", true)
 
   return (
     <html lang="es" className={`${jakarta.variable} h-full antialiased`}>
       <body className="h-full overflow-hidden" style={{ background: "linear-gradient(135deg, #0a0a1a 0%, #0d0d2b 50%, #0a1a0f 100%)" }}>
         <div style={{ display: "flex", height: "100%" }}>
-          <Sidebar agenteCount={count ?? 0} user={session?.user ?? null} />
+          <Sidebar agenteCount={count ?? 0} />
           <main style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
             {children}
           </main>

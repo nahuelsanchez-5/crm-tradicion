@@ -16,11 +16,9 @@ import {
   BarChart3,
   Menu,
   X,
-  LogOut,
   LucideIcon,
 } from "lucide-react"
 import DolarWidget from "./DolarWidget"
-import { handleSignOut } from "@/app/actions"
 
 interface NavItem {
   href: string
@@ -47,14 +45,9 @@ const SYSTEM_NAV: NavItem[] = [
 
 interface Props {
   agenteCount: number
-  user?: {
-    name?: string | null
-    email?: string | null
-    image?: string | null
-  } | null
 }
 
-export default function Sidebar({ agenteCount, user }: Props) {
+export default function Sidebar({ agenteCount }: Props) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -110,25 +103,14 @@ export default function Sidebar({ agenteCount, user }: Props) {
 
       {/* User footer */}
       <div className="px-3 pb-4 pt-2" style={{ borderTop: "1px solid var(--crm-divider)" }}>
-        <div className="flex items-center gap-3 px-2 py-2 rounded-xl">
+        <div className="flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer hover:bg-white/[0.05] transition-colors duration-150">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[12px] font-bold text-white flex-shrink-0" style={{ background: "rgba(227,24,55,0.2)", border: "1px solid rgba(227,24,55,0.3)" }}>
-            {user?.name ? user.name.charAt(0).toUpperCase() : "?"}
+            N
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-semibold text-white/80 leading-none truncate">
-              {user?.name ?? "Usuario"}
-            </p>
+          <div className="min-w-0">
+            <p className="text-[12px] font-600 text-white/80 leading-none">Nahuel Sánchez</p>
             <p className="text-[10px] text-white/30 mt-0.5 uppercase tracking-wide">Staff</p>
           </div>
-          <form action={handleSignOut}>
-            <button
-              type="submit"
-              title="Cerrar sesión"
-              className="flex items-center justify-center w-7 h-7 rounded-lg text-white/30 hover:text-white/70 hover:bg-white/[0.07] transition-colors duration-150 border-0 bg-transparent cursor-pointer"
-            >
-              <LogOut size={13} />
-            </button>
-          </form>
         </div>
       </div>
     </>
