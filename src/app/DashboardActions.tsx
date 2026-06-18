@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { crearPago } from "@/app/pagos/actions"
 import { guardarEncuesta } from "@/app/encuestas/actions"
 import { crearOperacion } from "@/app/operaciones/actions"
-import { crearCartel } from "@/app/carteleria/actions"
 import { crearOferta } from "@/app/ofertas/actions"
 import { agregarMovimiento } from "@/app/ofertas/actions"
 import type { OfertaActiva } from "@/app/page"
@@ -14,13 +13,13 @@ import {
   Building2, Handshake, RefreshCw, LucideIcon,
 } from "lucide-react"
 
-interface AgenteSimple { id: string; nombre: string }
+interface AgenteSimple  { id: string; nombre: string }
+interface CartelActivo  { id: string; numero: number; direccion: string; tipo: string; agente: string }
 interface Props { agentes: AgenteSimple[]; ofertasActivas: OfertaActiva[] }
 type ModalT = "none" | "pago" | "carteleria" | "encuesta" | "operacion" | "oferta" | "actualizar_oferta"
 
 const CONCEPTOS_PAGO      = ["FEE mensual", "Licencias CRM", "Mainstreet", "Otros"]
 const TIPOS_OP            = ["Venta", "Alquiler", "Alquiler Temporal", "Referido", "Otro"]
-const TIPOS_CARTEL        = ["Casa", "Terreno", "Local", "Departamento", "Campo", "Galpón"]
 const TIPOLOGIAS_OFERTA   = ["Casa", "Departamento", "Terreno", "Local Comercial", "Oficina", "PH", "Campo", "Galpón", "Edificio", "Otro"]
 const TIPOS_OP_OFERTA     = ["Venta", "Alquiler", "Alquiler Temporal"]
 const TIPOS_MOVIMIENTO    = ["Seguimiento", "Llamada", "Reunión", "Nota", "Documentación", "Otro"]
@@ -98,7 +97,10 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
   const [pagoForm,      setPagoForm]      = useState({ agente_id: agentes[0]?.id ?? "", concepto: CONCEPTOS_PAGO[0], monto_pagado: "", fecha: todayStr })
   const [encForm,       setEncForm]       = useState({ mes: mesActual, anio: anioActual, enviadas: "", respondidas: "", nps_promedio: "" })
   const [opForm,        setOpForm]        = useState({ fecha: todayStr, direccion: "", agentes: "", tipo: TIPOS_OP[0], comision_bruta: "", comision_neta: "", encuesta_comprador: false, encuesta_vendedor: false })
-  const [cartelForm,    setCartelForm]    = useState({ numero: "", direccion: "", mlsId: "", vencimiento: todayStr, tipo: TIPOS_CARTEL[0], agente: "" })
+  const [cartelesActivos,   setCartelesActivos]   = useState<CartelActivo[]>([])
+  const [cartelesLoading,   setCartelesLoading]   = useState(false)
+  const [selectedCartelId,  setSelectedCartelId]  = useState("")
+  const [toastMsg,          setToastMsg]          = useState("")
   const [ofertaForm,    setOfertaForm]    = useState({ numero: "", direccion: "", tipologia: TIPOLOGIAS_OFERTA[0], tipo_operacion: TIPOS_OP_OFERTA[0], agente_vendedor_id: agentes[0]?.id ?? "", agente_comprador_id: "", monto_ofertado_usd: "", precio_publicacion_usd: "", fecha_oferta: todayStr, notas: "" })
   const [actualizarForm, setActualizarForm] = useState({ oferta_id: ofertasActivas[0]?.id ?? "", tipo: TIPOS_MOVIMIENTO[0], descripcion: "", monto_usd: "" })
 
@@ -110,11 +112,26 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
     return () => document.removeEventListener("keydown", h)
   }, [modal, closeModal])
 
+  useEffect(() => {
+    if (modal !== "carteleria") return
+    setCartelesLoading(true)
+    setCartelesActivos([])
+    fetch("/api/carteleria/listar")
+      .then(r => r.json())
+      .then((json: { data?: CartelActivo[] }) => {
+        const list = json.data ?? []
+        setCartelesActivos(list)
+        if (list[0]) setSelectedCartelId(list[0].id)
+      })
+      .catch(() => setCartelesActivos([]))
+      .finally(() => setCartelesLoading(false))
+  }, [modal])
+
   function openModal(m: ModalT) {
     setError("")
     setPagoForm({ agente_id: agentes[0]?.id ?? "", concepto: CONCEPTOS_PAGO[0], monto_pagado: "", fecha: todayStr })
     setOpForm({ fecha: todayStr, direccion: "", agentes: "", tipo: TIPOS_OP[0], comision_bruta: "", comision_neta: "", encuesta_comprador: false, encuesta_vendedor: false })
-    setCartelForm({ numero: "", direccion: "", mlsId: "", vencimiento: todayStr, tipo: TIPOS_CARTEL[0], agente: "" })
+    setSelectedCartelId("")
     setOfertaForm({ numero: "", direccion: "", tipologia: TIPOLOGIAS_OFERTA[0], tipo_operacion: TIPOS_OP_OFERTA[0], agente_vendedor_id: agentes[0]?.id ?? "", agente_comprador_id: "", monto_ofertado_usd: "", precio_publicacion_usd: "", fecha_oferta: todayStr, notas: "" })
     setActualizarForm({ oferta_id: ofertasActivas[0]?.id ?? "", tipo: TIPOS_MOVIMIENTO[0], descripcion: "", monto_usd: "" })
     setModal(m)
@@ -152,11 +169,34 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
 
   function handleCarteleria(e: React.FormEvent) {
     e.preventDefault()
-    if (!cartelForm.numero || !cartelForm.agente) { setError("Número y agente son obligatorios"); return }
+    if (!selectedCartelId) { setError("Seleccioná un cartel"); return }
+    const cartel = cartelesActivos.find(c => c.id === selectedCartelId)
+    if (!cartel) { setError("Cartel no encontrado"); return }
     startTransition(async () => {
-      const r = await crearCartel({ numero: parseInt(cartelForm.numero) || 0, direccion: cartelForm.direccion, mlsId: cartelForm.mlsId, vencimiento: cartelForm.vencimiento, tipo: cartelForm.tipo, agente: cartelForm.agente })
-      if (r.error) setError(r.error)
-      else { closeModal(); router.refresh() }
+      try {
+        const res = await fetch("/api/carteleria/devolver", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            airtable_record_id: cartel.id,
+            nro_cartel:         cartel.numero,
+            direccion:          cartel.direccion,
+            agente:             cartel.agente,
+            tipo_propiedad:     cartel.tipo,
+          }),
+        })
+        const result = await res.json() as { success: boolean; error?: string }
+        if (!result.success) {
+          setError(result.error ?? "Error al registrar la devolución")
+        } else {
+          closeModal()
+          setToastMsg("Cartel devuelto correctamente")
+          setTimeout(() => setToastMsg(""), 4000)
+          router.refresh()
+        }
+      } catch {
+        setError("Error de conexión")
+      }
     })
   }
 
@@ -205,6 +245,21 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
 
   return (
     <>
+      {/* Toast */}
+      {toastMsg && (
+        <div style={{
+          position: "fixed", top: "20px", right: "20px", zIndex: 9999,
+          background: "rgba(16,185,129,0.15)", border: "1px solid rgba(16,185,129,0.35)",
+          borderRadius: "10px", padding: "12px 18px",
+          color: "#34d399", fontSize: "13px", fontWeight: 600,
+          backdropFilter: "blur(8px)",
+          display: "flex", alignItems: "center", gap: "8px",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+        }}>
+          ✓ {toastMsg}
+        </div>
+      )}
+
       {/* Quick action buttons */}
       <div className="grid grid-cols-3 md:grid-cols-6 gap-2.5 md:gap-3 mb-5 md:mb-6">
         {QUICK_BTNS.map(({ icon: Icon, label, sublabel, m, iconBg, iconColor }) => (
@@ -253,39 +308,38 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
         </ModalShell>
       )}
 
-      {/* MODAL CARTELERÍA */}
+      {/* MODAL CARTELERÍA — DEVOLUCIÓN */}
       {modal === "carteleria" && (
-        <ModalShell title="Devolución de Cartelería" subtitle="Registrar devolución en Airtable" onClose={closeModal}>
+        <ModalShell title="Devolución de Cartelería" subtitle="Seleccioná el cartel a devolver" onClose={closeModal}>
           <form onSubmit={handleCarteleria} className="p-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Número de cartel *">
-                <input type="number" min="1" placeholder="42" value={cartelForm.numero} onChange={e => setCartelForm(f => ({ ...f, numero: e.target.value }))} className={inp} required />
-              </Field>
-              <Field label="Tipo de propiedad">
-                <select value={cartelForm.tipo} onChange={e => setCartelForm(f => ({ ...f, tipo: e.target.value }))} className={inp}>
-                  {TIPOS_CARTEL.map(t => <option key={t} value={t}>{t}</option>)}
+            <Field label="Cartel a devolver *">
+              {cartelesLoading ? (
+                <div className="flex items-center gap-2 py-2.5 text-[13px]" style={{ color: "var(--crm-text-muted)" }}>
+                  <Loader2 size={14} className="animate-spin" />
+                  Cargando carteles activos...
+                </div>
+              ) : cartelesActivos.length === 0 ? (
+                <div className="py-2.5 text-[13px]" style={{ color: "var(--crm-text-muted)" }}>
+                  No hay carteles activos en Airtable
+                </div>
+              ) : (
+                <select
+                  value={selectedCartelId}
+                  onChange={e => setSelectedCartelId(e.target.value)}
+                  className={inp}
+                  required
+                >
+                  <option value="">Seleccioná un cartel...</option>
+                  {cartelesActivos.map(c => (
+                    <option key={c.id} value={c.id}>
+                      Nº {c.numero} — {c.direccion || "Sin dirección"} ({c.agente || "Sin agente"})
+                    </option>
+                  ))}
                 </select>
-              </Field>
-            </div>
-            <Field label="Dirección">
-              <input type="text" placeholder="Av. Colón 1234" value={cartelForm.direccion} onChange={e => setCartelForm(f => ({ ...f, direccion: e.target.value }))} className={inp} />
-            </Field>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="MLS ID">
-                <input type="text" placeholder="MLS-001" value={cartelForm.mlsId} onChange={e => setCartelForm(f => ({ ...f, mlsId: e.target.value }))} className={inp} />
-              </Field>
-              <Field label="Vencimiento">
-                <input type="date" value={cartelForm.vencimiento} onChange={e => setCartelForm(f => ({ ...f, vencimiento: e.target.value }))} className={inp} />
-              </Field>
-            </div>
-            <Field label="Agente *">
-              <input type="text" placeholder="Nombre del agente" value={cartelForm.agente} onChange={e => setCartelForm(f => ({ ...f, agente: e.target.value }))} list="agentes-cartel-list" className={inp} required />
-              <datalist id="agentes-cartel-list">
-                {agentes.map(a => <option key={a.id} value={a.nombre} />)}
-              </datalist>
+              )}
             </Field>
             <ErrorBox />
-            <SubmitRow isPending={isPending} onCancel={closeModal} label="Registrar" />
+            <SubmitRow isPending={isPending || cartelesLoading} onCancel={closeModal} label="Confirmar devolución" />
           </form>
         </ModalShell>
       )}
