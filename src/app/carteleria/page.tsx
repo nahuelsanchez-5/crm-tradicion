@@ -56,12 +56,24 @@ async function fetchCarteles(): Promise<CartelRow[]> {
 export default async function CarteleriaPage() {
   const supabase = createServerClient()
 
-  const [carteles, { data: agentesRaw }] = await Promise.all([
+  const now       = new Date()
+  const year      = now.getFullYear()
+  const month     = now.getMonth() + 1
+  const startDate = `${year}-${String(month).padStart(2, "00")}-01`
+  const endYear   = month === 12 ? year + 1 : year
+  const endMonth  = month === 12 ? 1 : month + 1
+  const endDate   = `${endYear}-${String(endMonth).padStart(2, "00")}-01`
+
+  const [carteles, { data: agentesRaw }, { count: recuperadosMes }] = await Promise.all([
     fetchCarteles(),
     supabase.from("agentes").select("nombre").eq("activo", true).order("nombre"),
+    supabase.from("carteles_devueltos")
+      .select("*", { count: "exact", head: true })
+      .gte("fecha_devolucion", startDate)
+      .lt("fecha_devolucion", endDate),
   ])
 
   const agentes = (agentesRaw ?? []).map(a => a.nombre as string)
 
-  return <CarteleriaClient carteles={carteles} agentes={agentes} />
+  return <CarteleriaClient carteles={carteles} agentes={agentes} recuperadosMes={recuperadosMes ?? 0} />
 }

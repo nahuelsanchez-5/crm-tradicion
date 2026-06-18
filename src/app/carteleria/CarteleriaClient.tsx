@@ -112,15 +112,16 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 //  MAIN COMPONENT
 // ═══════════════════════════════════════════════════════
 interface Props {
-  carteles: CartelRow[]
-  agentes:  string[]       // de Supabase (fallback a AGENTES_AIRTABLE si vacío)
+  carteles:       CartelRow[]
+  agentes:        string[]       // de Supabase (fallback a AGENTES_AIRTABLE si vacío)
+  recuperadosMes: number
 }
 
 const EMPTY_FORM: ModalForm = {
   numero: "", direccion: "", mlsId: "", vencimiento: "", tipo: "", agente: "",
 }
 
-export default function CarteleriaClient({ carteles, agentes }: Props) {
+export default function CarteleriaClient({ carteles, agentes, recuperadosMes }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -337,7 +338,7 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
       <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
 
         {/* ── KPI Cards ─────────────────────────── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px", marginBottom: "20px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "14px", marginBottom: "20px" }}>
           <KpiCard
             title="Total carteles activos"
             value={stats.total}
@@ -361,6 +362,14 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
             iconBg="bg-rose-500/15"
             iconColor="text-rose-400"
             icon={<Award size={18} />}
+          />
+          <KpiCard
+            title="Recuperados este mes"
+            value={recuperadosMes}
+            badge={recuperadosMes === 1 ? "cartel devuelto" : "carteles devueltos"}
+            iconBg="bg-emerald-500/15"
+            iconColor="text-emerald-400"
+            icon={<RotateCcw size={18} />}
           />
         </div>
 
