@@ -165,7 +165,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes }: 
   const filtered = useMemo(() => {
     const q = busqueda.toLowerCase()
     return carteles.filter(c => {
-      if (q && !c.direccion.toLowerCase().includes(q) && !c.mlsId.toLowerCase().includes(q)) return false
+      if (q && !c.direccion.toLowerCase().includes(q) && !c.mlsId.toLowerCase().includes(q) && !String(c.numero).includes(q)) return false
       if (filtroAgente && c.agente !== filtroAgente) return false
       if (filtroTipo   && c.tipo   !== filtroTipo)   return false
       return true
@@ -430,7 +430,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes }: 
             }} />
             <input
               type="text"
-              placeholder="Buscar por dirección o MLS-ID..."
+              placeholder="Buscar por dirección, Nº de cartel o MLS-ID..."
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
               style={{ ...inp, paddingLeft: "33px" }}
