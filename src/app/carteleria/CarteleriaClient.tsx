@@ -3,9 +3,9 @@
 import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import KpiCard from "@/components/KpiCard"
-import { crearCartel, editarCartel, devolverCartel } from "./actions"
+import { crearCartel, editarCartel } from "./actions"
 import type { CartelFormData } from "./actions"
-import { MapPin, AlertTriangle, Award, X, Loader2, Plus, Search, CheckCircle2, Save, RotateCcw } from "lucide-react"
+import { MapPin, AlertTriangle, Award, X, Loader2, Plus, Search, CheckCircle2, Save, RotateCcw, ChevronDown } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────
 export interface CartelRow {
@@ -43,6 +43,21 @@ const AGENTES_AIRTABLE = [
   "Silvina Scordo", "Vanina Bravo",
 ]
 
+const MONTH_NAMES = [
+  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
+]
+
+interface CartelDevuelto {
+  id:                 string | number
+  airtable_record_id: string
+  nro_cartel:         number
+  direccion:          string
+  agente:             string
+  tipo_propiedad:     string
+  fecha_devolucion:   string
+}
+
 // ── Helpers ───────────────────────────────────────────
 function diasColor(d: number): string {
   if (d > 30)  return "#059669"
@@ -60,6 +75,13 @@ function fmtDate(iso: string): string {
   if (!iso) return "—"
   const p = iso.split("-")
   return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : iso
+}
+
+function fmtDateTime(iso: string): string {
+  if (!iso) return "—"
+  const d   = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 // ── Shared styles ─────────────────────────────────────
@@ -119,6 +141,13 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
   const [devolverLoading, setDevolverLoading] = useState(false)
   const [devolverError,   setDevolverError]   = useState("")
 
+  // ── Devueltos ──────────────────────────────────────
+  const [devueltosOpen,    setDevueltosOpen]    = useState(false)
+  const [devueltosMes,     setDevueltosMes]     = useState(() => new Date().getMonth() + 1)
+  const [devueltosAnio,    setDevueltosAnio]    = useState(() => new Date().getFullYear())
+  const [devueltosData,    setDevueltosData]    = useState<CartelDevuelto[]>([])
+  const [devueltosLoading, setDevueltosLoading] = useState(false)
+
   // ── KPI stats ──────────────────────────────────────
   const stats = useMemo(() => {
     const total    = carteles.length
@@ -161,6 +190,23 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
     if (modalMode !== "none") document.addEventListener("keydown", h)
     return () => document.removeEventListener("keydown", h)
   }, [modalMode, closeModal])
+
+  const fetchDevueltos = useCallback(async (mes: number, anio: number) => {
+    setDevueltosLoading(true)
+    try {
+      const res  = await fetch(`/api/carteleria/devueltos?month=${mes}&year=${anio}`)
+      const json = await res.json() as { data?: CartelDevuelto[] }
+      setDevueltosData(json.data ?? [])
+    } catch {
+      setDevueltosData([])
+    } finally {
+      setDevueltosLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (devueltosOpen) fetchDevueltos(devueltosMes, devueltosAnio)
+  }, [devueltosOpen, devueltosMes, devueltosAnio, fetchDevueltos])
 
   function openNuevo() {
     setForm(EMPTY_FORM); setError(""); setModalMode("nuevo")
@@ -220,13 +266,30 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
     if (!devolverTarget) return
     setDevolverLoading(true)
     setDevolverError("")
-    const result = await devolverCartel(devolverTarget.id)
-    setDevolverLoading(false)
-    if (result.error) {
-      setDevolverError(result.error)
-    } else {
-      setDevolverTarget(null)
-      router.refresh()
+    try {
+      const res = await fetch("/api/carteleria/devolver", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          airtable_record_id: devolverTarget.id,
+          nro_cartel:         devolverTarget.numero,
+          direccion:          devolverTarget.direccion,
+          agente:             devolverTarget.agente,
+          tipo_propiedad:     devolverTarget.tipo,
+        }),
+      })
+      const result = await res.json() as { success: boolean; error?: string }
+      if (!result.success) {
+        setDevolverError(result.error ?? "Error al registrar la devolución")
+      } else {
+        setDevolverTarget(null)
+        if (devueltosOpen) fetchDevueltos(devueltosMes, devueltosAnio)
+        router.refresh()
+      }
+    } catch {
+      setDevolverError("Error de conexión")
+    } finally {
+      setDevolverLoading(false)
     }
   }
 
@@ -418,6 +481,7 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
             </span>
           </div>
 
+
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
@@ -557,6 +621,120 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* ── Carteles Devueltos ─────────────────────── */}
+        <div style={{ marginTop: "20px" }}>
+          <button
+            onClick={() => setDevueltosOpen(o => !o)}
+            style={{
+              width: "100%",
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "14px 20px",
+              background: "#13131a",
+              border: "1px solid rgba(255,255,255,0.07)",
+              borderRadius: devueltosOpen ? "14px 14px 0 0" : "14px",
+              cursor: "pointer", fontFamily: "inherit",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <ChevronDown
+                size={16}
+                color="rgba(255,255,255,0.45)"
+                style={{ transform: devueltosOpen ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.2s" }}
+              />
+              <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>Carteles Devueltos</span>
+            </div>
+            {devueltosOpen && !devueltosLoading && (
+              <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", fontWeight: 600 }}>
+                {devueltosData.length} devuelto{devueltosData.length !== 1 ? "s" : ""} en {MONTH_NAMES[devueltosMes - 1]} {devueltosAnio}
+              </span>
+            )}
+          </button>
+
+          {devueltosOpen && (
+            <div style={{
+              background: "#13131a",
+              border: "1px solid rgba(255,255,255,0.07)", borderTop: "none",
+              borderRadius: "0 0 14px 14px", padding: "16px 20px",
+            }}>
+              {/* Selector mes/año */}
+              <div style={{ display: "flex", gap: "10px", marginBottom: "16px", alignItems: "center", flexWrap: "wrap" }}>
+                <select
+                  value={devueltosMes}
+                  onChange={e => setDevueltosMes(Number(e.target.value))}
+                  style={{ ...inp, width: "auto", minWidth: "130px", cursor: "pointer" }}
+                >
+                  {MONTH_NAMES.map((n, i) => (
+                    <option key={i + 1} value={i + 1}>{n}</option>
+                  ))}
+                </select>
+                <select
+                  value={devueltosAnio}
+                  onChange={e => setDevueltosAnio(Number(e.target.value))}
+                  style={{ ...inp, width: "auto", minWidth: "90px", cursor: "pointer" }}
+                >
+                  {Array.from({ length: new Date().getFullYear() - 2023 }, (_, i) => 2024 + i).map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)" }}>
+                  {devueltosLoading
+                    ? "Cargando..."
+                    : `${devueltosData.length} cartel${devueltosData.length !== 1 ? "es" : ""} devuelto${devueltosData.length !== 1 ? "s" : ""}`
+                  }
+                </span>
+              </div>
+
+              {/* Tabla devueltos */}
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                      {["Nº Cartel", "Dirección", "Agente", "Fecha Devolución"].map(h => (
+                        <th key={h} style={{
+                          padding: "10px 16px", textAlign: "left",
+                          fontSize: "10.5px", fontWeight: 700,
+                          textTransform: "uppercase" as const,
+                          letterSpacing: "0.8px", color: "rgba(255,255,255,0.35)",
+                          whiteSpace: "nowrap",
+                        }}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {devueltosData.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} style={{
+                          padding: "36px", textAlign: "center",
+                          color: "rgba(255,255,255,0.35)", fontSize: "13px",
+                        }}>
+                          No hay carteles devueltos en este período
+                        </td>
+                      </tr>
+                    ) : devueltosData.map((d, i) => (
+                      <tr key={d.id} style={{ borderBottom: i < devueltosData.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
+                        <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: 700, color: "rgba(255,255,255,0.5)" }}>
+                          {d.nro_cartel || "—"}
+                        </td>
+                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "#f1f5f9", maxWidth: "220px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {d.direccion || "—"}
+                        </td>
+                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "#f1f5f9", whiteSpace: "nowrap" }}>
+                          {d.agente || "—"}
+                        </td>
+                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
+                          {fmtDateTime(d.fecha_devolucion)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -776,7 +954,7 @@ export default function CarteleriaClient({ carteles, agentes }: Props) {
 
             <div style={{ padding: "20px" }}>
               <p style={{ fontSize: "13px", color: "#f1f5f9", marginBottom: "8px", lineHeight: 1.5 }}>
-                ¿Registrar la devolución de este cartel? Se actualizará el vencimiento al día de hoy en Airtable.
+                ¿Confirmar la devolución de este cartel? Se registrará en el historial y se eliminará de Airtable.
               </p>
               <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "20px" }}>
                 Agente: <strong>{devolverTarget.agente || "—"}</strong>

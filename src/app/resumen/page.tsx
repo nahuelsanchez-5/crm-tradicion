@@ -37,7 +37,7 @@ export default async function ResumenPage() {
     { data: encuestas },
     { data: operaciones },
     { data: configs },
-    { data: carteles },
+    { count: cartelesDevueltosCount },
   ] = await Promise.all([
     supabase.from("pagos")
       .select("agente_id, monto_debe, monto_pagado, estado, concepto")
@@ -54,13 +54,13 @@ export default async function ResumenPage() {
     supabase.from("config")
       .select("clave, valor")
       .in("clave", ["obj_facturacion_anual", "obj_encuestas_nps", "obj_carteles"]),
-    supabase.from("carteles")
-      .select("total_entregados")
-      .eq("mes", month).eq("anio", year)
-      .maybeSingle(),
+    supabase.from("carteles_devueltos")
+      .select("*", { count: "exact", head: true })
+      .gte("fecha_devolucion", startDate)
+      .lt("fecha_devolucion", endDate),
   ])
 
-  const cartelesCount = carteles?.total_entregados ?? 0
+  const cartelesCount = cartelesDevueltosCount ?? 0
 
   // ── Config values ────────────────────────────────────────
   const configMap = Object.fromEntries((configs ?? []).map(c => [c.clave, c.valor]))
@@ -117,8 +117,8 @@ export default async function ResumenPage() {
     },
     {
       label:    "Cartelería",
-      objetivo: `${objCarteles} carteles activos`,
-      cumplido: `${cartelesCount} cartel${cartelesCount !== 1 ? "es" : ""} activos`,
+      objetivo: `${objCarteles} carteles recuperados`,
+      cumplido: `${cartelesCount} cartel${cartelesCount !== 1 ? "es" : ""} recuperado${cartelesCount !== 1 ? "s" : ""}`,
       aCobrar:  cartelesACobrar,
     },
     {
