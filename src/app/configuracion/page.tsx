@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { getConfig } from "./actions"
 import ConfiguracionClient from "./ConfiguracionClient"
 

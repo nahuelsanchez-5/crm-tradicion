@@ -135,9 +135,18 @@
   }
   body {
     @apply bg-background text-foreground;
+    color-scheme: dark;
   }
   html {
     @apply font-sans;
+  }
+  select {
+    color-scheme: dark;
+  }
+  select option {
+    background: #0f0f2e;
+    color: #f1f5f9;
+    opacity: 1;
   }
 }
 
@@ -205,6 +214,10 @@
   .crm-input option {
     background: #0f0f2e;
     color: var(--crm-text);
+  }
+  select.crm-input {
+    background: #13131a;
+    color-scheme: dark;
   }
   .crm-label {
     @apply block text-[10.5px] font-semibold uppercase tracking-wide mb-1.5;

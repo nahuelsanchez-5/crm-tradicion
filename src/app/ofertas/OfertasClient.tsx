@@ -271,7 +271,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
     const activas      = ofertas.filter(o => o.estado !== "Cerradas" && o.estado !== "Caídas").length
     const negociacion  = ofertas.filter(o => o.estado === "Espera rta. vendedor" || o.estado === "Espera rta. comprador").length
     const preCierre    = ofertas.filter(o => o.estado === "Aceptadas / Pre cierre").length
-    const cerradasMes  = ofertas.filter(o => o.estado === "Cerradas" && o.fecha_oferta?.startsWith(currentMonth)).length
+    const cerradasMes  = ofertas.filter(o => o.estado === "Cerradas" && (o.updated_at ?? o.fecha_oferta ?? "").startsWith(currentMonth)).length
     return { activas, negociacion, preCierre, cerradasMes }
   }, [ofertas])
 

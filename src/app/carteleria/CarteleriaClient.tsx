@@ -5,9 +5,14 @@ import { useRouter } from "next/navigation"
 import KpiCard from "@/components/KpiCard"
 import { crearCartel, editarCartel } from "./actions"
 import type { CartelFormData } from "./actions"
-import { MapPin, AlertTriangle, Award, X, Loader2, Plus, Search, CheckCircle2, Save, RotateCcw, ChevronDown } from "lucide-react"
+import { MapPin, AlertTriangle, X, Loader2, Plus, Search, CheckCircle2, Save, RotateCcw, ChevronDown, MessageCircle } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────
+export interface AgenteConTel {
+  nombre:   string
+  telefono: string | null
+}
+
 export interface CartelRow {
   id:            string
   numero:        number
@@ -113,7 +118,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 // ═══════════════════════════════════════════════════════
 interface Props {
   carteles:       CartelRow[]
-  agentes:        string[]       // de Supabase (fallback a AGENTES_AIRTABLE si vacío)
+  agentes:        AgenteConTel[] // de Supabase (fallback a AGENTES_AIRTABLE si vacío)
   recuperadosMes: number
 }
 
@@ -142,6 +147,9 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes }: 
   const [devolverLoading, setDevolverLoading] = useState(false)
   const [devolverError,   setDevolverError]   = useState("")
 
+  // ── Panel toggle (vencidos / proximos) ────────────
+  const [panelOpen, setPanelOpen] = useState<"vencidos" | "proximos" | null>(null)
+
   // ── Devueltos ──────────────────────────────────────
   const [devueltosOpen,    setDevueltosOpen]    = useState(false)
   const [devueltosMes,     setDevueltosMes]     = useState(() => new Date().getMonth() + 1)
@@ -150,16 +158,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes }: 
   const [devueltosLoading, setDevueltosLoading] = useState(false)
 
   // ── KPI stats ──────────────────────────────────────
-  const stats = useMemo(() => {
-    const total    = carteles.length
-    const urgentes = carteles.filter(c => c.diasRestantes < 10).length
-    const byAgente: Record<string, number> = {}
-    carteles.forEach(c => {
-      if (c.agente) byAgente[c.agente] = (byAgente[c.agente] ?? 0) + 1
-    })
-    const top = Object.entries(byAgente).sort((a, b) => b[1] - a[1])[0] ?? null
-    return { total, urgentes, top }
-  }, [carteles])
+  const stats = useMemo(() => ({ total: carteles.length }), [carteles])
 
   // ── Filtered rows ──────────────────────────────────
   const filtered = useMemo(() => {
@@ -171,6 +170,11 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes }: 
       return true
     })
   }, [carteles, busqueda, filtroAgente, filtroTipo])
+
+  // ── Vencidos / próximos ────────────────────────────
+  const vencidos = useMemo(() => carteles.filter(c => c.diasRestantes < 0),  [carteles])
+  const proximos = useMemo(() => carteles.filter(c => c.diasRestantes >= 0 && c.diasRestantes <= 10), [carteles])
+
 
   // ── Unique values for filter dropdowns ─────────────
   const agentOptions = useMemo(() =>
@@ -295,7 +299,18 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes }: 
   }
 
   // ── Agentes para el modal ──────────────────────────
-  const modalAgentes = agentes.length > 0 ? agentes : AGENTES_AIRTABLE
+  const modalAgentes = agentes.length > 0 ? agentes.map(a => a.nombre) : AGENTES_AIRTABLE
+
+  // ── WhatsApp URL para un cartel ────────────────────
+  function buildWaUrl(c: CartelRow, type: "vencido" | "proximo"): string {
+    const ag    = agentes.find(a => a.nombre === c.agente)
+    const phone = ag?.telefono?.replace(/\D/g, "") ?? ""
+    const dias  = Math.abs(c.diasRestantes)
+    const msg   = type === "vencido"
+      ? `Hola ${c.agente || "agente"}, necesitamos retirar urgente el cartel Nº ${c.numero} ubicado en ${c.direccion || "sin dirección"}. Lleva ${dias} día${dias !== 1 ? "s" : ""} vencido. Gracias, RE/MAX Tradición.`
+      : `Hola ${c.agente || "agente"}, el cartel Nº ${c.numero} ubicado en ${c.direccion || "sin dirección"} vence en ${c.diasRestantes} día${c.diasRestantes !== 1 ? "s" : ""}. Por favor coordinar el retiro o renovación. Gracias, RE/MAX Tradición.`
+    return phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`
+  }
 
   // ── Styles ─────────────────────────────────────────
   const cardStyle: React.CSSProperties = {
@@ -338,7 +353,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes }: 
       <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
 
         {/* ── KPI Cards ─────────────────────────── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "14px", marginBottom: "20px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "14px", marginBottom: panelOpen ? "8px" : "20px" }}>
           <KpiCard
             title="Total carteles activos"
             value={stats.total}
@@ -347,22 +362,32 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes }: 
             iconColor="text-teal-400"
             icon={<MapPin size={18} />}
           />
-          <KpiCard
-            title="Vencen en menos de 10 días"
-            value={stats.urgentes}
-            badge={stats.urgentes > 0 ? "Atención requerida" : "Sin urgencias"}
-            iconBg={stats.urgentes > 0 ? "bg-rose-500/15" : "bg-emerald-500/15"}
-            iconColor={stats.urgentes > 0 ? "text-rose-400" : "text-emerald-400"}
-            icon={<AlertTriangle size={18} />}
-          />
-          <KpiCard
-            title="Agente con más carteles"
-            value={stats.top ? stats.top[0].split(" ")[0] : "—"}
-            badge={stats.top ? `${stats.top[1]} cartel${stats.top[1] !== 1 ? "es" : ""}` : "Sin datos"}
-            iconBg="bg-rose-500/15"
-            iconColor="text-rose-400"
-            icon={<Award size={18} />}
-          />
+          <div
+            onClick={() => setPanelOpen(p => p === "proximos" ? null : "proximos")}
+            style={{ cursor: "pointer" }}
+          >
+            <KpiCard
+              title="Atención requerida"
+              value={proximos.length}
+              badge={panelOpen === "proximos" ? "▲ Cerrar" : proximos.length > 0 ? "Ver detalles" : "Sin urgencias"}
+              iconBg={proximos.length > 0 ? "bg-amber-500/15" : "bg-emerald-500/15"}
+              iconColor={proximos.length > 0 ? "text-amber-400" : "text-emerald-400"}
+              icon={<AlertTriangle size={18} />}
+            />
+          </div>
+          <div
+            onClick={() => setPanelOpen(p => p === "vencidos" ? null : "vencidos")}
+            style={{ cursor: "pointer" }}
+          >
+            <KpiCard
+              title="Vencidos"
+              value={vencidos.length}
+              badge={panelOpen === "vencidos" ? "▲ Cerrar" : vencidos.length > 0 ? "⚠️ Ver detalles" : "Sin vencidos"}
+              iconBg="bg-rose-500/15"
+              iconColor="text-rose-400"
+              icon={<AlertTriangle size={18} />}
+            />
+          </div>
           <KpiCard
             title="Recuperados este mes"
             value={recuperadosMes}
@@ -373,51 +398,108 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes }: 
           />
         </div>
 
-        {/* ── Alerta de vencimiento próximo ────────── */}
-        {carteles.filter(c => c.diasRestantes <= 10).length > 0 && (
-          <div style={{
-            background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.25)",
-            borderRadius: "12px", padding: "14px 18px", marginBottom: "16px",
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-              <AlertTriangle size={14} color="#fb923c" />
-              <span style={{ fontSize: "13px", fontWeight: 700, color: "#fb923c" }}>
-                Carteles próximos a vencer (≤10 días)
-              </span>
-              <span style={{
-                background: "#EA580C", color: "white",
-                padding: "1px 8px", borderRadius: "20px",
-                fontSize: "11px", fontWeight: 700,
+        {/* ── Inline alert panel ─────────────────── */}
+        <div style={{
+          overflow: "hidden",
+          maxHeight: panelOpen ? "600px" : "0px",
+          transition: "max-height 0.35s ease",
+          marginBottom: panelOpen ? "20px" : "0px",
+        }}>
+          {panelOpen && (
+            <div style={{
+              background: "#13131a",
+              border: `1px solid ${panelOpen === "vencidos" ? "rgba(239,68,68,0.3)" : "rgba(245,158,11,0.3)"}`,
+              borderRadius: "14px",
+              overflow: "hidden",
+            }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: "8px",
+                padding: "12px 18px",
+                background: panelOpen === "vencidos" ? "rgba(239,68,68,0.08)" : "rgba(245,158,11,0.08)",
+                borderBottom: `1px solid ${panelOpen === "vencidos" ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)"}`,
               }}>
-                {carteles.filter(c => c.diasRestantes <= 10).length}
-              </span>
+                <span style={{ fontSize: "15px" }}>{panelOpen === "vencidos" ? "⚠️" : "🕐"}</span>
+                <span style={{ fontSize: "13px", fontWeight: 700, color: panelOpen === "vencidos" ? "#ef4444" : "#f59e0b" }}>
+                  {panelOpen === "vencidos"
+                    ? `Carteles vencidos — ${vencidos.length} en total`
+                    : `Próximos a vencer (0–10 días) — ${proximos.length} en total`
+                  }
+                </span>
+              </div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                      {["Nº", "Dirección", "Agente", panelOpen === "vencidos" ? "Vencido hace" : "Vence en", "Acciones"].map(h => (
+                        <th key={h} style={{
+                          padding: "10px 14px", textAlign: "left",
+                          fontSize: "10px", fontWeight: 700,
+                          textTransform: "uppercase" as const,
+                          letterSpacing: "0.8px", color: "rgba(255,255,255,0.4)",
+                          whiteSpace: "nowrap",
+                        }}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(panelOpen === "vencidos" ? vencidos : proximos).map(c => (
+                      <tr key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                        <td style={{ padding: "10px 14px", fontSize: "13px", fontWeight: 700, color: panelOpen === "vencidos" ? "#ef4444" : "#f59e0b", whiteSpace: "nowrap" }}>
+                          {c.numero}
+                        </td>
+                        <td style={{ padding: "10px 14px", fontSize: "13px", color: "#f1f5f9", maxWidth: "280px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {c.direccion || "—"}
+                        </td>
+                        <td style={{ padding: "10px 14px", fontSize: "12px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap" }}>
+                          {c.agente || "—"}
+                        </td>
+                        <td style={{ padding: "10px 14px", fontSize: "12px", fontWeight: 600, color: panelOpen === "vencidos" ? "#ef4444" : "#f59e0b", whiteSpace: "nowrap" }}>
+                          {panelOpen === "vencidos"
+                            ? `${Math.abs(c.diasRestantes)}d`
+                            : c.diasRestantes === 0 ? "Hoy" : `${c.diasRestantes}d`
+                          }
+                        </td>
+                        <td style={{ padding: "10px 14px" }}>
+                          <div style={{ display: "flex", gap: "6px" }}>
+                            <button
+                              onClick={() => { setDevolverTarget(c); setDevolverError("") }}
+                              style={{
+                                padding: "4px 10px", borderRadius: "6px",
+                                border: "1px solid rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.08)",
+                                fontSize: "11px", fontWeight: 600, color: "#f87171",
+                                cursor: "pointer", fontFamily: "inherit",
+                                display: "flex", alignItems: "center", gap: "4px",
+                              }}
+                            >
+                              <RotateCcw size={11} /> Devolver
+                            </button>
+                            <a
+                              href={buildWaUrl(c, panelOpen === "vencidos" ? "vencido" : "proximo")}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                padding: "4px 10px", borderRadius: "6px",
+                                border: "1px solid rgba(34,197,94,0.3)", background: "rgba(34,197,94,0.08)",
+                                fontSize: "11px", fontWeight: 600, color: "#4ade80",
+                                cursor: "pointer", fontFamily: "inherit", textDecoration: "none",
+                                display: "flex", alignItems: "center", gap: "4px",
+                              }}
+                            >
+                              <MessageCircle size={11} /> WA
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-              {carteles.filter(c => c.diasRestantes <= 10).map(c => (
-                <div key={c.id} style={{
-                  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(251,146,60,0.2)",
-                  borderRadius: "10px", padding: "8px 12px",
-                  display: "flex", alignItems: "center", gap: "10px",
-                }}>
-                  <span style={{
-                    background: c.diasRestantes <= 0 ? "rgba(248,113,113,0.12)" : "rgba(251,191,36,0.12)",
-                    color: c.diasRestantes <= 0 ? "#f87171" : "#fbbf24",
-                    padding: "2px 8px", borderRadius: "6px",
-                    fontSize: "11px", fontWeight: 700,
-                  }}>
-                    #{c.numero}
-                  </span>
-                  <div>
-                    <div style={{ fontSize: "12px", fontWeight: 600, color: "#f1f5f9" }}>{c.direccion || "—"}</div>
-                    <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)" }}>
-                      {c.agente} · {c.diasRestantes <= 0 ? "Vencido" : `${c.diasRestantes}d`}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+          )}
+        </div>
+
 
         {/* ── Filtros ──────────────────────────────── */}
         <div style={{ display: "flex", gap: "10px", marginBottom: "14px", flexWrap: "wrap", alignItems: "center" }}>

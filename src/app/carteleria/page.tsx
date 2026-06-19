@@ -66,14 +66,17 @@ export default async function CarteleriaPage() {
 
   const [carteles, { data: agentesRaw }, { count: recuperadosMes }] = await Promise.all([
     fetchCarteles(),
-    supabase.from("agentes").select("nombre").eq("activo", true).order("nombre"),
+    supabase.from("agentes").select("nombre, telefono").eq("activo", true).order("nombre"),
     supabase.from("carteles_devueltos")
       .select("*", { count: "exact", head: true })
       .gte("fecha_devolucion", startDate)
       .lt("fecha_devolucion", endDate),
   ])
 
-  const agentes = (agentesRaw ?? []).map(a => a.nombre as string)
+  const agentes = (agentesRaw ?? []).map(a => ({
+    nombre:   a.nombre   as string,
+    telefono: (a.telefono as string | null) ?? null,
+  }))
 
   return <CarteleriaClient carteles={carteles} agentes={agentes} recuperadosMes={recuperadosMes ?? 0} />
 }
