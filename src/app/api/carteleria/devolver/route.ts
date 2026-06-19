@@ -15,17 +15,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const { airtable_record_id, nro_cartel, direccion, agente, tipo_propiedad } = body
 
-    if (!airtable_record_id || !nro_cartel) {
+    if (!nro_cartel) {
       return NextResponse.json({ success: false, error: "Datos incompletos" }, { status: 400 })
     }
 
-    const supabase       = createServerClient()
+    const supabase         = createServerClient()
     const fecha_devolucion = new Date().toISOString()
 
     // 1. INSERT en Supabase
     const { data: inserted, error: insertError } = await supabase
       .from("carteles_devueltos")
-      .insert({ airtable_record_id, nro_cartel, direccion, agente, tipo_propiedad, fecha_devolucion })
+      .insert({ airtable_record_id: airtable_record_id ?? null, nro_cartel, direccion, agente, tipo_propiedad, fecha_devolucion })
       .select("id")
       .single()
 
@@ -33,18 +33,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ success: false, error: insertError.message }, { status: 500 })
     }
 
-    // 2. DELETE en Airtable
-    const airtableRes = await fetch(`${AIRTABLE_TABLE_URL}/${airtable_record_id}`, {
-      method:  "DELETE",
-      headers: { Authorization: `Bearer ${process.env.AIRTABLE_TOKEN}` },
-    })
+    // 2. DELETE en Airtable (solo si hay record_id)
+    if (airtable_record_id) {
+      const airtableRes = await fetch(`${AIRTABLE_TABLE_URL}/${airtable_record_id}`, {
+        method:  "DELETE",
+        headers: { Authorization: `Bearer ${process.env.AIRTABLE_TOKEN}` },
+      })
 
-    if (!airtableRes.ok) {
-      // 3. Rollback: eliminar el registro de Supabase
-      await supabase.from("carteles_devueltos").delete().eq("id", inserted.id)
-      const errBody = await airtableRes.json().catch(() => ({})) as { error?: { message?: string } }
-      const errMsg  = errBody.error?.message ?? `Error Airtable ${airtableRes.status}`
-      return NextResponse.json({ success: false, error: errMsg }, { status: 500 })
+      if (!airtableRes.ok) {
+        // 3. Rollback: eliminar el registro de Supabase
+        await supabase.from("carteles_devueltos").delete().eq("id", inserted.id)
+        const errBody = await airtableRes.json().catch(() => ({})) as { error?: { message?: string } }
+        const errMsg  = errBody.error?.message ?? `Error Airtable ${airtableRes.status}`
+        return NextResponse.json({ success: false, error: errMsg }, { status: 500 })
+      }
     }
 
     return NextResponse.json({ success: true })

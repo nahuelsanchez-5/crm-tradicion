@@ -14,7 +14,15 @@ import {
 } from "lucide-react"
 
 interface AgenteSimple  { id: string; nombre: string }
-interface CartelActivo  { id: string; numero: number; direccion: string; tipo: string; agente: string }
+interface CartelBuscarResult {
+  found:               boolean
+  airtable_record_id?: string
+  nro_cartel?:         number
+  direccion?:          string
+  agente?:             string
+  tipo_propiedad?:     string
+  error?:              string
+}
 interface Props { agentes: AgenteSimple[]; ofertasActivas: OfertaActiva[] }
 type ModalT = "none" | "pago" | "carteleria" | "encuesta" | "operacion" | "oferta" | "actualizar_oferta"
 
@@ -97,10 +105,12 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
   const [pagoForm,      setPagoForm]      = useState({ agente_id: agentes[0]?.id ?? "", concepto: CONCEPTOS_PAGO[0], monto_pagado: "", fecha: todayStr })
   const [encForm,       setEncForm]       = useState({ mes: mesActual, anio: anioActual, enviadas: "", respondidas: "", nps_promedio: "" })
   const [opForm,        setOpForm]        = useState({ fecha: todayStr, direccion: "", agentes: "", tipo: TIPOS_OP[0], comision_bruta: "", comision_neta: "", encuesta_comprador: false, encuesta_vendedor: false })
-  const [cartelesActivos,   setCartelesActivos]   = useState<CartelActivo[]>([])
-  const [cartelesLoading,   setCartelesLoading]   = useState(false)
-  const [selectedCartelId,  setSelectedCartelId]  = useState("")
-  const [toastMsg,          setToastMsg]          = useState("")
+  const [cartelNro,        setCartelNro]        = useState("")
+  const [cartelSearching,  setCartelSearching]  = useState(false)
+  const [cartelResult,     setCartelResult]     = useState<CartelBuscarResult | null>(null)
+  const [cartelDirEdit,    setCartelDirEdit]    = useState("")
+  const [cartelAgenteEdit, setCartelAgenteEdit] = useState("")
+  const [toastMsg,         setToastMsg]         = useState("")
   const [ofertaForm,    setOfertaForm]    = useState({ numero: "", direccion: "", tipologia: TIPOLOGIAS_OFERTA[0], tipo_operacion: TIPOS_OP_OFERTA[0], agente_vendedor_id: agentes[0]?.id ?? "", agente_comprador_id: "", monto_ofertado_usd: "", precio_publicacion_usd: "", fecha_oferta: todayStr, notas: "" })
   const [actualizarForm, setActualizarForm] = useState({ oferta_id: ofertasActivas[0]?.id ?? "", tipo: TIPOS_MOVIMIENTO[0], descripcion: "", monto_usd: "" })
 
@@ -114,24 +124,36 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
 
   useEffect(() => {
     if (modal !== "carteleria") return
-    setCartelesLoading(true)
-    setCartelesActivos([])
-    fetch("/api/carteleria/listar")
-      .then(r => r.json())
-      .then((json: { data?: CartelActivo[] }) => {
-        const list = json.data ?? []
-        setCartelesActivos(list)
-        if (list[0]) setSelectedCartelId(list[0].id)
-      })
-      .catch(() => setCartelesActivos([]))
-      .finally(() => setCartelesLoading(false))
-  }, [modal])
+    const n = Number(cartelNro)
+    if (!cartelNro || !Number.isFinite(n) || n <= 0) {
+      setCartelResult(null)
+      setCartelSearching(false)
+      return
+    }
+    setCartelResult(null)
+    setCartelSearching(true)
+    const t = setTimeout(async () => {
+      try {
+        const res  = await fetch(`/api/carteleria/buscar?nro=${encodeURIComponent(cartelNro)}`)
+        const json = await res.json() as CartelBuscarResult
+        setCartelResult(json)
+      } catch {
+        setCartelResult({ found: false, error: "Error de conexión" })
+      } finally {
+        setCartelSearching(false)
+      }
+    }, 600)
+    return () => clearTimeout(t)
+  }, [cartelNro, modal])
 
   function openModal(m: ModalT) {
     setError("")
     setPagoForm({ agente_id: agentes[0]?.id ?? "", concepto: CONCEPTOS_PAGO[0], monto_pagado: "", fecha: todayStr })
     setOpForm({ fecha: todayStr, direccion: "", agentes: "", tipo: TIPOS_OP[0], comision_bruta: "", comision_neta: "", encuesta_comprador: false, encuesta_vendedor: false })
-    setSelectedCartelId("")
+    setCartelNro("")
+    setCartelResult(null)
+    setCartelDirEdit("")
+    setCartelAgenteEdit("")
     setOfertaForm({ numero: "", direccion: "", tipologia: TIPOLOGIAS_OFERTA[0], tipo_operacion: TIPOS_OP_OFERTA[0], agente_vendedor_id: agentes[0]?.id ?? "", agente_comprador_id: "", monto_ofertado_usd: "", precio_publicacion_usd: "", fecha_oferta: todayStr, notas: "" })
     setActualizarForm({ oferta_id: ofertasActivas[0]?.id ?? "", tipo: TIPOS_MOVIMIENTO[0], descripcion: "", monto_usd: "" })
     setModal(m)
@@ -167,30 +189,38 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
     })
   }
 
-  function handleCarteleria(e: React.FormEvent) {
+  function handleConfirmDevolucion(e: React.FormEvent) {
     e.preventDefault()
-    if (!selectedCartelId) { setError("Seleccioná un cartel"); return }
-    const cartel = cartelesActivos.find(c => c.id === selectedCartelId)
-    if (!cartel) { setError("Cartel no encontrado"); return }
+    if (!cartelResult || !cartelNro) return
+    const nro = Number(cartelNro)
     startTransition(async () => {
       try {
-        const res = await fetch("/api/carteleria/devolver", {
+        const body = cartelResult.found
+          ? {
+              airtable_record_id: cartelResult.airtable_record_id,
+              nro_cartel:         nro,
+              direccion:          cartelResult.direccion,
+              agente:             cartelResult.agente,
+              tipo_propiedad:     cartelResult.tipo_propiedad,
+            }
+          : {
+              airtable_record_id: null,
+              nro_cartel:         nro,
+              direccion:          cartelDirEdit.trim() || null,
+              agente:             cartelAgenteEdit.trim() || null,
+              tipo_propiedad:     null,
+            }
+        const res    = await fetch("/api/carteleria/devolver", {
           method:  "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            airtable_record_id: cartel.id,
-            nro_cartel:         cartel.numero,
-            direccion:          cartel.direccion,
-            agente:             cartel.agente,
-            tipo_propiedad:     cartel.tipo,
-          }),
+          body:    JSON.stringify(body),
         })
         const result = await res.json() as { success: boolean; error?: string }
         if (!result.success) {
           setError(result.error ?? "Error al registrar la devolución")
         } else {
           closeModal()
-          setToastMsg("Cartel devuelto correctamente")
+          setToastMsg(`Cartel Nº ${nro} registrado como devuelto`)
           setTimeout(() => setToastMsg(""), 4000)
           router.refresh()
         }
@@ -310,36 +340,113 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
 
       {/* MODAL CARTELERÍA — DEVOLUCIÓN */}
       {modal === "carteleria" && (
-        <ModalShell title="Devolución de Cartelería" subtitle="Seleccioná el cartel a devolver" onClose={closeModal}>
-          <form onSubmit={handleCarteleria} className="p-6">
-            <Field label="Cartel a devolver *">
-              {cartelesLoading ? (
-                <div className="flex items-center gap-2 py-2.5 text-[13px]" style={{ color: "var(--crm-text-muted)" }}>
-                  <Loader2 size={14} className="animate-spin" />
-                  Cargando carteles activos...
-                </div>
-              ) : cartelesActivos.length === 0 ? (
-                <div className="py-2.5 text-[13px]" style={{ color: "var(--crm-text-muted)" }}>
-                  No hay carteles activos en Airtable
-                </div>
-              ) : (
-                <select
-                  value={selectedCartelId}
-                  onChange={e => setSelectedCartelId(e.target.value)}
+        <ModalShell title="Devolución de Cartelería" subtitle="Ingresá el número de cartel" onClose={closeModal}>
+          <form onSubmit={handleConfirmDevolucion} className="p-6">
+
+            {/* Paso 1 — Búsqueda */}
+            <Field label="Nº de cartel">
+              <div style={{ position: "relative" }}>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="Ej: 42"
+                  value={cartelNro}
+                  onChange={e => setCartelNro(e.target.value)}
                   className={inp}
-                  required
-                >
-                  <option value="">Seleccioná un cartel...</option>
-                  {cartelesActivos.map(c => (
-                    <option key={c.id} value={c.id}>
-                      Nº {c.numero} — {c.direccion || "Sin dirección"} ({c.agente || "Sin agente"})
-                    </option>
-                  ))}
-                </select>
-              )}
+                  autoFocus
+                />
+                {cartelSearching && (
+                  <span style={{
+                    position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)",
+                    display: "flex", alignItems: "center",
+                  }}>
+                    <Loader2 size={14} className="animate-spin" style={{ color: "var(--crm-text-muted)" }} />
+                  </span>
+                )}
+              </div>
             </Field>
+
+            {/* Paso 2A — Encontrado */}
+            {cartelResult?.found && (
+              <>
+                <div style={{
+                  background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)",
+                  borderRadius: "8px", padding: "8px 12px", fontSize: "12px", color: "#34d399",
+                  marginBottom: "14px",
+                }}>
+                  ✓ Cartel encontrado en Airtable
+                </div>
+                <Field label="Dirección">
+                  <input
+                    type="text" readOnly
+                    value={cartelResult.direccion || "—"}
+                    className={inp}
+                    style={{ opacity: 0.6, cursor: "default" }}
+                  />
+                </Field>
+                <Field label="Agente">
+                  <input
+                    type="text" readOnly
+                    value={cartelResult.agente || "—"}
+                    className={inp}
+                    style={{ opacity: 0.6, cursor: "default" }}
+                  />
+                </Field>
+              </>
+            )}
+
+            {/* Paso 2B — No encontrado */}
+            {cartelResult && !cartelResult.found && (
+              <>
+                <div style={{
+                  background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)",
+                  borderRadius: "8px", padding: "8px 12px", fontSize: "12px", color: "#fbbf24",
+                  marginBottom: "14px",
+                }}>
+                  ⚠ Cartel no encontrado en Airtable
+                </div>
+                <Field label="Dirección (opcional)">
+                  <input
+                    type="text"
+                    placeholder="Av. San Martín 456"
+                    value={cartelDirEdit}
+                    onChange={e => setCartelDirEdit(e.target.value)}
+                    className={inp}
+                  />
+                </Field>
+                <Field label="Agente (opcional)">
+                  <input
+                    type="text"
+                    placeholder="Nombre del agente"
+                    value={cartelAgenteEdit}
+                    onChange={e => setCartelAgenteEdit(e.target.value)}
+                    className={inp}
+                  />
+                </Field>
+              </>
+            )}
+
             <ErrorBox />
-            <SubmitRow isPending={isPending || cartelesLoading} onCancel={closeModal} label="Confirmar devolución" />
+
+            <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end pt-1">
+              <button
+                type="button" onClick={closeModal} disabled={isPending}
+                className="crm-btn-secondary w-full sm:w-auto px-5 py-3 sm:py-2.5 min-h-[44px]"
+                style={{ fontFamily: "inherit" }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isPending || cartelSearching || !cartelResult || !cartelNro}
+                className="crm-btn-primary w-full sm:w-auto px-6 py-3 sm:py-2.5 min-h-[44px]"
+                style={{ fontFamily: "inherit" }}
+              >
+                {isPending && <Loader2 size={14} className="animate-spin" />}
+                {isPending ? "Registrando..." : "Confirmar devolución"}
+              </button>
+            </div>
+
           </form>
         </ModalShell>
       )}
