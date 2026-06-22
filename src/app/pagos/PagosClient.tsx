@@ -60,6 +60,7 @@ export interface AgenteInfo {
   telefono: string | null
   activo: boolean
   paga_fee: boolean | null
+  fecha_mainstreet: string | null
 }
 
 interface NuevoForm {
@@ -377,10 +378,22 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
     const crmTotal  = agentesCrmCount > 0 ? agentesCrmCount : agentesActivosCount
     const crmPct    = crmTotal > 0 ? Math.round((crmCobrX / crmTotal) * 100) : 0
 
-    // Mainstreet
+    // Mainstreet — denominador: agentes activos con fecha_mainstreet en el mes/año del filtro
+    const refDate  = selectedMonth === "todos"
+      ? new Date()
+      : new Date(parseInt(selectedMonth.split("-")[0]), parseInt(selectedMonth.split("-")[1]) - 1, 1)
+    const refMonth = refDate.getMonth() + 1
+    const refYear  = refDate.getFullYear()
+
+    const mainTotal = agentesActivos.filter(a => {
+      if (!a.fecha_mainstreet) return false
+      const [y, m] = a.fecha_mainstreet.split("-").map(Number)
+      return m === refMonth && y === refYear
+    }).length
+
     const mainPagos = monthPagos.filter(p => getConceptGroup(p.concepto) === "Mainstreet")
     const mainCobrX = new Set(mainPagos.filter(p => p.estado === "Pagado").map(p => p.agente_id)).size
-    const mainPct   = agentesActivosCount > 0 ? Math.round((mainCobrX / agentesActivosCount) * 100) : 0
+    const mainPct   = mainTotal > 0 ? Math.round((mainCobrX / mainTotal) * 100) : 0
 
     // Otros
     const otrosPagos = monthPagos.filter(p => getConceptGroup(p.concepto) === "Otros")
@@ -391,7 +404,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
     return {
       feeCobrX, feeTotal: agentesFeeCount, feePct,
       crmCobrX, crmTotal, crmPct,
-      mainCobrX, mainTotal: agentesActivosCount, mainPct,
+      mainCobrX, mainTotal, mainPct,
       otrosCobrX, pctGeneral,
     }
   }, [pagos, agentes, selectedMonth])
