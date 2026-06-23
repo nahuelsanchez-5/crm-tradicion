@@ -7,7 +7,6 @@ import type { RegistroEncuestaData } from "./actions"
 import type { RegistroRow } from "./page"
 import { ClipboardList, TrendingUp, Star, X, Loader2, ChevronDown, ChevronRight, CheckCircle2, Save } from "lucide-react"
 import KpiCardGlobal from "@/components/KpiCard"
-import { createClient } from "@/lib/supabase"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -140,25 +139,36 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
 
   // ── Agentes para dropdown MAILING ─────────────────
   const [agentes,        setAgentes]       = useState<Agente[]>([])
-  const [loadingAgentes, setLoadingAgentes] = useState(false)
+  const [loadingAgentes, setLoadingAgentes] = useState(true)
 
   useEffect(() => {
-    if (!showModal) return
     let cancelled = false
-    setLoadingAgentes(true)
-    const sb = createClient()
-    sb.from("agentes")
-      .select("id, nombre")
-      .eq("activo", true)
-      .order("nombre", { ascending: true })
-      .then(({ data }) => {
-        if (!cancelled) {
-          setAgentes((data ?? []) as Agente[])
-          setLoadingAgentes(false)
-        }
+    const url    = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const apiKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+    fetch(
+      `${url}/rest/v1/agentes?select=id,nombre&activo=eq.true&order=nombre.asc`,
+      {
+        headers: {
+          apikey:        apiKey,
+          Authorization: `Bearer ${apiKey}`,
+        },
+      }
+    )
+      .then(res => {
+        if (!res.ok) throw new Error(`Supabase agentes: ${res.status} ${res.statusText}`)
+        return res.json() as Promise<Agente[]>
+      })
+      .then(data => {
+        if (!cancelled) setAgentes(data)
+      })
+      .catch(err => {
+        console.error("[EncuestasClient] Error cargando agentes:", err)
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingAgentes(false)
       })
     return () => { cancelled = true }
-  }, [showModal])
+  }, [])
 
   // ── Expanded month rows ────────────────────────────
   const [expandedMeses, setExpandedMeses] = useState<Set<string>>(() => {
