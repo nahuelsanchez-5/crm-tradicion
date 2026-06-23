@@ -39,15 +39,15 @@ interface FormState {
 // ── Helpers ──────────────────────────────────────────
 function npsColor(nps: number | null): string {
   if (nps === null) return "rgba(255,255,255,0.35)"
-  if (nps >= 50)  return "#4ade80"
-  if (nps >= 0)   return "#fbbf24"
+  if (nps >= 8) return "#4ade80"
+  if (nps >= 6) return "#fbbf24"
   return "#f87171"
 }
 
 function npsLabel(nps: number | null): string {
   if (nps === null) return "—"
-  if (nps >= 70) return "Promotor"
-  if (nps >= 0)  return "Neutral"
+  if (nps >= 9) return "Promotor"
+  if (nps >= 7) return "Neutral"
   return "Detractor"
 }
 
@@ -68,7 +68,7 @@ function mesNombre(key: string): string {
 
 function NpsBadge({ nps }: { nps: number | null }) {
   const color = npsColor(nps)
-  const bg    = nps === null ? "rgba(255,255,255,0.08)" : nps >= 50 ? "rgba(74,222,128,0.12)" : nps >= 0 ? "rgba(251,191,36,0.12)" : "rgba(248,113,113,0.12)"
+  const bg    = nps === null ? "rgba(255,255,255,0.08)" : nps >= 8 ? "rgba(74,222,128,0.12)" : nps >= 6 ? "rgba(251,191,36,0.12)" : "rgba(248,113,113,0.12)"
   return (
     <span style={{
       background: bg, color, padding: "2px 9px",
@@ -233,8 +233,8 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
     setError("")
     if (!form.referencia.trim()) { setError("Ingresá la referencia"); return }
     const nps = form.nps !== "" ? parseInt(form.nps) : null
-    if (nps !== null && (isNaN(nps) || nps < -100 || nps > 100)) {
-      setError("El NPS debe estar entre -100 y 100"); return
+    if (nps !== null && (isNaN(nps) || nps < 0 || nps > 10)) {
+      setError("El NPS debe estar entre 0 y 10"); return
     }
 
     const payload: RegistroEncuestaData = {
@@ -312,12 +312,12 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
             value={npsMes !== null ? String(npsMes) : "—"}
             badge={
               npsMes === null ? "Sin respuestas NPS"
-              : npsMes >= 70  ? "Excelente"
-              : npsMes >= 40  ? "Bueno"
+              : npsMes >= 8   ? "Excelente"
+              : npsMes >= 6   ? "Bueno"
               :                 "Por mejorar"
             }
-            iconBg={npsMes === null ? "bg-slate-500/15" : npsMes >= 70 ? "bg-emerald-500/15" : npsMes >= 40 ? "bg-amber-500/15" : "bg-rose-500/15"}
-            iconColor={npsMes === null ? "text-slate-400" : npsMes >= 70 ? "text-emerald-400" : npsMes >= 40 ? "text-amber-400" : "text-rose-400"}
+            iconBg={npsMes === null ? "bg-slate-500/15" : npsMes >= 8 ? "bg-emerald-500/15" : npsMes >= 6 ? "bg-amber-500/15" : "bg-rose-500/15"}
+            iconColor={npsMes === null ? "text-slate-400" : npsMes >= 8 ? "text-emerald-400" : npsMes >= 6 ? "text-amber-400" : "text-rose-400"}
             icon={<Star size={18} />}
           />
         </div>
@@ -621,10 +621,10 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
               )}
 
               {/* NPS */}
-              <Field label="NPS (−100 a 100)">
+              <Field label="NPS (0 a 10)">
                 <input
-                  type="number" min="-100" max="100" step="1"
-                  placeholder="Opcional — ej: 75"
+                  type="number" min="0" max="10" step="1"
+                  placeholder="Opcional — ej: 7"
                   value={form.nps}
                   onChange={e => setForm(f => ({ ...f, nps: e.target.value }))}
                   style={inp}
