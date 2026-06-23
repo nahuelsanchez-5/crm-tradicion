@@ -7,6 +7,7 @@ import type { RegistroEncuestaData } from "./actions"
 import type { RegistroRow } from "./page"
 import { ClipboardList, TrendingUp, Star, X, Loader2, ChevronDown, ChevronRight, CheckCircle2, Save } from "lucide-react"
 import KpiCardGlobal from "@/components/KpiCard"
+import { createClient } from "@/lib/supabase"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -15,6 +16,11 @@ const MONTH_NAMES = [
 ]
 
 // ── Types ────────────────────────────────────────────
+interface Agente {
+  id:     string
+  nombre: string
+}
+
 interface Props {
   registros:  RegistroRow[]
   objetivoPct: number
@@ -131,6 +137,28 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
     comentario: "",
     fecha:      todayStr,
   })
+
+  // ── Agentes para dropdown MAILING ─────────────────
+  const [agentes,        setAgentes]       = useState<Agente[]>([])
+  const [loadingAgentes, setLoadingAgentes] = useState(false)
+
+  useEffect(() => {
+    if (!showModal) return
+    let cancelled = false
+    setLoadingAgentes(true)
+    const sb = createClient()
+    sb.from("agentes")
+      .select("id, nombre")
+      .eq("activo", true)
+      .order("nombre", { ascending: true })
+      .then(({ data }) => {
+        if (!cancelled) {
+          setAgentes((data ?? []) as Agente[])
+          setLoadingAgentes(false)
+        }
+      })
+    return () => { cancelled = true }
+  }, [showModal])
 
   // ── Expanded month rows ────────────────────────────
   const [expandedMeses, setExpandedMeses] = useState<Set<string>>(() => {
@@ -482,7 +510,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                   {(["ESPONTANEA", "MAILING"] as const).map(t => (
                     <button
                       key={t} type="button"
-                      onClick={() => setForm(f => ({ ...f, tipo: t }))}
+                      onClick={() => setForm(f => ({ ...f, tipo: t, referencia: "" }))}
                       style={{
                         flex: 1, padding: "10px 0", borderRadius: "9px",
                         fontSize: "12.5px", fontWeight: form.tipo === t ? 800 : 500,
@@ -512,15 +540,36 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 {/* Referencia */}
-                <Field label={form.tipo === "ESPONTANEA" ? "N° de oferta *" : "Agente *"}>
-                  <input
-                    type="text"
-                    placeholder={form.tipo === "ESPONTANEA" ? "Ej: 1234" : "Ej: Romina Prieto"}
-                    value={form.referencia}
-                    onChange={e => setForm(f => ({ ...f, referencia: e.target.value }))}
-                    style={inp} required autoFocus
-                  />
-                </Field>
+                {form.tipo === "ESPONTANEA" ? (
+                  <Field label="N° de oferta *">
+                    <input
+                      type="text"
+                      placeholder="Ej: 1234"
+                      value={form.referencia}
+                      onChange={e => setForm(f => ({ ...f, referencia: e.target.value }))}
+                      style={inp} required autoFocus
+                    />
+                  </Field>
+                ) : (
+                  <Field label="Agente *">
+                    <select
+                      value={form.referencia}
+                      onChange={e => setForm(f => ({ ...f, referencia: e.target.value }))}
+                      style={{ ...inp, appearance: "none", WebkitAppearance: "none", cursor: "pointer" }}
+                      required
+                      disabled={loadingAgentes}
+                    >
+                      <option value="" disabled>
+                        {loadingAgentes ? "Cargando agentes..." : "Seleccionar agente..."}
+                      </option>
+                      {agentes.map(a => (
+                        <option key={a.id} value={a.nombre} style={{ background: "#1e1e2e" }}>
+                          {a.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                )}
 
                 {/* Subtipo (solo ESPONTANEA) */}
                 {form.tipo === "ESPONTANEA" ? (
