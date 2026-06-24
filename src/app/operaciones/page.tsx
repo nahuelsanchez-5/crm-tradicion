@@ -5,10 +5,13 @@ import type { OperacionRow } from "./OperacionesClient"
 export default async function OperacionesPage() {
   const supabase = createServerClient()
 
-  const { data: raw, error } = await supabase
-    .from("operaciones")
-    .select("id, fecha, direccion, agentes, tipo, comision_bruta, comision_neta, encuesta_comprador, encuesta_vendedor")
-    .order("fecha", { ascending: false })
+  const [{ data: raw, error }, { data: agentesRaw }] = await Promise.all([
+    supabase
+      .from("operaciones")
+      .select("id, fecha, direccion, agentes, tipo, comision_bruta, comision_neta, encuesta_comprador, encuesta_vendedor")
+      .order("fecha", { ascending: false }),
+    supabase.from("agentes").select("nombre").eq("activo", true),
+  ])
 
   let operaciones: OperacionRow[]
   if (error?.code === "42703") {
@@ -26,5 +29,7 @@ export default async function OperacionesPage() {
     operaciones = ((raw ?? []) as unknown) as OperacionRow[]
   }
 
-  return <OperacionesClient operaciones={operaciones} />
+  const agentesInternos = (agentesRaw ?? []).map(a => a.nombre as string)
+
+  return <OperacionesClient operaciones={operaciones} agentesInternos={agentesInternos} />
 }

@@ -235,8 +235,8 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
   )
 
   function agenteName(id: string | null, externo: string | null): string {
-    if (id)     return agenteMap.get(id) ?? "Desconocido"
-    if (externo) return `${externo} (ext.)`
+    if (id)      return agenteMap.get(id) ?? "Desconocido"
+    if (externo) return externo
     return "Sin agente"
   }
 

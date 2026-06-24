@@ -50,6 +50,16 @@ interface FormData {
 }
 
 // ── Helpers ──────────────────────────────────────────
+function cleanAgentes(raw: string, internos: Set<string>): string {
+  return raw
+    .split(" / ")
+    .map(part => {
+      const base = part.replace(/ \(ext\.\)$/, "").trim()
+      return internos.has(base) ? base : part
+    })
+    .join(" / ")
+}
+
 function fmtUSD(n: number): string {
   const rounded = Math.round(n * 100) / 100
   if (rounded === Math.floor(rounded)) {
@@ -160,7 +170,8 @@ function Toggle({
 //  MAIN COMPONENT
 // ═══════════════════════════════════════════════════════
 interface Props {
-  operaciones: OperacionRow[]
+  operaciones:     OperacionRow[]
+  agentesInternos: string[]
 }
 
 const EMPTY_FORM: FormData = {
@@ -176,9 +187,11 @@ const EMPTY_FORM: FormData = {
   encuesta_vendedor:  false,
 }
 
-export default function OperacionesClient({ operaciones }: Props) {
+export default function OperacionesClient({ operaciones, agentesInternos }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+
+  const internosSet = useMemo(() => new Set(agentesInternos), [agentesInternos])
 
   // ── Filters ────────────────────────────────────────
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -459,8 +472,8 @@ export default function OperacionesClient({ operaciones }: Props) {
                           </span>
                         </td>
                         <td style={{ padding: "12px 16px", fontSize: "12px", color: "rgba(255,255,255,0.45)", maxWidth: "160px" }}>
-                          <span title={o.agentes} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {o.agentes}
+                          <span title={cleanAgentes(o.agentes, internosSet)} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {cleanAgentes(o.agentes, internosSet)}
                           </span>
                         </td>
                         <td style={{ padding: "12px 16px" }}>

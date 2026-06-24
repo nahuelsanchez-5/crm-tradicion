@@ -248,7 +248,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
   const agenteMap = new Map(agentes.map(a => [a.id, a.nombre]))
   function agenteName(id: string | null, externo: string | null): string {
     if (id)      return agenteMap.get(id) ?? "Desconocido"
-    if (externo) return `${externo} (ext.)`
+    if (externo) return externo
     return "Sin agente"
   }
 
@@ -283,11 +283,10 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
   const [errMov,     setErrMov]      = useState("")
 
   // ── Modal: Registrar cierre ────────────────────────
-  const [modalCierre,    setModalCierre]    = useState(false)
-  const [cierreFecha,    setCierreFecha]    = useState("")
-  const [cierrePrecio,   setCierrePrecio]   = useState("")
-  const [cierreComision, setCierreComision] = useState("")
-  const [errCierre,      setErrCierre]      = useState("")
+  const [modalCierre,  setModalCierre]  = useState(false)
+  const [cierreFecha,  setCierreFecha]  = useState("")
+  const [cierrePrecio, setCierrePrecio] = useState("")
+  const [errCierre,    setErrCierre]    = useState("")
 
   // ── Modal: Editar oferta ───────────────────────────
   const [modalEditar,  setModalEditar]  = useState(false)
@@ -324,7 +323,6 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
     if (nuevoEstado === "Cerradas") {
       setCierreFecha(new Date().toISOString().split("T")[0])
       setCierrePrecio("")
-      setCierreComision("")
       setErrCierre("")
       setModalEstado(false)
       setModalCierre(true)
@@ -425,25 +423,24 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
   // ── Submit: registrar cierre ───────────────────────
   function handleSubmitCierre(e: React.FormEvent) {
     e.preventDefault()
-    const precio   = parseFloat(cierrePrecio)
-    const comision = parseFloat(cierreComision)
-    if (isNaN(precio) || isNaN(comision)) { setErrCierre("Precio y comisión son obligatorios"); return }
-    const vName = agenteName(oferta.agente_vendedor_id, oferta.agente_vendedor_externo)
-    const cName = agenteName(oferta.agente_comprador_id, oferta.agente_comprador_externo)
-    const parts: string[] = []
-    if (vName !== "Sin agente") parts.push(vName)
-    if (cName !== "Sin agente" && cName !== vName) parts.push(cName)
+    const precio = parseFloat(cierrePrecio)
+    if (isNaN(precio) || precio <= 0) { setErrCierre("El precio de cierre es obligatorio"); return }
     startTransition(async () => {
-      const result = await registrarCierre(
-        oferta.id,
-        cierreFecha,
-        precio,
-        comision,
-        oferta.direccion,
-        oferta.tipo_operacion,
-        parts.join(" / "),
-      )
+      // 1. Actualizar oferta a Cerradas
+      const result = await registrarCierre(oferta.id, cierreFecha, precio)
       if (result.error) { setErrCierre(result.error); return }
+      // 2. Crear operacion con comisión auto-calculada
+      const opRes = await fetch("/api/operaciones/crear", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ oferta_id: oferta.id, precio_acordado_usd: precio }),
+      })
+      const opJson = (await opRes.json()) as { success: boolean; error?: string }
+      // 409 = duplicado, no es error crítico (la oferta ya quedó cerrada)
+      if (!opJson.success && opRes.status !== 409) {
+        setErrCierre(opJson.error ?? "Error al crear la operación")
+        return
+      }
       closeAll()
       router.refresh()
     })
@@ -506,6 +503,25 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
             }}
           >
             <Pencil size={14} /> Editar oferta
+          </button>
+          <button
+            onClick={() => {
+              setCierreFecha(new Date().toISOString().split("T")[0])
+              setCierrePrecio("")
+              setErrCierre("")
+              setModalCierre(true)
+            }}
+            style={{
+              background: "linear-gradient(135deg,#4ade80 0%,#22c55e 100%)",
+              color: "#0a1a0a", border: "none",
+              padding: "8px 18px", borderRadius: "9px",
+              fontSize: "13px", fontWeight: 700, cursor: "pointer",
+              boxShadow: "0 2px 10px rgba(74,222,128,0.3)",
+              fontFamily: "inherit",
+              display: "flex", alignItems: "center", gap: "6px",
+            }}
+          >
+            Registrar cierre
           </button>
           <button
             onClick={() => { setNuevoEstado(oferta.estado); setDescEstado(""); setMontoEstado(""); setModalEstado(true) }}
@@ -1001,31 +1017,59 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                 </Field>
               </div>
 
-              {/* Agentes */}
+              {/* Agentes — interno y externo son excluyentes */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <Field label="Agente vendedor">
-                  <select value={editForm.agente_vendedor_id} onChange={e => setEF("agente_vendedor_id", e.target.value)} style={inp}>
-                    <option value="">Sin agente</option>
+                <Field label="Agente vendedor (interno)">
+                  <select
+                    value={editForm.agente_vendedor_id}
+                    onChange={e => {
+                      const v = e.target.value
+                      setEditForm(f => ({ ...f, agente_vendedor_id: v, agente_vendedor_externo: v ? "" : f.agente_vendedor_externo }))
+                    }}
+                    style={inp}
+                  >
+                    <option value="">— Sin agente interno —</option>
                     {agentes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
                   </select>
                 </Field>
-                <Field label="Agente comprador">
-                  <select value={editForm.agente_comprador_id} onChange={e => setEF("agente_comprador_id", e.target.value)} style={inp}>
-                    <option value="">Sin agente</option>
+                <Field label="Agente comprador (interno)">
+                  <select
+                    value={editForm.agente_comprador_id}
+                    onChange={e => {
+                      const v = e.target.value
+                      setEditForm(f => ({ ...f, agente_comprador_id: v, agente_comprador_externo: v ? "" : f.agente_comprador_externo }))
+                    }}
+                    style={inp}
+                  >
+                    <option value="">— Sin agente interno —</option>
                     {agentes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
                   </select>
                 </Field>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <Field label="Vendedor externo (opcional)">
-                  <input type="text" value={editForm.agente_vendedor_externo}
-                    onChange={e => setEF("agente_vendedor_externo", e.target.value)}
-                    placeholder="Nombre y apellido" style={inp} />
+                <Field label="Vendedor externo (otra inmobiliaria)">
+                  <input
+                    type="text"
+                    value={editForm.agente_vendedor_externo}
+                    onChange={e => {
+                      const v = e.target.value
+                      setEditForm(f => ({ ...f, agente_vendedor_externo: v, agente_vendedor_id: v ? "" : f.agente_vendedor_id }))
+                    }}
+                    placeholder="Nombre y/o inmobiliaria"
+                    style={inp}
+                  />
                 </Field>
-                <Field label="Comprador externo (opcional)">
-                  <input type="text" value={editForm.agente_comprador_externo}
-                    onChange={e => setEF("agente_comprador_externo", e.target.value)}
-                    placeholder="Nombre y apellido" style={inp} />
+                <Field label="Comprador externo (otra inmobiliaria)">
+                  <input
+                    type="text"
+                    value={editForm.agente_comprador_externo}
+                    onChange={e => {
+                      const v = e.target.value
+                      setEditForm(f => ({ ...f, agente_comprador_externo: v, agente_comprador_id: v ? "" : f.agente_comprador_id }))
+                    }}
+                    placeholder="Nombre y/o inmobiliaria"
+                    style={inp}
+                  />
                 </Field>
               </div>
 
@@ -1197,10 +1241,9 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                 <input type="number" value={cierrePrecio} onChange={e => setCierrePrecio(e.target.value)}
                   min="0" placeholder="0" style={inp} required />
               </Field>
-              <Field label="Comisión total (USD) *">
-                <input type="number" value={cierreComision} onChange={e => setCierreComision(e.target.value)}
-                  min="0" placeholder="0" style={inp} required />
-              </Field>
+              <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", margin: "-6px 0 14px" }}>
+                La comisión se calculará automáticamente: 3% por cada agente interno.
+              </p>
               {errCierre && (
                 <div style={{
                   background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",

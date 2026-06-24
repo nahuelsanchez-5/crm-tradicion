@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { registrarEncuesta } from "./actions"
 import type { RegistroEncuestaData } from "./actions"
 import type { RegistroRow } from "./page"
-import { ClipboardList, TrendingUp, Star, X, Loader2, ChevronDown, ChevronRight, CheckCircle2, Save } from "lucide-react"
+import { ClipboardList, TrendingUp, Star, X, Loader2, ChevronDown, ChevronRight, CheckCircle2, Save, BarChart2 } from "lucide-react"
 import KpiCardGlobal from "@/components/KpiCard"
 
 // ── Constants ────────────────────────────────────────
@@ -140,6 +140,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
   // ── Agentes para dropdown MAILING ─────────────────
   const [agentes,        setAgentes]       = useState<Agente[]>([])
   const [loadingAgentes, setLoadingAgentes] = useState(true)
+  const [opCountByMes,   setOpCountByMes]   = useState<Map<string, number>>(new Map())
 
   useEffect(() => {
     let cancelled = false
@@ -170,6 +171,36 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
     return () => { cancelled = true }
   }, [])
 
+  // ── Operaciones por mes (para tasa de respuesta) ───
+  useEffect(() => {
+    let cancelled = false
+    const url    = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const apiKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+    let fromYear  = anio
+    let fromMonth = mesActual - 6
+    if (fromMonth <= 0) { fromYear--; fromMonth += 12 }
+    const fromDate = `${fromYear}-${String(fromMonth).padStart(2, "0")}-01`
+    fetch(
+      `${url}/rest/v1/operaciones?select=fecha&fecha=gte.${fromDate}`,
+      { headers: { apikey: apiKey, Authorization: `Bearer ${apiKey}` } }
+    )
+      .then(res => {
+        if (!res.ok) throw new Error(`operaciones: ${res.status}`)
+        return res.json() as Promise<{ fecha: string }[]>
+      })
+      .then(rows => {
+        if (cancelled) return
+        const counts = new Map<string, number>()
+        for (const row of rows) {
+          const k = mesKey(row.fecha)
+          counts.set(k, (counts.get(k) ?? 0) + 1)
+        }
+        setOpCountByMes(counts)
+      })
+      .catch(err => console.error("[EncuestasClient] Error cargando operaciones:", err))
+    return () => { cancelled = true }
+  }, [anio, mesActual])
+
   // ── Expanded month rows ────────────────────────────
   const [expandedMeses, setExpandedMeses] = useState<Set<string>>(() => {
     const now = new Date()
@@ -194,6 +225,8 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
     ? Math.round(conNpsMes.reduce((s, r) => s + (r.nps ?? 0), 0) / conNpsMes.length)
     : null
   const pctNpsMes    = totalMes > 0 ? Math.round((conNpsMes.length / totalMes) * 100) : 0
+  const opsMesActual = opCountByMes.get(mesActualStr) ?? 0
+  const tasaActual   = opsMesActual === 0 ? 0 : Math.round((totalMes / (opsMesActual * 2)) * 100)
 
   // ── Group by month for history ─────────────────────
   const groupedByMes = useMemo(() => {
@@ -290,7 +323,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
       <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
 
         {/* ── KPI Cards ─────────────────────────── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px", marginBottom: "20px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "14px", marginBottom: "20px" }}>
           <KpiCardGlobal
             title={`Encuestas — ${MONTH_NAMES[mesActual - 1]}`}
             value={totalMes}
@@ -319,6 +352,14 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
             iconBg={npsMes === null ? "bg-slate-500/15" : npsMes >= 8 ? "bg-emerald-500/15" : npsMes >= 6 ? "bg-amber-500/15" : "bg-rose-500/15"}
             iconColor={npsMes === null ? "text-slate-400" : npsMes >= 8 ? "text-emerald-400" : npsMes >= 6 ? "text-amber-400" : "text-rose-400"}
             icon={<Star size={18} />}
+          />
+          <KpiCardGlobal
+            title="Tasa de respuesta"
+            value={`${tasaActual}%`}
+            badge={opsMesActual === 0 ? "Sin operaciones este mes" : `${totalMes} enc / ${opsMesActual * 2} esperadas`}
+            iconBg={tasaActual >= 50 ? "bg-blue-500/15" : tasaActual > 0 ? "bg-amber-500/15" : "bg-slate-500/15"}
+            iconColor={tasaActual >= 50 ? "text-blue-400" : tasaActual > 0 ? "text-amber-400" : "text-slate-400"}
+            icon={<BarChart2 size={18} />}
           />
         </div>
 
@@ -351,6 +392,8 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                   ? Math.round(conNps.reduce((s, r) => s + (r.nps ?? 0), 0) / conNps.length)
                   : null
                 const pctNps    = regs.length > 0 ? Math.round(conNps.length / regs.length * 100) : 0
+                const opsMes    = opCountByMes.get(mesK) ?? 0
+                const tasaMes   = opsMes === 0 ? 0 : Math.round((regs.length / (opsMes * 2)) * 100)
 
                 return (
                   <Fragment key={mesK}>
@@ -403,6 +446,14 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                           padding: "2px 9px", borderRadius: "10px",
                         }}>
                           {pctNps}% NPS
+                        </span>
+                        <span style={{
+                          fontSize: "11px", fontWeight: 700,
+                          background: tasaMes >= 50 ? "rgba(96,165,250,0.12)" : "rgba(255,255,255,0.08)",
+                          color: tasaMes >= 50 ? "#60a5fa" : "rgba(255,255,255,0.35)",
+                          padding: "2px 9px", borderRadius: "10px",
+                        }}>
+                          {tasaMes}% resp
                         </span>
                       </div>
                     </div>

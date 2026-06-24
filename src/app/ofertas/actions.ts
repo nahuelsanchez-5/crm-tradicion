@@ -168,31 +168,12 @@ export async function toggleChecklist(
   return {}
 }
 
-const VALID_TIPOS = ["Venta", "Alquiler", "Alquiler Temporal", "Referido", "Otro"]
-
 export async function registrarCierre(
   ofertaId: string,
   fecha: string,
   precioCierre: number,
-  comisionTotal: number,
-  direccion: string,
-  tipo: string,
-  agentesText: string,
 ): Promise<{ error?: string }> {
   const supabase = createServerClient()
-
-  const tipoDb = tipo === "Alquiler Temporario" ? "Alquiler Temporal"
-               : VALID_TIPOS.includes(tipo) ? tipo : "Otro"
-
-  const { error: opError } = await supabase.from("operaciones").insert({
-    fecha,
-    direccion,
-    agentes:       agentesText || "Sin agente",
-    tipo:          tipoDb,
-    comision_bruta: comisionTotal,
-    comision_neta:  comisionTotal,
-  })
-  if (opError) return { error: opError.message }
 
   const { error: ofertaError } = await supabase
     .from("ofertas")
@@ -203,8 +184,8 @@ export async function registrarCierre(
   await supabase.from("ofertas_historial").insert({
     oferta_id:   ofertaId,
     tipo:        "Cambio de estado",
-    descripcion: `Cerradas — Comisión: USD ${Math.round(comisionTotal).toLocaleString("es-AR")}`,
-    monto_usd:   comisionTotal,
+    descripcion: `Cerradas — Precio de cierre: USD ${Math.round(precioCierre).toLocaleString("es-AR")}`,
+    monto_usd:   precioCierre,
   })
 
   revalidatePath("/ofertas")
