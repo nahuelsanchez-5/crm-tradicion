@@ -2,6 +2,7 @@
 
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
+import { requireSession } from "@/lib/auth-guard"
 
 export interface FacturacionFormData {
   mes:          number
@@ -14,6 +15,7 @@ export interface FacturacionFormData {
 //  GUARDAR FACTURACIÓN (upsert por mes+año)
 // ─────────────────────────────────────────────────────
 export async function guardarFacturacion(data: FacturacionFormData) {
+  await requireSession()
   const supabase = createServerClient()
 
   // Verificar si ya existe registro para ese mes/año

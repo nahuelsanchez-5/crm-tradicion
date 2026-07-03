@@ -53,6 +53,9 @@ export default function Sidebar({ agenteCount }: Props) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
 
+  // La pantalla de login no lleva navegación
+  if (pathname === "/login") return null
+
   const navItems = BASE_NAV.map(i =>
     i.href === "/agentes"
       ? { ...i, badge: agenteCount, badgeVariant: "blue" as const }

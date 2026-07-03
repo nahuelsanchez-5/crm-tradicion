@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
+import { getSession } from "@/lib/auth-guard"
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -295,15 +296,12 @@ async function executeAction(
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  // ── Diagnóstico de env ────────────────────────────────────────────────────
-  const apiKey = process.env.GEMINI_API_KEY ?? ""
-  console.log(
-    "[ai-assistant] GEMINI_API_KEY presente:",
-    !!apiKey,
-    "| primeros 10 chars:",
-    apiKey ? apiKey.slice(0, 10) + "..." : "(vacía)"
-  )
+  const session = await getSession()
+  if (!session) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+  }
 
+  const apiKey = process.env.GEMINI_API_KEY ?? ""
   if (!apiKey) {
     console.error("[ai-assistant] GEMINI_API_KEY no está definida en el entorno")
     return NextResponse.json(
@@ -379,18 +377,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     })
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err)
-    const errStack = err instanceof Error ? err.stack : undefined
     console.error("[ai-assistant] Error:", errMsg)
-    if (errStack) console.error("[ai-assistant] Stack:", errStack)
     return NextResponse.json(
-      {
-        message: `Error del servidor: ${errMsg}`,
-        debug: {
-          error: errMsg,
-          geminiModel: "gemini-1.5-flash",
-          hasApiKey: !!process.env.GEMINI_API_KEY,
-        },
-      },
+      { message: "Error del servidor. Intentá de nuevo." },
       { status: 500 }
     )
   }

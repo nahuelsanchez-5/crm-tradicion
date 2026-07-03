@@ -2,8 +2,10 @@
 
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
+import { requireSession } from "@/lib/auth-guard"
 
 export async function marcarSeguimiento(ofertaId: string): Promise<{ error?: string }> {
+  await requireSession()
   const supabase = createServerClient()
 
   const { error } = await supabase.from("ofertas_historial").insert({
