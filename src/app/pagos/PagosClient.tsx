@@ -1593,6 +1593,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 <div style={{
                   border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px",
                   overflow: "auto", maxHeight: "200px",
+                  background: "#13131a",
                 }}>
                   <div style={{
                     display: "flex", alignItems: "center", gap: "8px",
@@ -1620,9 +1621,9 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                       style={{
                         display: "flex", alignItems: "center", gap: "10px",
                         padding: "8px 12px",
-                        borderBottom: "1px solid #F8F9FC",
+                        borderBottom: "1px solid rgba(255,255,255,0.06)",
                         cursor: "pointer",
-                        background: selectedAgentesRec.has(a.id) ? "#F5F3FF" : "white",
+                        background: selectedAgentesRec.has(a.id) ? "rgba(124,58,237,0.15)" : "transparent",
                         transition: "background 0.1s",
                       }}
                     >
