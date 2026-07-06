@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
+import { getSession } from "@/lib/auth-guard"
 
 const VALID_TIPOS = ["Venta", "Alquiler", "Alquiler Temporal", "Referido", "Otro"]
 
 // POST /api/operaciones/crear
 // Body: { oferta_id: string; precio_acordado_usd: number }
 export async function POST(req: NextRequest) {
+  const session = await getSession()
+  if (!session) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+  }
   try {
     const body = (await req.json()) as { oferta_id?: string; precio_acordado_usd?: number }
     const { oferta_id, precio_acordado_usd } = body

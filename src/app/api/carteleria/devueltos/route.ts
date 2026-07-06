@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
+import { getSession } from "@/lib/auth-guard"
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const session = await getSession()
+  if (!session) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+  }
   try {
     const { searchParams } = new URL(req.url)
     const month = parseInt(searchParams.get("month") ?? "0")

@@ -2,6 +2,7 @@
 
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
+import { requireSession } from "@/lib/auth-guard"
 
 export interface OperacionFormData {
   fecha:              string
@@ -18,6 +19,7 @@ export interface OperacionFormData {
 //  CREAR OPERACIÓN
 // ─────────────────────────────────────────────────────
 export async function crearOperacion(data: OperacionFormData) {
+  await requireSession()
   const supabase = createServerClient()
 
   const { error } = await supabase.from("operaciones").insert({
@@ -41,6 +43,7 @@ export async function crearOperacion(data: OperacionFormData) {
 //  ACTUALIZAR OPERACIÓN
 // ─────────────────────────────────────────────────────
 export async function actualizarOperacion(id: string, data: OperacionFormData) {
+  await requireSession()
   const supabase = createServerClient()
 
   const { error } = await supabase
@@ -67,6 +70,7 @@ export async function actualizarOperacion(id: string, data: OperacionFormData) {
 //  ELIMINAR OPERACIÓN
 // ─────────────────────────────────────────────────────
 export async function eliminarOperacion(id: string): Promise<{ error?: string }> {
+  await requireSession()
   const supabase = createServerClient()
   const { error } = await supabase.from("operaciones").delete().eq("id", id)
   if (error) return { error: error.message }

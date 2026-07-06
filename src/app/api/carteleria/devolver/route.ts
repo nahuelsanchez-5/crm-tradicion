@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
+import { getSession } from "@/lib/auth-guard"
 
 const AIRTABLE_TABLE_URL = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${process.env.AIRTABLE_CARTELERIA_TABLE_ID}`
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const session = await getSession()
+  if (!session) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+  }
   try {
     const body = await req.json() as {
       airtable_record_id?: string

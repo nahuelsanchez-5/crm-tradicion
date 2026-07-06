@@ -3,6 +3,7 @@
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 import { CHECKLIST_ITEMS } from "./checklist-items"
+import { requireSession } from "@/lib/auth-guard"
 
 // ── Types ─────────────────────────────────────────────
 export interface EditarOfertaData {
@@ -49,6 +50,7 @@ export interface OfertaFormData {
 export async function crearOferta(
   data: OfertaFormData,
 ): Promise<{ error?: string; id?: string }> {
+  await requireSession()
   const supabase = createServerClient()
 
   const { data: oferta, error } = await supabase
@@ -107,6 +109,7 @@ export async function cambiarEstado(
   descripcion: string,
   monto?: number | null,
 ): Promise<{ error?: string }> {
+  await requireSession()
   const supabase = createServerClient()
 
   const updates: Record<string, unknown> = { estado: nuevoEstado }
@@ -135,6 +138,7 @@ export async function agregarMovimiento(
   descripcion: string,
   monto?: number | null,
 ): Promise<{ error?: string }> {
+  await requireSession()
   const supabase = createServerClient()
 
   const { error } = await supabase.from("ofertas_historial").insert({
@@ -155,6 +159,7 @@ export async function toggleChecklist(
   ofertaId: string,
   completado: boolean,
 ): Promise<{ error?: string }> {
+  await requireSession()
   const supabase = createServerClient()
 
   const { error } = await supabase
@@ -173,6 +178,7 @@ export async function registrarCierre(
   fecha: string,
   precioCierre: number,
 ): Promise<{ error?: string }> {
+  await requireSession()
   const supabase = createServerClient()
 
   const { error: ofertaError } = await supabase
@@ -199,6 +205,7 @@ export async function registrarCierre(
 //  EDITAR OFERTA
 // ─────────────────────────────────────────────────────
 export async function editarOferta(id: string, data: EditarOfertaData): Promise<{ error?: string }> {
+  await requireSession()
   const supabase = createServerClient()
 
   const { error } = await supabase

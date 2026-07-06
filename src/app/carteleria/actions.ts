@@ -1,6 +1,7 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { requireSession } from "@/lib/auth-guard"
 
 // ── Field IDs ─────────────────────────────────────────
 // fldClqD1zmj0AYlBn = Días restantes → fórmula, solo lectura, NO se envía en writes
@@ -45,6 +46,7 @@ export interface CartelFormData {
 }
 
 export async function crearCartel(data: CartelFormData) {
+  await requireSession()
   const res = await fetch(apiUrl(), {
     method: "POST",
     headers: authHeaders(),
@@ -62,6 +64,7 @@ export async function crearCartel(data: CartelFormData) {
 }
 
 export async function devolverCartel(id: string) {
+  await requireSession()
   const today = new Date().toISOString().split("T")[0]
   const res = await fetch(apiUrl(), {
     method: "PATCH",
@@ -80,6 +83,7 @@ export async function devolverCartel(id: string) {
 }
 
 export async function editarCartel(id: string, data: CartelFormData) {
+  await requireSession()
   const res = await fetch(apiUrl(), {
     method: "PATCH",
     headers: authHeaders(),

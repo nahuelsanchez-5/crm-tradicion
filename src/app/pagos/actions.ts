@@ -2,6 +2,7 @@
 
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
+import { requireSession } from "@/lib/auth-guard"
 
 function calcularEstado(monto_debe: number, monto_pagado: number): string {
   if (monto_pagado <= 0)              return "Pendiente"
@@ -19,6 +20,7 @@ export async function crearPago(data: {
   monto_debe: number
   monto_pagado: number
 }) {
+  await requireSession()
   const supabase = createServerClient()
 
   const estado = calcularEstado(data.monto_debe, data.monto_pagado)
@@ -47,6 +49,7 @@ export async function crearGasto(data: {
   concepto: string
   monto_debe: number
 }) {
+  await requireSession()
   const supabase = createServerClient()
 
   const { error } = await supabase.from("pagos").insert({
@@ -73,6 +76,7 @@ export async function crearGastoRecurrente(data: {
   concepto: string
   monto_debe: number
 }) {
+  await requireSession()
   if (data.agente_ids.length === 0) return { error: "Seleccioná al menos un agente" }
 
   const supabase = createServerClient()
@@ -98,6 +102,7 @@ export async function crearGastoRecurrente(data: {
 //  ELIMINAR PAGO / GASTO
 // ─────────────────────────────────────────────────────
 export async function eliminarPago(id: string) {
+  await requireSession()
   const supabase = createServerClient()
 
   const { error } = await supabase
@@ -119,6 +124,7 @@ export async function registrarSaldoFavor(data: {
   fecha: string
   monto: number
 }) {
+  await requireSession()
   const supabase = createServerClient()
 
   const { error } = await supabase.from("pagos").insert({
@@ -146,6 +152,7 @@ export async function crearGastoConCredito(data: {
   monto_debe: number
   credito_aplicado: number
 }) {
+  await requireSession()
   const supabase = createServerClient()
 
   const montoNeto = Math.max(0, data.monto_debe - data.credito_aplicado)
@@ -182,6 +189,7 @@ export async function actualizarPago(
   id: string,
   data: { monto_pagado: number; estado: string }
 ) {
+  await requireSession()
   const supabase = createServerClient()
 
   const { error } = await supabase
