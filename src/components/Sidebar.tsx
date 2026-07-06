@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
+import { useSession, signOut } from "next-auth/react"
 import {
   LayoutDashboard,
   CalendarDays,
@@ -17,6 +18,7 @@ import {
   BarChart3,
   Menu,
   X,
+  LogOut,
   LucideIcon,
 } from "lucide-react"
 import DolarWidget from "./DolarWidget"
@@ -52,6 +54,10 @@ interface Props {
 export default function Sidebar({ agenteCount }: Props) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { data: session } = useSession()
+
+  const userName = session?.user?.name ?? "Staff"
+  const userInitial = userName.charAt(0).toUpperCase()
 
   // La pantalla de login no lleva navegación
   if (pathname === "/login") return null
@@ -108,14 +114,21 @@ export default function Sidebar({ agenteCount }: Props) {
 
       {/* User footer */}
       <div className="px-3 pb-4 pt-2" style={{ borderTop: "1px solid var(--crm-divider)" }}>
-        <div className="flex items-center gap-3 px-2 py-2 rounded-xl cursor-pointer hover:bg-white/[0.05] transition-colors duration-150">
+        <div className="flex items-center gap-3 px-2 py-2 rounded-xl">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[12px] font-bold text-white flex-shrink-0" style={{ background: "rgba(227,24,55,0.2)", border: "1px solid rgba(227,24,55,0.3)" }}>
-            N
+            {userInitial}
           </div>
-          <div className="min-w-0">
-            <p className="text-[12px] font-600 text-white/80 leading-none">Nahuel Sánchez</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-[12px] font-600 text-white/80 leading-none truncate">{userName}</p>
             <p className="text-[10px] text-white/30 mt-0.5 uppercase tracking-wide">Staff</p>
           </div>
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            title="Cerrar sesión"
+            className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/[0.07] transition-colors duration-150 border-none bg-transparent cursor-pointer"
+          >
+            <LogOut size={14} />
+          </button>
         </div>
       </div>
     </>
