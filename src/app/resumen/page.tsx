@@ -53,7 +53,8 @@ export default async function ResumenPage({
       .eq("activo", true),
     supabase.from("encuestas_registros")
       .select("nps")
-      .gte("fecha", startDate).lt("fecha", endDate),
+      .gte("fecha", startDate).lt("fecha", endDate)
+      .eq("eliminado", false),
     supabase.from("operaciones")
       .select("comision_bruta")
       .gte("fecha", startDate).lt("fecha", endDate),

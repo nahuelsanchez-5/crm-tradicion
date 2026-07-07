@@ -26,6 +26,7 @@ export default async function EncuestasPage() {
     .from("encuestas_registros")
     .select("id, fecha, tipo, subtipo, referencia, nps, comentario, created_at")
     .gte("fecha", desde)
+    .eq("eliminado", false)
     .order("fecha", { ascending: false })
 
   // Config: objetivo % de encuestas con NPS

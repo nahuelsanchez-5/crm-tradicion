@@ -27,6 +27,15 @@ export interface RegistroEncuestaData {
   comentario: string
 }
 
+export interface EditarEncuestaData {
+  fecha:      string
+  tipo:       "ESPONTANEA" | "MAILING"
+  subtipo:    string | null
+  referencia: string
+  nps:        number | null
+  comentario: string
+}
+
 export async function registrarEncuesta(data: RegistroEncuestaData) {
   await requireSession()
   const supabase = createServerClient()
@@ -46,10 +55,34 @@ export async function registrarEncuesta(data: RegistroEncuestaData) {
   return { success: true }
 }
 
+export async function editarEncuesta(id: string, data: EditarEncuestaData) {
+  await requireSession()
+  const supabase = createServerClient()
+  const { error } = await supabase
+    .from("encuestas_registros")
+    .update({
+      fecha:      data.fecha,
+      tipo:       data.tipo,
+      subtipo:    data.subtipo || null,
+      referencia: data.referencia.trim(),
+      nps:        data.nps,
+      comentario: data.comentario.trim() || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("eliminado", false)
+  if (error) return { error: error.message }
+  revalidatePath("/encuestas")
+  return { success: true }
+}
+
 export async function eliminarEncuesta(id: string) {
   await requireSession()
   const supabase = createServerClient()
-  const { error } = await supabase.from("encuestas_registros").delete().eq("id", id)
+  const { error } = await supabase
+    .from("encuestas_registros")
+    .update({ eliminado: true, updated_at: new Date().toISOString() })
+    .eq("id", id)
   if (error) return { error: error.message }
   revalidatePath("/encuestas")
   return { success: true }
