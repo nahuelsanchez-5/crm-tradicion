@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { usePathname } from "next/navigation"
 import { Sparkles, X, Send, Mic } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -26,6 +27,7 @@ interface ApiResponse {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function AIAssistant() {
+  const pathname = usePathname()
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -210,6 +212,9 @@ export default function AIAssistant() {
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
+
+  // La pantalla de login no lleva asistente (va después de todos los hooks)
+  if (pathname === "/login") return null
 
   return (
     <>

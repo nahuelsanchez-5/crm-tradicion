@@ -2,6 +2,7 @@
 
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
+import { requireSession } from "@/lib/auth-guard"
 
 // ── Migration note ──────────────────────────────────
 // This module uses a new table. Run in Supabase SQL Editor:
@@ -27,6 +28,7 @@ export interface RegistroEncuestaData {
 }
 
 export async function registrarEncuesta(data: RegistroEncuestaData) {
+  await requireSession()
   const supabase = createServerClient()
 
   const { error } = await supabase.from("encuestas_registros").insert({
@@ -45,6 +47,7 @@ export async function registrarEncuesta(data: RegistroEncuestaData) {
 }
 
 export async function eliminarEncuesta(id: string) {
+  await requireSession()
   const supabase = createServerClient()
   const { error } = await supabase.from("encuestas_registros").delete().eq("id", id)
   if (error) return { error: error.message }
@@ -62,6 +65,7 @@ export interface EncuestaFormData {
 }
 
 export async function guardarEncuesta(data: EncuestaFormData) {
+  await requireSession()
   const supabase = createServerClient()
 
   const { data: existing } = await supabase

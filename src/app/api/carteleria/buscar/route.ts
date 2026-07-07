@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { getSession } from "@/lib/auth-guard"
 
 const FIELD_IDS = {
   nro:   "fldsAoewlr0711e3s",
@@ -8,6 +9,10 @@ const FIELD_IDS = {
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  const session = await getSession()
+  if (!session) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+  }
   try {
     const nro = req.nextUrl.searchParams.get("nro")
     const n   = Number(nro)

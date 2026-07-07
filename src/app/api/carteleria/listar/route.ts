@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { getSession } from "@/lib/auth-guard"
 
 const FIELD_IDS = [
   "fldsAoewlr0711e3s",   // Nº de cartel
@@ -9,6 +10,10 @@ const FIELD_IDS = [
 ]
 
 export async function GET(): Promise<NextResponse> {
+  const session = await getSession()
+  if (!session) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 })
+  }
   try {
     const params = new URLSearchParams()
     FIELD_IDS.forEach(id => params.append("fields[]", id))

@@ -2,6 +2,7 @@
 
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
+import { requireSession } from "@/lib/auth-guard"
 
 export interface ConfigEntry {
   clave:   string
@@ -11,6 +12,7 @@ export interface ConfigEntry {
 }
 
 export async function guardarConfig(entries: ConfigEntry[]) {
+  await requireSession()
   const supabase = createServerClient()
 
   const upserts = entries.map(e => ({
@@ -32,6 +34,7 @@ export async function guardarConfig(entries: ConfigEntry[]) {
 }
 
 export async function getConfig(): Promise<ConfigEntry[]> {
+  await requireSession()
   const supabase = createServerClient()
 
   const { data } = await supabase

@@ -2,6 +2,7 @@
 
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
+import { requireSession } from "@/lib/auth-guard"
 
 export interface AgenteFormData {
   nombre: string
@@ -17,6 +18,7 @@ export interface AgenteFormData {
 //  CREAR AGENTE
 // ─────────────────────────────────────────────────────
 export async function crearAgente(data: AgenteFormData) {
+  await requireSession()
   const supabase = createServerClient()
 
   const { error } = await supabase
@@ -43,6 +45,7 @@ export async function crearAgente(data: AgenteFormData) {
 //  ACTUALIZAR PAGA_FEE
 // ─────────────────────────────────────────────────────
 export async function actualizarPagaFee(id: string, pagaFee: boolean) {
+  await requireSession()
   const supabase = createServerClient()
 
   const { error } = await supabase
@@ -61,6 +64,7 @@ export async function actualizarPagaFee(id: string, pagaFee: boolean) {
 //  ACTUALIZAR AGENTE
 // ─────────────────────────────────────────────────────
 export async function actualizarAgente(id: string, data: AgenteFormData) {
+  await requireSession()
   const supabase = createServerClient()
 
   const { error } = await supabase
