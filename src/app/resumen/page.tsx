@@ -23,11 +23,17 @@ function getConceptGroup(concepto: string): "FEE" | "CRM" | "Mainstreet" | "Otro
   return "Otros"
 }
 
-export default async function ResumenPage() {
+export default async function ResumenPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string; anio?: string }>
+}) {
+  const { mes, anio } = await searchParams
+  const now   = new Date()
+  const year  = anio ? Math.max(2020, Math.min(2099, parseInt(anio))) : now.getFullYear()
+  const month = mes  ? Math.max(1,    Math.min(12,   parseInt(mes)))  : now.getMonth() + 1
+
   const supabase  = createServerClient()
-  const now       = new Date()
-  const year      = now.getFullYear()
-  const month     = now.getMonth() + 1
   const startDate = `${year}-${String(month).padStart(2, "0")}-01`
   const endDate   = nextMonthDate(year, month)
 
@@ -142,6 +148,8 @@ export default async function ResumenPage() {
       mes={`${MONTH_NAMES[month - 1]} ${year}`}
       kpis={kpis}
       totalACobrar={totalACobrar}
+      selectedMonth={month}
+      selectedYear={year}
     />
   )
 }

@@ -33,12 +33,16 @@ export default async function RootLayout({
       <body className="h-full overflow-hidden" style={{ background: "linear-gradient(135deg, #0a0a1a 0%, #0d0d2b 50%, #0a1a0f 100%)" }}>
         <SessionProvider>
           <div style={{ display: "flex", height: "100%" }}>
-            <Sidebar agenteCount={count ?? 0} />
+            <div className="no-print" style={{ display: "contents" }}>
+              <Sidebar agenteCount={count ?? 0} />
+            </div>
             <main style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
               {children}
             </main>
           </div>
-          <AIAssistant />
+          <div className="no-print">
+            <AIAssistant />
+          </div>
         </SessionProvider>
       </body>
     </html>

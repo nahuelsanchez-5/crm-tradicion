@@ -1,5 +1,8 @@
 "use client"
 
+import { useRouter, usePathname } from "next/navigation"
+import { Printer } from "lucide-react"
+
 const MONTH_NAMES = [
   "Enero","Febrero","Marzo","Abril","Mayo","Junio",
   "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
@@ -13,12 +16,24 @@ export interface KpiRow {
 }
 
 interface Props {
-  mes:          string
-  kpis:         KpiRow[]
-  totalACobrar: number
+  mes:           string
+  kpis:          KpiRow[]
+  totalACobrar:  number
+  selectedMonth: number
+  selectedYear:  number
 }
 
-export default function ResumenClient({ mes, kpis, totalACobrar }: Props) {
+export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, selectedYear }: Props) {
+  const router   = useRouter()
+  const pathname = usePathname()
+
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: currentYear - 2022 }, (_, i) => 2023 + i)
+
+  const navigate = (m: number, y: number) => {
+    router.push(`${pathname}?mes=${m}&anio=${y}`)
+  }
+
   const totalColor =
     totalACobrar >= 300 ? "#059669"
     : totalACobrar >= 150 ? "#D97706"
@@ -30,11 +45,12 @@ export default function ResumenClient({ mes, kpis, totalACobrar }: Props) {
     : "rgba(248,113,113,0.12)"
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+    <div id="resumen-root" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
       {/* Header */}
-      <div className="crm-page-header flex-shrink-0">
-        <div>
+      <div className="crm-page-header flex-shrink-0" style={{ flexWrap: "wrap", gap: "12px" }}>
+        {/* Title */}
+        <div style={{ minWidth: 0 }}>
           <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
             Resumen mensual
           </h1>
@@ -42,7 +58,54 @@ export default function ResumenClient({ mes, kpis, totalACobrar }: Props) {
             {mes} · Indicadores de gestión y bonos a cobrar
           </p>
         </div>
-        <div style={{
+
+        {/* Controls: month selector + print button */}
+        <div className="print-hide" style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
+          <select
+            value={selectedMonth}
+            onChange={e => navigate(parseInt(e.target.value), selectedYear)}
+            style={{
+              background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: "8px", color: "#f1f5f9", padding: "6px 10px",
+              fontSize: "13px", fontWeight: 600, cursor: "pointer", outline: "none",
+            }}
+          >
+            {MONTH_NAMES.map((name, i) => (
+              <option key={name} value={i + 1}>{name}</option>
+            ))}
+          </select>
+
+          <select
+            value={selectedYear}
+            onChange={e => navigate(selectedMonth, parseInt(e.target.value))}
+            style={{
+              background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: "8px", color: "#f1f5f9", padding: "6px 10px",
+              fontSize: "13px", fontWeight: 600, cursor: "pointer", outline: "none",
+            }}
+          >
+            {years.map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+
+          <button
+            onClick={() => window.print()}
+            title="Imprimir resumen"
+            style={{
+              display: "flex", alignItems: "center", gap: "6px",
+              background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: "8px", color: "#f1f5f9", padding: "6px 12px",
+              fontSize: "13px", fontWeight: 600, cursor: "pointer",
+            }}
+          >
+            <Printer size={14} />
+            Imprimir
+          </button>
+        </div>
+
+        {/* Total badge */}
+        <div className="kpi-badge-total" style={{
           padding: "8px 20px", borderRadius: "10px",
           background: totalBg, border: `1px solid ${totalColor}40`,
         }}>
@@ -91,7 +154,7 @@ export default function ResumenClient({ mes, kpis, totalACobrar }: Props) {
                       {kpi.cumplido}
                     </td>
                     <td style={{ padding: "16px 20px" }}>
-                      <span style={{
+                      <span className={kpi.aCobrar > 0 ? "kpi-badge-pos" : "kpi-badge-neg"} style={{
                         display: "inline-flex", alignItems: "center",
                         padding: "5px 14px", borderRadius: "20px",
                         fontSize: "13px", fontWeight: 800,
@@ -112,7 +175,7 @@ export default function ResumenClient({ mes, kpis, totalACobrar }: Props) {
                     Total a cobrar
                   </td>
                   <td style={{ padding: "16px 20px" }}>
-                    <span style={{
+                    <span className="kpi-badge-total" style={{
                       display: "inline-flex", alignItems: "center",
                       padding: "6px 18px", borderRadius: "20px",
                       fontSize: "15px", fontWeight: 800,
@@ -132,7 +195,7 @@ export default function ResumenClient({ mes, kpis, totalACobrar }: Props) {
               <div key={kpi.label} style={{ padding: "16px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
                   <span style={{ fontWeight: 700, fontSize: "14px", color: "#f1f5f9" }}>{kpi.label}</span>
-                  <span style={{
+                  <span className={kpi.aCobrar > 0 ? "kpi-badge-pos" : "kpi-badge-neg"} style={{
                     padding: "4px 12px", borderRadius: "20px",
                     fontSize: "12px", fontWeight: 800,
                     background: kpi.aCobrar > 0 ? "rgba(74,222,128,0.12)" : "rgba(248,113,113,0.12)",
@@ -151,7 +214,7 @@ export default function ResumenClient({ mes, kpis, totalACobrar }: Props) {
             ))}
             <div style={{ padding: "16px", background: "rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontWeight: 800, fontSize: "14px", color: "#f1f5f9" }}>Total a cobrar</span>
-              <span style={{
+              <span className="kpi-badge-total" style={{
                 padding: "6px 16px", borderRadius: "20px",
                 fontSize: "15px", fontWeight: 800,
                 background: totalBg, color: totalColor,

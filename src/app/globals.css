@@ -399,3 +399,67 @@
     padding-left: 64px !important;
   }
 }
+
+/* ── Print styles ──────────────────────────────────────────────────── */
+@media print {
+  .no-print   { display: none !important; }
+  .print-hide { display: none !important; }
+
+  html, body {
+    background: white !important;
+    color: #111 !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  main {
+    overflow: visible !important;
+    background: white !important;
+    width: 100% !important;
+  }
+
+  #resumen-root {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Reset all inner elements to white/dark — exclude badge spans */
+  #resumen-root *:not(.kpi-badge-pos):not(.kpi-badge-neg):not(.kpi-badge-total):not(.kpi-badge-total *) {
+    background: white !important;
+    color: #111 !important;
+    border-color: #e2e8f0 !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Restore green badge (USD 100 cobrado) */
+  #resumen-root .kpi-badge-pos {
+    background: #dcfce7 !important;
+    color: #166534 !important;
+    border: 1px solid #86efac !important;
+  }
+
+  /* Restore red badge (USD 0 no cobrado) */
+  #resumen-root .kpi-badge-neg {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+    border: 1px solid #fca5a5 !important;
+  }
+
+  /* Restore total badge */
+  #resumen-root .kpi-badge-total,
+  #resumen-root .kpi-badge-total p {
+    background: #f0fdf4 !important;
+    color: #166534 !important;
+    border-color: #86efac !important;
+  }
+
+  /* Page title for print */
+  #resumen-root .crm-page-header {
+    background: white !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    padding: 16px 0 !important;
+  }
+}
