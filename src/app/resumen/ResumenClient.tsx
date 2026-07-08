@@ -48,7 +48,7 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
     <div id="resumen-root" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
       {/* Header */}
-      <div className="crm-page-header flex-shrink-0" style={{ flexWrap: "wrap", gap: "12px" }}>
+      <div className="crm-page-header flex-shrink-0">
         {/* Title */}
         <div style={{ minWidth: 0 }}>
           <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
@@ -59,60 +59,65 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
           </p>
         </div>
 
-        {/* Controls: month selector + print button */}
-        <div className="print-hide" style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "auto" }}>
-          <select
-            value={selectedMonth}
-            onChange={e => navigate(parseInt(e.target.value), selectedYear)}
-            style={{
-              background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: "8px", color: "#f1f5f9", padding: "6px 10px",
-              fontSize: "13px", fontWeight: 600, cursor: "pointer", outline: "none",
-            }}
-          >
-            {MONTH_NAMES.map((name, i) => (
-              <option key={name} value={i + 1}>{name}</option>
-            ))}
-          </select>
+        {/* Right group: controls (hidden in print) + badge */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
 
-          <select
-            value={selectedYear}
-            onChange={e => navigate(selectedMonth, parseInt(e.target.value))}
-            style={{
-              background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: "8px", color: "#f1f5f9", padding: "6px 10px",
-              fontSize: "13px", fontWeight: 600, cursor: "pointer", outline: "none",
-            }}
-          >
-            {years.map(y => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
+          {/* Controls: month/year selector + print button */}
+          <div className="print-hide" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <select
+              value={selectedMonth}
+              onChange={e => navigate(parseInt(e.target.value), selectedYear)}
+              style={{
+                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: "8px", color: "#f1f5f9", padding: "6px 10px",
+                fontSize: "13px", fontWeight: 600, cursor: "pointer", outline: "none",
+              }}
+            >
+              {MONTH_NAMES.map((name, i) => (
+                <option key={name} value={i + 1}>{name}</option>
+              ))}
+            </select>
 
-          <button
-            onClick={() => window.print()}
-            title="Imprimir resumen"
-            style={{
-              display: "flex", alignItems: "center", gap: "6px",
-              background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)",
-              borderRadius: "8px", color: "#f1f5f9", padding: "6px 12px",
-              fontSize: "13px", fontWeight: 600, cursor: "pointer",
-            }}
-          >
-            <Printer size={14} />
-            Imprimir
-          </button>
-        </div>
+            <select
+              value={selectedYear}
+              onChange={e => navigate(selectedMonth, parseInt(e.target.value))}
+              style={{
+                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: "8px", color: "#f1f5f9", padding: "6px 10px",
+                fontSize: "13px", fontWeight: 600, cursor: "pointer", outline: "none",
+              }}
+            >
+              {years.map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
 
-        {/* Total badge */}
-        <div className="kpi-badge-total" style={{
-          padding: "8px 20px", borderRadius: "10px",
-          background: totalBg, border: `1px solid ${totalColor}40`,
-        }}>
-          <p style={{ margin: 0, fontSize: "11px", fontWeight: 700, color: totalColor, textTransform: "uppercase", letterSpacing: "0.7px" }}>Total a cobrar</p>
-          <p style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: totalColor, lineHeight: 1.2 }}>
-            USD {totalACobrar}
-          </p>
+            <button
+              onClick={() => window.print()}
+              title="Imprimir resumen"
+              style={{
+                display: "flex", alignItems: "center", gap: "6px",
+                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: "8px", color: "#f1f5f9", padding: "6px 12px",
+                fontSize: "13px", fontWeight: 600, cursor: "pointer",
+              }}
+            >
+              <Printer size={14} />
+              Imprimir
+            </button>
+          </div>
+
+          {/* Total badge — visible in print */}
+          <div className="kpi-badge-total" style={{
+            padding: "8px 20px", borderRadius: "10px",
+            background: totalBg, border: `1px solid ${totalColor}40`,
+          }}>
+            <p style={{ margin: 0, fontSize: "11px", fontWeight: 700, color: totalColor, textTransform: "uppercase", letterSpacing: "0.7px" }}>Total a cobrar</p>
+            <p style={{ margin: 0, fontSize: "22px", fontWeight: 800, color: totalColor, lineHeight: 1.2 }}>
+              USD {totalACobrar}
+            </p>
+          </div>
+
         </div>
       </div>
 
