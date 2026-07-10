@@ -77,7 +77,7 @@ export default async function ResumenPage({
       .select("agente_id, monto_debe, monto_pagado, estado, concepto")
       .gte("fecha", startDate).lt("fecha", endDate),
     supabase.from("agentes")
-      .select("id, paga_fee, licencia, activo")
+      .select("id, paga_fee, tipo_plan, activo")
       .eq("activo", true),
     supabase.from("encuestas_registros")
       .select("nps")
@@ -108,14 +108,22 @@ export default async function ResumenPage({
   const pagosData    = pagos ?? []
   const agentesData  = agentes ?? []
   const activos      = agentesData.filter(a => a.activo)
+
+  // FEE: agentes con paga_fee = true
   const agentesFee   = Math.max(activos.filter(a => a.paga_fee === true).length, 1)
-  const agentesCrm   = Math.max(
-    activos.filter(a => a.paga_fee && a.licencia && a.licencia !== "---").length, 1
+
+  // CRM: solo PRO y PRO+ — Bonificado (B QR, B Ofi) y sin plan NO cuentan
+  const agenteCrmIds = new Set(
+    activos.filter(a => a.tipo_plan === "PRO" || a.tipo_plan === "PRO+").map(a => a.id)
   )
+  const agentesCrm   = Math.max(agenteCrmIds.size, 1)
+
+  // Mainstreet: todos los activos
   const agentesTotal = Math.max(activos.length, 1)
 
   const feePagados  = new Set(pagosData.filter(p => getConceptGroup(p.concepto) === "FEE"        && p.estado === "Pagado").map(p => p.agente_id)).size
-  const crmPagados  = new Set(pagosData.filter(p => getConceptGroup(p.concepto) === "CRM"        && p.estado === "Pagado").map(p => p.agente_id)).size
+  // crmPagados solo cuenta agentes que efectivamente tienen plan PRO/PRO+
+  const crmPagados  = new Set(pagosData.filter(p => getConceptGroup(p.concepto) === "CRM" && p.estado === "Pagado" && agenteCrmIds.has(p.agente_id)).map(p => p.agente_id)).size
   const mainPagados = new Set(pagosData.filter(p => getConceptGroup(p.concepto) === "Mainstreet" && p.estado === "Pagado").map(p => p.agente_id)).size
 
   // Individual pcts for display

@@ -66,7 +66,7 @@ async function main() {
     { data: configs },
   ] = await Promise.all([
     sb.from("pagos").select("agente_id, estado, concepto, fecha"),
-    sb.from("agentes").select("id, paga_fee, licencia, activo").eq("activo", true),
+    sb.from("agentes").select("id, paga_fee, tipo_plan, activo").eq("activo", true),
     sb.from("encuestas_registros").select("nps, fecha").eq("eliminado", false),
     sb.from("operaciones").select("comision_bruta, fecha"),
     sb.from("carteles_devueltos").select("fecha_devolucion"),
@@ -83,12 +83,14 @@ async function main() {
   const objNps = parseFloat(cfgMap.obj_encuestas_nps ?? "8.0") || 8.0
 
   // Active agents
-  const activos    = (agentes ?? [])
-  const agentesFee = Math.max(activos.filter(a => a.paga_fee === true).length, 1)
-  const agentesCrm = Math.max(activos.filter(a => a.paga_fee && a.licencia && a.licencia !== "---").length, 1)
+  const activos      = (agentes ?? [])
+  const agentesFee   = Math.max(activos.filter(a => a.paga_fee === true).length, 1)
+  // CRM: solo PRO y PRO+ — Bonificado (B QR, B Ofi) y sin plan NO cuentan
+  const agenteCrmIds = new Set(activos.filter(a => a.tipo_plan === "PRO" || a.tipo_plan === "PRO+").map(a => a.id))
+  const agentesCrm   = Math.max(agenteCrmIds.size, 1)
   const agentesTotal = Math.max(activos.length, 1)
 
-  console.log(`Agentes activos: ${activos.length}  (Fee: ${agentesFee}, CRM: ${agentesCrm}, Total MS: ${agentesTotal})`)
+  console.log(`Agentes activos: ${activos.length}  (Fee: ${agentesFee}, CRM PRO/PRO+: ${agentesCrm}, Total MS: ${agentesTotal})`)
   console.log(`Config — objNps: ${objNps}  |  Airtable: ${atOk ? `${atCarteles.length} carteles activos` : `ERROR: ${atErr}` }\n`)
 
   // 3. Find months with any data
@@ -113,7 +115,7 @@ async function main() {
     // Pagos del mes
     const pagos = (pagosAll ?? []).filter(p => p.fecha >= start && p.fecha < end)
     const feePag  = new Set(pagos.filter(p => getGroup(p.concepto) === "FEE"        && p.estado === "Pagado").map(p => p.agente_id)).size
-    const crmPag  = new Set(pagos.filter(p => getGroup(p.concepto) === "CRM"        && p.estado === "Pagado").map(p => p.agente_id)).size
+    const crmPag  = new Set(pagos.filter(p => getGroup(p.concepto) === "CRM"        && p.estado === "Pagado" && agenteCrmIds.has(p.agente_id)).map(p => p.agente_id)).size
     const mainPag = new Set(pagos.filter(p => getGroup(p.concepto) === "Mainstreet" && p.estado === "Pagado").map(p => p.agente_id)).size
 
     // Cobros — fórmula actual (promedio simple)
