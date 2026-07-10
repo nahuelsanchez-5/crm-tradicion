@@ -23,6 +23,33 @@ function getConceptGroup(concepto: string): "FEE" | "CRM" | "Mainstreet" | "Otro
   return "Otros"
 }
 
+// ── Airtable: carteles con vencimiento en el mes (aún activos) ───────────────
+interface AirtableRecord {
+  id: string
+  fields: Record<string, unknown>
+}
+
+async function fetchAirtableVencimientosEnMes(start: string, end: string): Promise<number | null> {
+  try {
+    const params = new URLSearchParams()
+    params.append("fields[]", "fldnLaQjKRCD8vezt")   // vencimiento
+    params.set("returnFieldsByFieldId", "true")
+    params.set("pageSize", "100")
+    const res = await fetch(
+      `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${process.env.AIRTABLE_CARTELERIA_TABLE_ID}?${params}`,
+      { headers: { Authorization: `Bearer ${process.env.AIRTABLE_TOKEN}` }, cache: "no-store" }
+    )
+    if (!res.ok) return null
+    const json = (await res.json()) as { records?: AirtableRecord[] }
+    return (json.records ?? []).filter(r => {
+      const venc = (r.fields["fldnLaQjKRCD8vezt"] as string) ?? ""
+      return venc >= start && venc < end
+    }).length
+  } catch {
+    return null
+  }
+}
+
 export default async function ResumenPage({
   searchParams,
 }: {
@@ -44,6 +71,7 @@ export default async function ResumenPage({
     { data: operaciones },
     { data: configs },
     { count: cartelesDevueltosCount },
+    atVencEnMes,
   ] = await Promise.all([
     supabase.from("pagos")
       .select("agente_id, monto_debe, monto_pagado, estado, concepto")
@@ -60,48 +88,66 @@ export default async function ResumenPage({
       .gte("fecha", startDate).lt("fecha", endDate),
     supabase.from("config")
       .select("clave, valor")
-      .in("clave", ["obj_facturacion_anual", "obj_encuestas_nps", "obj_carteles"]),
+      .in("clave", ["obj_facturacion_anual", "obj_encuestas_pct", "obj_carteles"]),
     supabase.from("carteles_devueltos")
       .select("*", { count: "exact", head: true })
       .gte("fecha_devolucion", startDate)
       .lt("fecha_devolucion", endDate),
+    fetchAirtableVencimientosEnMes(startDate, endDate),
   ])
 
   const cartelesCount = cartelesDevueltosCount ?? 0
 
   // ── Config values ────────────────────────────────────────
-  const configMap = Object.fromEntries((configs ?? []).map(c => [c.clave, c.valor]))
-  const objFactAnual  = parseFloat(configMap.obj_facturacion_anual ?? "710000") || 710000
-  const objNps        = parseFloat(configMap.obj_encuestas_nps     ?? "8.0")    || 8.0
-  const objCarteles   = parseInt(configMap.obj_carteles            ?? "20")     || 20
+  const configMap   = Object.fromEntries((configs ?? []).map(c => [c.clave, c.valor]))
+  const objFactAnual = parseFloat(configMap.obj_facturacion_anual ?? "710000") || 710000
+  const objEncPct    = parseInt(configMap.obj_encuestas_pct       ?? "60")     || 60
+  const objCarteles  = parseInt(configMap.obj_carteles            ?? "20")     || 20
 
-  // ── Cobros ───────────────────────────────────────────────
-  const pagosData     = pagos   ?? []
-  const agentesData   = agentes ?? []
-  const activos       = agentesData.filter(a => a.activo)
-  const agentesFee    = Math.max(activos.filter(a => a.paga_fee === true).length, 1)
-  const agentesCrm    = Math.max(
+  // ── Cobros — fórmula ponderada: SUMA(cobrado)/SUMA(total) × 100 ─────────────
+  const pagosData    = pagos ?? []
+  const agentesData  = agentes ?? []
+  const activos      = agentesData.filter(a => a.activo)
+  const agentesFee   = Math.max(activos.filter(a => a.paga_fee === true).length, 1)
+  const agentesCrm   = Math.max(
     activos.filter(a => a.paga_fee && a.licencia && a.licencia !== "---").length, 1
   )
-  const agentesTotal  = Math.max(activos.length, 1)
+  const agentesTotal = Math.max(activos.length, 1)
 
   const feePagados  = new Set(pagosData.filter(p => getConceptGroup(p.concepto) === "FEE"        && p.estado === "Pagado").map(p => p.agente_id)).size
   const crmPagados  = new Set(pagosData.filter(p => getConceptGroup(p.concepto) === "CRM"        && p.estado === "Pagado").map(p => p.agente_id)).size
   const mainPagados = new Set(pagosData.filter(p => getConceptGroup(p.concepto) === "Mainstreet" && p.estado === "Pagado").map(p => p.agente_id)).size
 
-  const feePct   = Math.round((feePagados  / agentesFee)   * 100)
-  const crmPct   = Math.round((crmPagados  / agentesCrm)   * 100)
-  const mainPct  = Math.round((mainPagados / agentesTotal)  * 100)
-  const cobrosPct = Math.round((feePct + crmPct + mainPct) / 3)
+  // Individual pcts for display
+  const feePct  = Math.round((feePagados  / agentesFee)   * 100)
+  const crmPct  = Math.round((crmPagados  / agentesCrm)   * 100)
+  const mainPct = Math.round((mainPagados / agentesTotal)  * 100)
+
+  // Ponderada: SUMA(cobrado) / SUMA(total) × 100
+  const cobrosPct    = Math.round(((feePagados + crmPagados + mainPagados) / (agentesFee + agentesCrm + agentesTotal)) * 100)
   const cobrosACobrar = cobrosPct >= 100 ? 100 : 0
 
-  // ── Cartelería ───────────────────────────────────────────
-  const cartelesACobrar = cartelesCount >= objCarteles ? 100 : 0
+  // ── Cartelería — fórmula dinámica: recuperados/pendientes × 100 ─────────────
+  // pendientes del mes = carteles aún activos en Airtable con venc. en el mes + ya recuperados
+  const pendientesTotales = atVencEnMes !== null ? atVencEnMes + cartelesCount : null
+  const pctCartDin = pendientesTotales !== null && pendientesTotales > 0
+    ? Math.round((cartelesCount / pendientesTotales) * 100)
+    : null
 
-  // ── Encuestas NPS ────────────────────────────────────────
-  const npsValues  = (encuestas ?? []).filter(e => e.nps !== null).map(e => e.nps as number)
-  const avgNps     = npsValues.length > 0 ? npsValues.reduce((a, b) => a + b, 0) / npsValues.length : null
-  const encACobrar = avgNps !== null && avgNps >= objNps ? 100 : 0
+  const cartelesACobrar = (() => {
+    if (pctCartDin === null)         return cartelesCount >= objCarteles ? 100 : 0
+    if (pendientesTotales === 0)     return cartelesCount >= objCarteles ? 100 : 0
+    return pctCartDin >= 100 ? 100 : 0
+  })()
+
+  // ── Encuestas — tasa de respuesta: (enc.)/(ops×2) ≥ obj% ────────────────────
+  const encuestasData  = encuestas ?? []
+  const totalEncuestas = encuestasData.length
+  const npsValues      = encuestasData.filter(e => e.nps !== null).map(e => e.nps as number)
+  const avgNps         = npsValues.length > 0 ? npsValues.reduce((a, b) => a + b, 0) / npsValues.length : null
+  const totalOps       = (operaciones ?? []).length
+  const tasaRespPct    = totalOps > 0 ? Math.round((totalEncuestas / (totalOps * 2)) * 100) : 0
+  const encACobrar     = tasaRespPct >= objEncPct ? 100 : 0
 
   // ── Facturación ──────────────────────────────────────────
   const comisionTotal  = (operaciones ?? []).reduce((s, o) => s + (Number(o.comision_bruta) || 0), 0)
@@ -118,22 +164,26 @@ export default async function ResumenPage({
   const kpis: KpiRow[] = [
     {
       label:    "Cobros",
-      objetivo: "100% de cobranza",
-      cumplido: `${cobrosPct}% prom. (FEE ${feePct}%, CRM ${crmPct}%, MS ${mainPct}%)`,
+      objetivo: "100% de cobranza (ponderado)",
+      cumplido: `${cobrosPct}% (Fee ${feePagados}/${agentesFee} = ${feePct}%, CRM ${crmPagados}/${agentesCrm} = ${crmPct}%, MS ${mainPagados}/${agentesTotal} = ${mainPct}%)`,
       aCobrar:  cobrosACobrar,
     },
     {
       label:    "Cartelería",
-      objetivo: `${objCarteles} carteles recuperados`,
-      cumplido: `${cartelesCount} cartel${cartelesCount !== 1 ? "es" : ""} recuperado${cartelesCount !== 1 ? "s" : ""}`,
+      objetivo: pendientesTotales !== null ? "100% de pendientes del mes" : `${objCarteles} carteles recuperados`,
+      cumplido: pctCartDin !== null
+        ? `${cartelesCount}/${pendientesTotales} recuperados (${pctCartDin}%)`
+        : pendientesTotales === 0
+          ? `Sin vencimientos este mes (${cartelesCount} recuperados igualmente)`
+          : `${cartelesCount} cartel${cartelesCount !== 1 ? "es" : ""} recuperado${cartelesCount !== 1 ? "s" : ""}`,
       aCobrar:  cartelesACobrar,
     },
     {
-      label:    "Encuestas NPS",
-      objetivo: `NPS ≥ ${objNps.toFixed(1)}`,
-      cumplido: avgNps !== null
-        ? `NPS ${avgNps.toFixed(1)} (${npsValues.length} enc.)`
-        : "Sin encuestas este mes",
+      label:    "Encuestas",
+      objetivo: `Tasa de respuesta ≥ ${objEncPct}%`,
+      cumplido: totalEncuestas === 0 && totalOps === 0
+        ? "Sin encuestas ni operaciones este mes"
+        : `${tasaRespPct}% resp. (${totalEncuestas} enc. / ${totalOps * 2} esp.)${avgNps !== null ? ` · NPS prom. ${avgNps.toFixed(1)}` : ""}`,
       aCobrar:  encACobrar,
     },
     {
