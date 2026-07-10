@@ -77,7 +77,7 @@ export default async function ResumenPage({
       .select("agente_id, monto_debe, monto_pagado, estado, concepto")
       .gte("fecha", startDate).lt("fecha", endDate),
     supabase.from("agentes")
-      .select("id, paga_fee, tipo_plan, activo")
+      .select("id, paga_fee, tipo_plan, activo, fecha_mainstreet")
       .eq("activo", true),
     supabase.from("encuestas_registros")
       .select("nps")
@@ -118,8 +118,11 @@ export default async function ResumenPage({
   )
   const agentesCrm   = Math.max(agenteCrmIds.size, 1)
 
-  // Mainstreet: todos los activos
-  const agentesTotal = Math.max(activos.length, 1)
+  // Mainstreet: solo agentes cuyo aniversario (mes de fecha_mainstreet) cae en el mes seleccionado
+  const agentesMainstreet = Math.max(
+    activos.filter(a => a.fecha_mainstreet && new Date(a.fecha_mainstreet + "T00:00:00").getMonth() + 1 === month).length,
+    1
+  )
 
   const feePagados  = new Set(pagosData.filter(p => getConceptGroup(p.concepto) === "FEE"        && p.estado === "Pagado").map(p => p.agente_id)).size
   // crmPagados solo cuenta agentes que efectivamente tienen plan PRO/PRO+
@@ -129,10 +132,10 @@ export default async function ResumenPage({
   // Individual pcts for display
   const feePct  = Math.round((feePagados  / agentesFee)   * 100)
   const crmPct  = Math.round((crmPagados  / agentesCrm)   * 100)
-  const mainPct = Math.round((mainPagados / agentesTotal)  * 100)
+  const mainPct = Math.round((mainPagados / agentesMainstreet) * 100)
 
   // Ponderada: SUMA(cobrado) / SUMA(total) × 100
-  const cobrosPct    = Math.round(((feePagados + crmPagados + mainPagados) / (agentesFee + agentesCrm + agentesTotal)) * 100)
+  const cobrosPct    = Math.round(((feePagados + crmPagados + mainPagados) / (agentesFee + agentesCrm + agentesMainstreet)) * 100)
   const cobrosACobrar = cobrosPct >= 100 ? 100 : 0
 
   // ── Cartelería — fórmula dinámica: recuperados/pendientes × 100 ─────────────
@@ -161,7 +164,7 @@ export default async function ResumenPage({
   const comisionTotal  = (operaciones ?? []).reduce((s, o) => s + (Number(o.comision_bruta) || 0), 0)
   const objFactMensual = objFactAnual * SEASON[month - 1]
   const factRatio      = objFactMensual > 0 ? comisionTotal / objFactMensual : 0
-  const factACobrar    = Math.round(Math.min(factRatio, 1) * 100)
+  const factACobrar    = factRatio >= 1 ? 100 : 0
 
   const totalACobrar = cobrosACobrar + cartelesACobrar + encACobrar + factACobrar
 
@@ -173,7 +176,7 @@ export default async function ResumenPage({
     {
       label:    "Cobros",
       objetivo: "100% de cobranza (ponderado)",
-      cumplido: `${cobrosPct}% (Fee ${feePagados}/${agentesFee} = ${feePct}%, CRM ${crmPagados}/${agentesCrm} = ${crmPct}%, MS ${mainPagados}/${agentesTotal} = ${mainPct}%)`,
+      cumplido: `${cobrosPct}% (Fee ${feePagados}/${agentesFee} = ${feePct}%, CRM ${crmPagados}/${agentesCrm} = ${crmPct}%, MS ${mainPagados}/${agentesMainstreet} = ${mainPct}%)`,
       aCobrar:  cobrosACobrar,
     },
     {

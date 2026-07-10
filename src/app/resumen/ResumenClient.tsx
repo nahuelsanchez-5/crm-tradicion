@@ -237,8 +237,7 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
           border: "1px solid rgba(255,255,255,0.07)", fontSize: "12px", color: "rgba(255,255,255,0.45)", lineHeight: 1.6,
         }}>
           <strong style={{ color: "#f1f5f9" }}>Criterio de bono:</strong>{" "}
-          Cobros, Cartelería y Encuestas: USD 100 si se alcanza el objetivo, USD 0 si no.
-          Facturación: proporcional al porcentaje alcanzado (máx. USD 100).
+          Cobros, Cartelería, Encuestas y Facturación: USD 100 si se alcanza el objetivo, USD 0 si no.
         </div>
       </div>
     </div>
