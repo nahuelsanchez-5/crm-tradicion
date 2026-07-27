@@ -155,26 +155,43 @@ export async function crearGastoConCredito(data: {
   await requireSession()
   const supabase = createServerClient()
 
-  const montoNeto = Math.max(0, data.monto_debe - data.credito_aplicado)
+  // Consume "Saldo a favor" rows FIFO so the credit isn't double-counted in the balance.
+  // Without this, the original deposit row (+credit) and the new monto_pagado (+credit) would
+  // both add to the balance, making the agent appear to owe less than they actually do.
+  const { data: saldos, error: saldosError } = await supabase
+    .from("pagos")
+    .select("id, monto_pagado")
+    .eq("agente_id", data.agente_id)
+    .eq("concepto", "Saldo a favor")
+    .gt("monto_pagado", 0)
+    .order("fecha", { ascending: true })
+    .order("created_at", { ascending: true })
 
-  const { error } = await supabase.from("pagos").insert([
-    {
-      agente_id:    data.agente_id,
-      fecha:        data.fecha,
-      concepto:     data.concepto,
-      monto_debe:   montoNeto,
-      monto_pagado: 0,
-      estado:       montoNeto === 0 ? "Pagado" : "Pendiente",
-    },
-    {
-      agente_id:    data.agente_id,
-      fecha:        data.fecha,
-      concepto:     "Crédito aplicado",
-      monto_debe:   data.credito_aplicado,
-      monto_pagado: 0,
-      estado:       "Pagado",
-    },
-  ])
+  if (saldosError) return { error: saldosError.message }
+
+  let remaining = data.credito_aplicado
+  for (const saldo of (saldos ?? [])) {
+    if (remaining <= 0) break
+    const use = Math.min(remaining, Number(saldo.monto_pagado))
+    const newMonto = Number(saldo.monto_pagado) - use
+    const { error } = newMonto === 0
+      ? await supabase.from("pagos").delete().eq("id", saldo.id)
+      : await supabase.from("pagos").update({ monto_pagado: newMonto }).eq("id", saldo.id)
+    if (error) return { error: error.message }
+    remaining -= use
+  }
+
+  // Single row: full original cargo + credit reflected as monto_pagado
+  const estado = data.credito_aplicado >= data.monto_debe ? "Pagado" : "Parcial"
+
+  const { error } = await supabase.from("pagos").insert({
+    agente_id:    data.agente_id,
+    fecha:        data.fecha,
+    concepto:     data.concepto,
+    monto_debe:   data.monto_debe,
+    monto_pagado: data.credito_aplicado,
+    estado,
+  })
 
   if (error) return { error: error.message }
 

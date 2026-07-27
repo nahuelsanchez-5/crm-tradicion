@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
@@ -556,7 +556,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
         const pagado = Number(p.monto_pagado)
         const resta  = debe - pagado
         if (p.estado === "Pagado" || resta <= 0) {
-          return `- ${p.concepto} — ${fmtUSD(debe > 0 ? debe : pagado)} \u2705`
+          return `- ${p.concepto} — ${fmtUSD(debe > 0 ? debe : pagado)} ✔`
         }
         if (pagado > 0) {
           return `- ${p.concepto} — pagaste ${fmtUSD(pagado)} de ${fmtUSD(debe)}. Te quedan ${fmtUSD(resta)}.`
@@ -965,7 +965,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                         </div>
                         {ag.pagos.map((p, pi) => (
                           <div key={p.id} style={{
-                            background: p.concepto === "Saldo a favor" ? "rgba(74,222,128,0.06)" : p.concepto === "Crédito aplicado" ? "rgba(59,130,246,0.06)" : "rgba(255,255,255,0.03)",
+                            background: p.concepto === "Saldo a favor" ? "rgba(74,222,128,0.06)" : "rgba(255,255,255,0.03)",
                             borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)",
                             padding: "10px 12px", marginBottom: pi < ag.pagos.length - 1 ? "8px" : 0,
                           }}>
@@ -973,8 +973,6 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                               <div>
                                 {p.concepto === "Saldo a favor" ? (
                                   <span style={{ background: "rgba(74,222,128,0.12)", color: "#4ade80", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>Saldo a favor</span>
-                                ) : p.concepto === "Crédito aplicado" ? (
-                                  <span style={{ background: "rgba(59,130,246,0.12)", color: "#60a5fa", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>Crédito aplicado</span>
                                 ) : (
                                   <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#f1f5f9" }}>{p.concepto}</div>
                                 )}
@@ -1209,12 +1207,9 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                   <tbody>
                                     {ag.pagos.map((p, pi) => {
                                       const isSaldoFavor = p.concepto === "Saldo a favor"
-                                      const isCreditoAplicado = p.concepto === "Crédito aplicado"
                                       const rowBg = isSaldoFavor
                                         ? "rgba(74,222,128,0.05)"
-                                        : isCreditoAplicado
-                                          ? "rgba(59,130,246,0.05)"
-                                          : p.estado === "Pagado" ? "rgba(74,222,128,0.04)" : p.estado === "Parcial" ? "rgba(251,191,36,0.04)" : "rgba(248,113,113,0.04)"
+                                        : p.estado === "Pagado" ? "rgba(74,222,128,0.04)" : p.estado === "Parcial" ? "rgba(251,191,36,0.04)" : "rgba(248,113,113,0.04)"
                                       return (
                                         <tr key={p.id} style={{ borderTop: pi > 0 ? "1px solid rgba(255,255,255,0.06)" : "none", background: rowBg }}>
                                           <td style={{ padding: "10px 14px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
@@ -1225,13 +1220,9 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                               <span style={{ background: "rgba(74,222,128,0.12)", color: "#4ade80", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>
                                                 Saldo a favor
                                               </span>
-                                            ) : isCreditoAplicado ? (
-                                              <span style={{ background: "rgba(59,130,246,0.12)", color: "#60a5fa", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>
-                                                Crédito aplicado
-                                              </span>
                                             ) : p.concepto}
                                           </td>
-                                          <td style={{ padding: "10px 14px", fontSize: "12px", fontWeight: 600, color: isCreditoAplicado ? "#2563EB" : "#E11D48", whiteSpace: "nowrap" }}>
+                                          <td style={{ padding: "10px 14px", fontSize: "12px", fontWeight: 600, color: "#E11D48", whiteSpace: "nowrap" }}>
                                             {isSaldoFavor ? "—" : fmtUSD(Number(p.monto_debe))}
                                           </td>
                                           <td style={{ padding: "10px 14px", fontSize: "12px", color: "#059669", fontWeight: 600, whiteSpace: "nowrap" }}>
