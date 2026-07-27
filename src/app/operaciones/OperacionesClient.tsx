@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
+import { useState, useMemo, useTransition, useEffect, useCallback, useRef } from "react"
 import { useRouter } from "next/navigation"
 import KpiCard from "@/components/KpiCard"
 import { crearOperacion, actualizarOperacion, eliminarOperacion } from "./actions"
 import type { OperacionFormData } from "./actions"
-import { Building2, DollarSign, BarChart2, X, Loader2, Trash2 } from "lucide-react"
+import { Building2, DollarSign, BarChart2, X, Loader2, Trash2, ChevronDown } from "lucide-react"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -44,7 +44,6 @@ interface FormData {
   moneda:             "USD" | "ARS"
   tipo_cambio:        string
   comision_bruta:     string
-  comision_neta:      string
   encuesta_comprador: boolean
   encuesta_vendedor:  boolean
 }
@@ -182,7 +181,6 @@ const EMPTY_FORM: FormData = {
   moneda:             "USD",
   tipo_cambio:        "",
   comision_bruta:     "",
-  comision_neta:      "",
   encuesta_comprador: false,
   encuesta_vendedor:  false,
 }
@@ -222,6 +220,11 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
   const [error,       setError]      = useState("")
   const [deleteId,    setDeleteId]   = useState<string | null>(null)
 
+  // ── Agentes multi-select ───────────────────────────
+  const [agentesSelected,     setAgentesSelected]     = useState<string[]>([])
+  const [agentesDropdownOpen, setAgentesDropdownOpen] = useState(false)
+  const agentesDropdownRef = useRef<HTMLDivElement>(null)
+
   // ── Computed ───────────────────────────────────────
   const filteredOps = useMemo(() => {
     if (selectedMonth === "todos") return operaciones
@@ -239,7 +242,11 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
   }, [filteredOps])
 
   // ── Keyboard ───────────────────────────────────────
-  const closeModal = useCallback(() => { setModal("none"); setError("") }, [])
+  const closeModal = useCallback(() => {
+    setModal("none")
+    setError("")
+    setAgentesDropdownOpen(false)
+  }, [])
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -249,15 +256,31 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
     return () => document.removeEventListener("keydown", h)
   }, [modal, closeModal, deleteId])
 
+  useEffect(() => {
+    if (!agentesDropdownOpen) return
+    function handleOutside(e: MouseEvent) {
+      if (agentesDropdownRef.current && !agentesDropdownRef.current.contains(e.target as Node)) {
+        setAgentesDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleOutside)
+    return () => document.removeEventListener("mousedown", handleOutside)
+  }, [agentesDropdownOpen])
+
   // ── Open modals ────────────────────────────────────
   function openNuevo() {
     setForm({ ...EMPTY_FORM, fecha: new Date().toISOString().split("T")[0] })
+    setAgentesSelected([])
+    setAgentesDropdownOpen(false)
     setError("")
     setModal("nuevo")
   }
 
   function openEditar(o: OperacionRow) {
     setSelectedOp(o)
+    const parsed = o.agentes ? o.agentes.split(" / ").map(s => s.trim()).filter(Boolean) : []
+    setAgentesSelected(parsed)
+    setAgentesDropdownOpen(false)
     setForm({
       fecha:              o.fecha,
       direccion:          o.direccion,
@@ -266,7 +289,6 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
       moneda:             "USD",
       tipo_cambio:        "",
       comision_bruta:     String(Number(o.comision_bruta)),
-      comision_neta:      String(Number(o.comision_neta)),
       encuesta_comprador: o.encuesta_comprador ?? false,
       encuesta_vendedor:  o.encuesta_vendedor  ?? false,
     })
@@ -288,6 +310,14 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
     setForm(f => ({ ...f, [k]: v }))
   }
 
+  function toggleAgente(nombre: string) {
+    setAgentesSelected(prev => {
+      const next = prev.includes(nombre) ? prev.filter(n => n !== nombre) : [...prev, nombre]
+      setF("agentes", next.join(" / "))
+      return next
+    })
+  }
+
   // ── Submit ─────────────────────────────────────────
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -299,9 +329,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
 
     const tc = parseFloat(form.tipo_cambio) || 1
     const brutoRaw = parseFloat(form.comision_bruta) || 0
-    const netoRaw  = parseFloat(form.comision_neta)  || 0
     const brutoUSD = form.moneda === "ARS" ? Math.round(brutoRaw / tc * 100) / 100 : brutoRaw
-    const netoUSD  = form.moneda === "ARS" ? Math.round(netoRaw  / tc * 100) / 100 : netoRaw
 
     const payload: OperacionFormData = {
       fecha:              form.fecha,
@@ -309,7 +337,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
       agentes:            form.agentes.trim(),
       tipo:               form.tipo,
       comision_bruta:     brutoUSD,
-      comision_neta:      netoUSD,
+      comision_neta:      brutoUSD,
       encuesta_comprador: form.encuesta_comprador,
       encuesta_vendedor:  form.encuesta_vendedor,
     }
@@ -375,7 +403,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
             icon={<Building2 size={18} />}
           />
           <KpiCard
-            title="Comisiones brutas"
+            title="Comisiones"
             value={fmtUSD(stats.totalComisiones)}
             badge="total del período"
             iconBg="bg-teal-500/15"
@@ -428,7 +456,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                  {["Fecha","Dirección","Agente(s)","Tipo","Comisión Bruta",""].map(h => (
+                  {["Fecha","Dirección","Agente(s)","Tipo","Comisión",""].map(h => (
                     <th key={h} style={{
                       padding: "10px 16px", textAlign: "left",
                       fontSize: "10.5px", fontWeight: 700,
@@ -595,14 +623,66 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
 
               {/* Agentes */}
               <Field label="Agente(s) *">
-                <input
-                  type="text"
-                  value={form.agentes}
-                  onChange={e => setF("agentes", e.target.value)}
-                  placeholder="Romina Prieto / Cecilia Frigerio"
-                  style={inp}
-                  required
-                />
+                <div ref={agentesDropdownRef} style={{ position: "relative" }}>
+                  <button
+                    type="button"
+                    onClick={() => setAgentesDropdownOpen(o => !o)}
+                    style={{
+                      ...inp,
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      cursor: "pointer", textAlign: "left",
+                    }}
+                  >
+                    <span style={{
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                      color: agentesSelected.length ? "#f1f5f9" : "rgba(255,255,255,0.3)",
+                    }}>
+                      {agentesSelected.length ? agentesSelected.join(" / ") : "Seleccioná agente(s)"}
+                    </span>
+                    <ChevronDown
+                      size={14}
+                      style={{
+                        flexShrink: 0, marginLeft: "8px",
+                        color: "rgba(255,255,255,0.4)",
+                        transform: agentesDropdownOpen ? "rotate(180deg)" : "none",
+                        transition: "transform 0.15s",
+                      }}
+                    />
+                  </button>
+                  {agentesDropdownOpen && (
+                    <div style={{
+                      position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 50,
+                      background: "#1e1e2e", border: "1px solid rgba(255,255,255,0.12)",
+                      borderRadius: "8px", boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+                      maxHeight: "200px", overflowY: "auto",
+                    }}>
+                      {agentesInternos.map(nombre => {
+                        const checked = agentesSelected.includes(nombre)
+                        return (
+                          <label
+                            key={nombre}
+                            style={{
+                              display: "flex", alignItems: "center", gap: "10px",
+                              padding: "9px 12px", cursor: "pointer",
+                              fontSize: "13px", fontFamily: "inherit",
+                              color: checked ? "#f1f5f9" : "rgba(255,255,255,0.65)",
+                              background: checked ? "rgba(255,255,255,0.06)" : "transparent",
+                              transition: "background 0.1s",
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleAgente(nombre)}
+                              style={{ accentColor: "#E31837", width: "15px", height: "15px", cursor: "pointer", flexShrink: 0 }}
+                            />
+                            {nombre}
+                          </label>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
               </Field>
 
               {/* Moneda */}
@@ -627,36 +707,23 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
                 </Field>
               )}
 
-              {/* Comisiones */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <Field label={`Comisión bruta (${form.moneda})`}>
-                  <input
-                    type="number"
-                    min="0"
-                    step="50"
-                    value={form.comision_bruta}
-                    onChange={e => setF("comision_bruta", e.target.value)}
-                    placeholder={form.moneda === "ARS" ? "6000000" : "5000"}
-                    style={inp}
-                  />
-                  {form.moneda === "ARS" && form.tipo_cambio && form.comision_bruta && (
-                    <div style={{ fontSize: "11px", color: "#2dd4bf", marginTop: "4px", fontWeight: 600 }}>
-                      ≈ USD {Math.round(parseFloat(form.comision_bruta) / parseFloat(form.tipo_cambio)).toLocaleString("es-AR")}
-                    </div>
-                  )}
-                </Field>
-                <Field label={`Comisión neta (${form.moneda})`}>
-                  <input
-                    type="number"
-                    min="0"
-                    step="50"
-                    value={form.comision_neta}
-                    onChange={e => setF("comision_neta", e.target.value)}
-                    placeholder={form.moneda === "ARS" ? "5100000" : "4250"}
-                    style={inp}
-                  />
-                </Field>
-              </div>
+              {/* Comisión */}
+              <Field label={`Comisión (${form.moneda})`}>
+                <input
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={form.comision_bruta}
+                  onChange={e => setF("comision_bruta", e.target.value)}
+                  placeholder={form.moneda === "ARS" ? "6000000" : "5000"}
+                  style={inp}
+                />
+                {form.moneda === "ARS" && form.tipo_cambio && form.comision_bruta && (
+                  <div style={{ fontSize: "11px", color: "#2dd4bf", marginTop: "4px", fontWeight: 600 }}>
+                    ≈ USD {Math.round(parseFloat(form.comision_bruta) / parseFloat(form.tipo_cambio)).toLocaleString("es-AR")}
+                  </div>
+                )}
+              </Field>
 
               {/* Encuestas */}
               <Field label="Encuestas">
