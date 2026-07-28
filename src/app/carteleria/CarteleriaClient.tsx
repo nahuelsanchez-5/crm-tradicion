@@ -63,6 +63,14 @@ interface CartelDevuelto {
   fecha_devolucion:   string
 }
 
+interface RecuperadoMesRow {
+  id:               string | number
+  nro_cartel:       number
+  direccion:        string
+  agente:           string
+  fecha_devolucion: string
+}
+
 // ── Helpers ───────────────────────────────────────────
 function diasColor(d: number): string {
   if (d > 30)  return "#059669"
@@ -117,16 +125,17 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 //  MAIN COMPONENT
 // ═══════════════════════════════════════════════════════
 interface Props {
-  carteles:       CartelRow[]
-  agentes:        AgenteConTel[] // de Supabase (fallback a AGENTES_AIRTABLE si vacío)
-  recuperadosMes: number
+  carteles:        CartelRow[]
+  agentes:         AgenteConTel[] // de Supabase (fallback a AGENTES_AIRTABLE si vacío)
+  recuperadosMes:  number
+  recuperadosData: RecuperadoMesRow[]
 }
 
 const EMPTY_FORM: ModalForm = {
   numero: "", direccion: "", mlsId: "", vencimiento: "", tipo: "", agente: "",
 }
 
-export default function CarteleriaClient({ carteles, agentes, recuperadosMes }: Props) {
+export default function CarteleriaClient({ carteles, agentes, recuperadosMes, recuperadosData }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -147,8 +156,8 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes }: 
   const [devolverLoading, setDevolverLoading] = useState(false)
   const [devolverError,   setDevolverError]   = useState("")
 
-  // ── Panel toggle (vencidos / proximos) ────────────
-  const [panelOpen, setPanelOpen] = useState<"vencidos" | "proximos" | null>(null)
+  // ── Panel toggle (vencidos / proximos / recuperados) ──
+  const [panelOpen, setPanelOpen] = useState<"vencidos" | "proximos" | "recuperados" | null>(null)
 
   // ── Devueltos ──────────────────────────────────────
   const [devueltosOpen,    setDevueltosOpen]    = useState(false)
@@ -388,14 +397,19 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes }: 
               icon={<AlertTriangle size={18} />}
             />
           </div>
-          <KpiCard
-            title="Recuperados este mes"
-            value={recuperadosMes}
-            badge={recuperadosMes === 1 ? "cartel devuelto" : "carteles devueltos"}
-            iconBg="bg-emerald-500/15"
-            iconColor="text-emerald-400"
-            icon={<RotateCcw size={18} />}
-          />
+          <div
+            onClick={() => setPanelOpen(p => p === "recuperados" ? null : "recuperados")}
+            style={{ cursor: "pointer" }}
+          >
+            <KpiCard
+              title="Recuperados este mes"
+              value={recuperadosMes}
+              badge={panelOpen === "recuperados" ? "▲ Cerrar" : recuperadosMes === 1 ? "cartel devuelto" : "carteles devueltos"}
+              iconBg="bg-emerald-500/15"
+              iconColor="text-emerald-400"
+              icon={<RotateCcw size={18} />}
+            />
+          </div>
         </div>
 
         {/* ── Inline alert panel ─────────────────── */}
@@ -410,21 +424,23 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes }: 
         }}>
           <div style={{
             background: "#13131a",
-            border: `1px solid ${panelOpen === "vencidos" ? "rgba(239,68,68,0.3)" : "rgba(245,158,11,0.3)"}`,
+            border: `1px solid ${panelOpen === "vencidos" ? "rgba(239,68,68,0.3)" : panelOpen === "recuperados" ? "rgba(16,185,129,0.3)" : "rgba(245,158,11,0.3)"}`,
             borderRadius: "14px",
             overflow: "hidden",
           }}>
             <div style={{
               display: "flex", alignItems: "center", gap: "8px",
               padding: "12px 18px",
-              background: panelOpen === "vencidos" ? "rgba(239,68,68,0.08)" : "rgba(245,158,11,0.08)",
-              borderBottom: `1px solid ${panelOpen === "vencidos" ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)"}`,
+              background: panelOpen === "vencidos" ? "rgba(239,68,68,0.08)" : panelOpen === "recuperados" ? "rgba(16,185,129,0.08)" : "rgba(245,158,11,0.08)",
+              borderBottom: `1px solid ${panelOpen === "vencidos" ? "rgba(239,68,68,0.2)" : panelOpen === "recuperados" ? "rgba(16,185,129,0.2)" : "rgba(245,158,11,0.2)"}`,
             }}>
-              <span style={{ fontSize: "15px" }}>{panelOpen === "vencidos" ? "⚠️" : "🕐"}</span>
-              <span style={{ fontSize: "13px", fontWeight: 700, color: panelOpen === "vencidos" ? "#ef4444" : "#f59e0b" }}>
+              <span style={{ fontSize: "15px" }}>{panelOpen === "vencidos" ? "⚠️" : panelOpen === "recuperados" ? "✅" : "🕐"}</span>
+              <span style={{ fontSize: "13px", fontWeight: 700, color: panelOpen === "vencidos" ? "#ef4444" : panelOpen === "recuperados" ? "#10b981" : "#f59e0b" }}>
                 {panelOpen === "vencidos"
                   ? `Carteles vencidos — ${vencidos.length} en total`
-                  : `Próximos a vencer (0–10 días) — ${proximos.length} en total`
+                  : panelOpen === "recuperados"
+                    ? `Carteles recuperados este mes — ${recuperadosData.length} en total`
+                    : `Próximos a vencer (0–10 días) — ${proximos.length} en total`
                 }
               </span>
             </div>
@@ -432,7 +448,10 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes }: 
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                    {["Nº", "Dirección", "Agente", panelOpen === "vencidos" ? "Vencido hace" : "Vence en", "Acciones"].map(h => (
+                    {(panelOpen === "recuperados"
+                      ? ["Nº", "Dirección", "Agente", "Fecha de recuperación"]
+                      : ["Nº", "Dirección", "Agente", panelOpen === "vencidos" ? "Vencido hace" : "Vence en", "Acciones"]
+                    ).map(h => (
                       <th key={h} style={{
                         padding: "10px 14px", textAlign: "left",
                         fontSize: "10px", fontWeight: 700,
@@ -446,55 +465,84 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes }: 
                   </tr>
                 </thead>
                 <tbody>
-                  {(panelOpen === "vencidos" ? vencidos : proximos).map(c => (
-                    <tr key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                      <td style={{ padding: "10px 14px", fontSize: "13px", fontWeight: 700, color: panelOpen === "vencidos" ? "#ef4444" : "#f59e0b", whiteSpace: "nowrap" }}>
-                        {c.numero}
-                      </td>
-                      <td style={{ padding: "10px 14px", fontSize: "13px", color: "#f1f5f9", maxWidth: "280px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {c.direccion || "—"}
-                      </td>
-                      <td style={{ padding: "10px 14px", fontSize: "12px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap" }}>
-                        {c.agente || "—"}
-                      </td>
-                      <td style={{ padding: "10px 14px", fontSize: "12px", fontWeight: 600, color: panelOpen === "vencidos" ? "#ef4444" : "#f59e0b", whiteSpace: "nowrap" }}>
-                        {panelOpen === "vencidos"
-                          ? `Vencido hace ${Math.abs(c.diasRestantes)}d`
-                          : c.diasRestantes === 0 ? "Hoy" : `Vence en ${c.diasRestantes}d`
-                        }
-                      </td>
-                      <td style={{ padding: "10px 14px" }}>
-                        <div style={{ display: "flex", gap: "6px" }}>
-                          <button
-                            onClick={() => { setDevolverTarget(c); setDevolverError("") }}
-                            style={{
-                              padding: "4px 10px", borderRadius: "6px",
-                              border: "1px solid rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.08)",
-                              fontSize: "11px", fontWeight: 600, color: "#f87171",
-                              cursor: "pointer", fontFamily: "inherit",
-                              display: "flex", alignItems: "center", gap: "4px",
-                            }}
-                          >
-                            <RotateCcw size={11} /> Devolver
-                          </button>
-                          <a
-                            href={buildWaUrl(c, panelOpen === "vencidos" ? "vencido" : "proximo")}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              padding: "4px 10px", borderRadius: "6px",
-                              border: "1px solid rgba(34,197,94,0.3)", background: "rgba(34,197,94,0.08)",
-                              fontSize: "11px", fontWeight: 600, color: "#4ade80",
-                              cursor: "pointer", fontFamily: "inherit", textDecoration: "none",
-                              display: "flex", alignItems: "center", gap: "4px",
-                            }}
-                          >
-                            <MessageCircle size={11} /> WA
-                          </a>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {panelOpen === "recuperados"
+                    ? recuperadosData.length === 0
+                      ? (
+                        <tr>
+                          <td colSpan={4} style={{
+                            padding: "36px", textAlign: "center",
+                            color: "rgba(255,255,255,0.35)", fontSize: "13px",
+                          }}>
+                            No hay carteles recuperados este mes
+                          </td>
+                        </tr>
+                      )
+                      : recuperadosData.map((d, i) => (
+                        <tr key={d.id} style={{ borderBottom: i < recuperadosData.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                          <td style={{ padding: "10px 14px", fontSize: "13px", fontWeight: 700, color: "#10b981", whiteSpace: "nowrap" }}>
+                            {d.nro_cartel || "—"}
+                          </td>
+                          <td style={{ padding: "10px 14px", fontSize: "13px", color: "#f1f5f9", maxWidth: "280px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {d.direccion || "—"}
+                          </td>
+                          <td style={{ padding: "10px 14px", fontSize: "12px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap" }}>
+                            {d.agente || "—"}
+                          </td>
+                          <td style={{ padding: "10px 14px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
+                            {fmtDate(d.fecha_devolucion)}
+                          </td>
+                        </tr>
+                      ))
+                    : (panelOpen === "vencidos" ? vencidos : proximos).map(c => (
+                      <tr key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                        <td style={{ padding: "10px 14px", fontSize: "13px", fontWeight: 700, color: panelOpen === "vencidos" ? "#ef4444" : "#f59e0b", whiteSpace: "nowrap" }}>
+                          {c.numero}
+                        </td>
+                        <td style={{ padding: "10px 14px", fontSize: "13px", color: "#f1f5f9", maxWidth: "280px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {c.direccion || "—"}
+                        </td>
+                        <td style={{ padding: "10px 14px", fontSize: "12px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap" }}>
+                          {c.agente || "—"}
+                        </td>
+                        <td style={{ padding: "10px 14px", fontSize: "12px", fontWeight: 600, color: panelOpen === "vencidos" ? "#ef4444" : "#f59e0b", whiteSpace: "nowrap" }}>
+                          {panelOpen === "vencidos"
+                            ? `Vencido hace ${Math.abs(c.diasRestantes)}d`
+                            : c.diasRestantes === 0 ? "Hoy" : `Vence en ${c.diasRestantes}d`
+                          }
+                        </td>
+                        <td style={{ padding: "10px 14px" }}>
+                          <div style={{ display: "flex", gap: "6px" }}>
+                            <button
+                              onClick={() => { setDevolverTarget(c); setDevolverError("") }}
+                              style={{
+                                padding: "4px 10px", borderRadius: "6px",
+                                border: "1px solid rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.08)",
+                                fontSize: "11px", fontWeight: 600, color: "#f87171",
+                                cursor: "pointer", fontFamily: "inherit",
+                                display: "flex", alignItems: "center", gap: "4px",
+                              }}
+                            >
+                              <RotateCcw size={11} /> Devolver
+                            </button>
+                            <a
+                              href={buildWaUrl(c, panelOpen === "vencidos" ? "vencido" : "proximo")}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                padding: "4px 10px", borderRadius: "6px",
+                                border: "1px solid rgba(34,197,94,0.3)", background: "rgba(34,197,94,0.08)",
+                                fontSize: "11px", fontWeight: 600, color: "#4ade80",
+                                cursor: "pointer", fontFamily: "inherit", textDecoration: "none",
+                                display: "flex", alignItems: "center", gap: "4px",
+                              }}
+                            >
+                              <MessageCircle size={11} /> WA
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  }
                 </tbody>
               </table>
             </div>

@@ -64,13 +64,14 @@ export default async function CarteleriaPage() {
   const endMonth  = month === 12 ? 1 : month + 1
   const endDate   = `${endYear}-${String(endMonth).padStart(2, "00")}-01`
 
-  const [carteles, { data: agentesRaw }, { count: recuperadosMes }] = await Promise.all([
+  const [carteles, { data: agentesRaw }, { data: recuperadosRaw }] = await Promise.all([
     fetchCarteles(),
     supabase.from("agentes").select("nombre, telefono").eq("activo", true).order("nombre"),
     supabase.from("carteles_devueltos")
-      .select("*", { count: "exact", head: true })
+      .select("id, nro_cartel, direccion, agente, fecha_devolucion")
       .gte("fecha_devolucion", startDate)
-      .lt("fecha_devolucion", endDate),
+      .lt("fecha_devolucion", endDate)
+      .order("fecha_devolucion", { ascending: false }),
   ])
 
   const agentes = (agentesRaw ?? []).map(a => ({
@@ -78,5 +79,20 @@ export default async function CarteleriaPage() {
     telefono: (a.telefono as string | null) ?? null,
   }))
 
-  return <CarteleriaClient carteles={carteles} agentes={agentes} recuperadosMes={recuperadosMes ?? 0} />
+  const recuperadosData = (recuperadosRaw ?? []).map(r => ({
+    id:               r.id as string | number,
+    nro_cartel:       r.nro_cartel as number,
+    direccion:        r.direccion  as string,
+    agente:           r.agente     as string,
+    fecha_devolucion: r.fecha_devolucion as string,
+  }))
+
+  return (
+    <CarteleriaClient
+      carteles={carteles}
+      agentes={agentes}
+      recuperadosMes={recuperadosData.length}
+      recuperadosData={recuperadosData}
+    />
+  )
 }
