@@ -57,14 +57,14 @@ export default async function ResumenPage({
       .select("agente_id, monto_debe, monto_pagado, estado, concepto")
       .gte("fecha", startDate).lt("fecha", endDate),
     supabase.from("agentes")
-      .select("id, paga_fee, tipo_plan, activo, fecha_mainstreet")
+      .select("id, nombre, paga_fee, tipo_plan, activo, fecha_mainstreet")
       .eq("activo", true),
     supabase.from("encuestas_registros")
       .select("nps")
       .gte("fecha", startDate).lt("fecha", endDate)
       .eq("eliminado", false),
     supabase.from("operaciones")
-      .select("comision_bruta")
+      .select("comision_bruta, agentes, tipo")
       .gte("fecha", startDate).lt("fecha", endDate),
     supabase.from("config")
       .select("clave, valor")
@@ -124,14 +124,33 @@ export default async function ResumenPage({
 
   const cartelesACobrar = objCartelesMes > 0 && cartelesCount >= objCartelesMes ? 100 : 0
 
-  // ── Encuestas — tasa de respuesta: (enc.)/(ops×2) ≥ obj% ────────────────────
+  // ── Encuestas — denominador = puntas internas en operaciones de Venta ───────
   const encuestasData  = encuestas ?? []
   const totalEncuestas = encuestasData.length
   const npsValues      = encuestasData.filter(e => e.nps !== null).map(e => e.nps as number)
   const avgNps         = npsValues.length > 0 ? npsValues.reduce((a, b) => a + b, 0) / npsValues.length : null
-  const totalOps       = (operaciones ?? []).length
-  const tasaRespPct    = totalOps > 0 ? Math.round((totalEncuestas / (totalOps * 2)) * 100) : 0
-  const encACobrar     = tasaRespPct >= objEncPct ? 100 : 0
+
+  // Set de nombres internos (agentes activos de Tradición)
+  const internos = new Set(
+    agentesData.map(a => a.nombre as string).filter(Boolean)
+  )
+
+  // Sumar puntas internas en operaciones de tipo Venta del mes
+  const totalEncuestasEsperadas = (operaciones ?? [])
+    .filter(o => o.tipo === "Venta")
+    .reduce((sum, o) => {
+      const agStr = (o.agentes as string) ?? ""
+      if (agStr.endsWith("(2 puntas)")) {
+        const base = agStr.replace(/ \(2 puntas\)$/, "").trim()
+        return sum + (internos.has(base) ? 2 : 0)
+      }
+      return sum + agStr.split(" / ").filter(p => internos.has(p.trim())).length
+    }, 0)
+
+  const tasaRespPct = totalEncuestasEsperadas > 0
+    ? Math.round((totalEncuestas / totalEncuestasEsperadas) * 100)
+    : 0
+  const encACobrar  = totalEncuestasEsperadas > 0 && tasaRespPct >= objEncPct ? 100 : 0
 
   // ── Facturación ──────────────────────────────────────────
   const comisionTotal  = (operaciones ?? []).reduce((s, o) => s + (Number(o.comision_bruta) || 0), 0)
@@ -164,10 +183,12 @@ export default async function ResumenPage({
     },
     {
       label:    "Encuestas",
-      objetivo: `Tasa de respuesta ≥ ${objEncPct}%`,
-      cumplido: totalEncuestas === 0 && totalOps === 0
-        ? "Sin encuestas ni operaciones este mes"
-        : `${tasaRespPct}% resp. (${totalEncuestas} enc. / ${totalOps * 2} esp.)${avgNps !== null ? ` · NPS prom. ${avgNps.toFixed(1)}` : ""}`,
+      objetivo: totalEncuestasEsperadas === 0
+        ? "Sin operaciones de venta este mes"
+        : `Tasa de respuesta ≥ ${objEncPct}%`,
+      cumplido: totalEncuestasEsperadas === 0
+        ? `${totalEncuestas} encuesta${totalEncuestas !== 1 ? "s" : ""} registrada${totalEncuestas !== 1 ? "s" : ""} · no genera bono`
+        : `${tasaRespPct}% resp. (${totalEncuestas} enc. / ${totalEncuestasEsperadas} esp.)${avgNps !== null ? ` · NPS prom. ${avgNps.toFixed(1)}` : ""}`,
       aCobrar:  encACobrar,
     },
     {
