@@ -29,15 +29,15 @@ export default async function AgentesPage() {
 
     supabase
       .from("operaciones")
-      .select("agente_vendedor, comision_bruta")
+      .select("agentes, comision_bruta")
       .gte("fecha", `${anioStr}-01-01`)
-      .lte("fecha", `${anioStr}-12-31`),
+      .lt("fecha", `${String(anio + 1)}-01-01`),
 
     supabase
       .from("pagos")
       .select("agente_id, concepto, monto_debe, monto_pagado, estado")
       .gte("fecha", `${mesStr}-01`)
-      .lte("fecha", `${mesStr}-31`),
+      .lt("fecha", mes === 12 ? `${anio + 1}-01-01` : `${anio}-${String(mes + 1).padStart(2, "0")}-01`),
 
     supabase
       .from("ofertas")
@@ -65,13 +65,16 @@ export default async function AgentesPage() {
     plan: (planes ?? []).find(p => p.agente_id === a.id) ?? null,
   }))
 
-  // Facturación del año por nombre de agente (vendedor)
+  // Facturación del año por nombre de agente (vendedor = primer fragmento del campo agentes)
   const facturacionPorNombre: Record<string, number> = {}
   for (const op of (operaciones ?? [])) {
-    if (op.agente_vendedor) {
-      const k = (op.agente_vendedor as string).toLowerCase().trim()
-      facturacionPorNombre[k] = (facturacionPorNombre[k] ?? 0) + Number(op.comision_bruta ?? 0)
-    }
+    const agStr = ((op.agentes as string) ?? "").trim()
+    if (!agStr) continue
+    // "Vendedor / Comprador" → "Vendedor"; "Nombre (2 puntas)" → "Nombre"
+    const vendedor = agStr.split(" / ")[0].replace(/ \(2 puntas\)$/, "").trim()
+    if (!vendedor) continue
+    const k = vendedor.toLowerCase()
+    facturacionPorNombre[k] = (facturacionPorNombre[k] ?? 0) + Number(op.comision_bruta ?? 0)
   }
 
   // Ofertas activas por nombre de agente
