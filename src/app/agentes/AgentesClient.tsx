@@ -6,7 +6,7 @@ import { crearAgente, actualizarAgente, actualizarPagaFee, type AgenteFormData }
 import { Users, X, Loader2, MessageCircle, AlertCircle } from "lucide-react"
 
 // ── Types ────────────────────────────────────────────
-type Plan = "PRO" | "PRO+" | "B QR" | "B Ofi"
+type Plan = "PRO" | "PRO+" | "B QR" | "B Ofi" | ""
 
 interface Plan_CRM {
   tipo_plan: string
@@ -314,7 +314,7 @@ export default function AgentesClient({
       telefono:         ag.telefono ?? "",
       fecha_alta:       ag.fecha_alta,
       fecha_mainstreet: ag.fecha_mainstreet ?? "",
-      plan:             (ag.tipo_plan ?? "PRO") as Plan,
+      plan:             (ag.tipo_plan ?? "") as Plan,
       activo:           ag.activo,
     })
     setError("")
@@ -731,10 +731,11 @@ export default function AgentesClient({
                     style={inputStyle} />
                 </Field>
               </div>
-              <Field label={modal === "nuevo" ? "Plan inicial *" : "Plan *"}>
+              <Field label={modal === "nuevo" ? "Plan inicial" : "Plan"}>
                 <select value={form.plan}
                   onChange={e => setForm(f => ({ ...f, plan: e.target.value }))}
-                  style={{ ...inputStyle, cursor: "pointer" }} required>
+                  style={{ ...inputStyle, cursor: "pointer" }}>
+                  <option value="">Sin licencia</option>
                   <option value="PRO">PRO</option>
                   <option value="PRO+">PRO+</option>
                   <option value="B QR">B QR</option>

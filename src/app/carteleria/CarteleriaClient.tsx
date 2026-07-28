@@ -489,7 +489,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                             {d.agente || "—"}
                           </td>
                           <td style={{ padding: "10px 14px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
-                            {fmtDate(d.fecha_devolucion)}
+                            {fmtDate(d.fecha_devolucion.slice(0, 10))}
                           </td>
                         </tr>
                       ))
