@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useMemo, useTransition, useEffect, useCallback, useRef } from "react"
+import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import KpiCard from "@/components/KpiCard"
 import { crearOperacion, actualizarOperacion, eliminarOperacion } from "./actions"
 import type { OperacionFormData } from "./actions"
-import { Building2, DollarSign, BarChart2, X, Loader2, Trash2, ChevronDown } from "lucide-react"
+import { Building2, DollarSign, X, Loader2, Trash2 } from "lucide-react"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -39,7 +39,6 @@ export interface OperacionRow {
 interface FormData {
   fecha:              string
   direccion:          string
-  agentes:            string
   tipo:               string
   moneda:             "USD" | "ARS"
   tipo_cambio:        string
@@ -57,6 +56,43 @@ function cleanAgentes(raw: string, internos: Set<string>): string {
       return internos.has(base) ? base : part
     })
     .join(" / ")
+}
+
+function buildAgentesStr(
+  vend: string, vendExt: string,
+  comp: string, compExt: string,
+  dosPuntas: boolean,
+): string {
+  const vName = vend === "Otra inmobiliaria" ? vendExt.trim() : vend
+  if (dosPuntas) return vName ? `${vName} (2 puntas)` : ""
+  const cName = comp === "Otra inmobiliaria" ? compExt.trim() : comp
+  return [vName, cName].filter(Boolean).join(" / ")
+}
+
+function parseAgentesStr(raw: string, internos: Set<string>) {
+  if (!raw || raw === "Sin agente") {
+    return { vendedor: "", vendedorExt: "", comprador: "", compradorExt: "", dosPuntas: false }
+  }
+  if (raw.endsWith("(2 puntas)")) {
+    const base = raw.replace(/ \(2 puntas\)$/, "").trim()
+    return {
+      vendedor:    internos.has(base) ? base : "Otra inmobiliaria",
+      vendedorExt: internos.has(base) ? "" : base,
+      comprador:   "",
+      compradorExt:"",
+      dosPuntas:   true,
+    }
+  }
+  const parts = raw.split(" / ").map(s => s.trim())
+  const p1 = parts[0] ?? ""
+  const p2 = parts[1] ?? ""
+  return {
+    vendedor:    p1 ? (internos.has(p1) ? p1 : "Otra inmobiliaria") : "",
+    vendedorExt: p1 && !internos.has(p1) ? p1 : "",
+    comprador:   p2 ? (internos.has(p2) ? p2 : "Otra inmobiliaria") : "",
+    compradorExt:p2 && !internos.has(p2) ? p2 : "",
+    dosPuntas:   false,
+  }
 }
 
 function fmtUSD(n: number): string {
@@ -176,7 +212,6 @@ interface Props {
 const EMPTY_FORM: FormData = {
   fecha:              "",
   direccion:          "",
-  agentes:            "",
   tipo:               "Venta",
   moneda:             "USD",
   tipo_cambio:        "",
@@ -220,10 +255,12 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
   const [error,       setError]      = useState("")
   const [deleteId,    setDeleteId]   = useState<string | null>(null)
 
-  // ── Agentes multi-select ───────────────────────────
-  const [agentesSelected,     setAgentesSelected]     = useState<string[]>([])
-  const [agentesDropdownOpen, setAgentesDropdownOpen] = useState(false)
-  const agentesDropdownRef = useRef<HTMLDivElement>(null)
+  // ── Agentes por punta ──────────────────────────────
+  const [vendedor,     setVendedor]     = useState("")
+  const [vendedorExt,  setVendedorExt]  = useState("")
+  const [comprador,    setComprador]    = useState("")
+  const [compradorExt, setCompradorExt] = useState("")
+  const [dosPuntas,    setDosPuntas]    = useState(false)
 
   // ── Computed ───────────────────────────────────────
   const filteredOps = useMemo(() => {
@@ -245,7 +282,6 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
   const closeModal = useCallback(() => {
     setModal("none")
     setError("")
-    setAgentesDropdownOpen(false)
   }, [])
 
   useEffect(() => {
@@ -256,35 +292,25 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
     return () => document.removeEventListener("keydown", h)
   }, [modal, closeModal, deleteId])
 
-  useEffect(() => {
-    if (!agentesDropdownOpen) return
-    function handleOutside(e: MouseEvent) {
-      if (agentesDropdownRef.current && !agentesDropdownRef.current.contains(e.target as Node)) {
-        setAgentesDropdownOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleOutside)
-    return () => document.removeEventListener("mousedown", handleOutside)
-  }, [agentesDropdownOpen])
-
   // ── Open modals ────────────────────────────────────
   function openNuevo() {
     setForm({ ...EMPTY_FORM, fecha: new Date().toISOString().split("T")[0] })
-    setAgentesSelected([])
-    setAgentesDropdownOpen(false)
+    setVendedor(""); setVendedorExt("")
+    setComprador(""); setCompradorExt("")
+    setDosPuntas(false)
     setError("")
     setModal("nuevo")
   }
 
   function openEditar(o: OperacionRow) {
     setSelectedOp(o)
-    const parsed = o.agentes ? o.agentes.split(" / ").map(s => s.trim()).filter(Boolean) : []
-    setAgentesSelected(parsed)
-    setAgentesDropdownOpen(false)
+    const p = parseAgentesStr(o.agentes ?? "", internosSet)
+    setVendedor(p.vendedor);     setVendedorExt(p.vendedorExt)
+    setComprador(p.comprador);   setCompradorExt(p.compradorExt)
+    setDosPuntas(p.dosPuntas)
     setForm({
       fecha:              o.fecha,
       direccion:          o.direccion,
-      agentes:            o.agentes,
       tipo:               o.tipo,
       moneda:             "USD",
       tipo_cambio:        "",
@@ -310,21 +336,15 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
     setForm(f => ({ ...f, [k]: v }))
   }
 
-  function toggleAgente(nombre: string) {
-    setAgentesSelected(prev => {
-      const next = prev.includes(nombre) ? prev.filter(n => n !== nombre) : [...prev, nombre]
-      setF("agentes", next.join(" / "))
-      return next
-    })
-  }
-
   // ── Submit ─────────────────────────────────────────
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError("")
 
+    const agentesStr = buildAgentesStr(vendedor, vendedorExt, comprador, compradorExt, dosPuntas)
+
     if (!form.direccion.trim()) { setError("La dirección es obligatoria"); return }
-    if (!form.agentes.trim())   { setError("El/los agente(s) son obligatorios"); return }
+    if (!agentesStr)            { setError("El agente vendedor es obligatorio"); return }
     if (form.moneda === "ARS" && !form.tipo_cambio) { setError("Ingresá el tipo de cambio para convertir a USD"); return }
 
     const tc = parseFloat(form.tipo_cambio) || 1
@@ -334,7 +354,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
     const payload: OperacionFormData = {
       fecha:              form.fecha,
       direccion:          form.direccion.trim(),
-      agentes:            form.agentes.trim(),
+      agentes:            agentesStr,
       tipo:               form.tipo,
       comision_bruta:     brutoUSD,
       comision_neta:      brutoUSD,
@@ -622,68 +642,88 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
               </Field>
 
               {/* Agentes */}
-              <Field label="Agente(s) *">
-                <div ref={agentesDropdownRef} style={{ position: "relative" }}>
-                  <button
-                    type="button"
-                    onClick={() => setAgentesDropdownOpen(o => !o)}
-                    style={{
-                      ...inp,
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      cursor: "pointer", textAlign: "left",
-                    }}
-                  >
-                    <span style={{
-                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                      color: agentesSelected.length ? "#f1f5f9" : "rgba(255,255,255,0.3)",
-                    }}>
-                      {agentesSelected.length ? agentesSelected.join(" / ") : "Seleccioná agente(s)"}
-                    </span>
-                    <ChevronDown
-                      size={14}
-                      style={{
-                        flexShrink: 0, marginLeft: "8px",
-                        color: "rgba(255,255,255,0.4)",
-                        transform: agentesDropdownOpen ? "rotate(180deg)" : "none",
-                        transition: "transform 0.15s",
-                      }}
-                    />
-                  </button>
-                  {agentesDropdownOpen && (
-                    <div style={{
-                      position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 50,
-                      background: "#1e1e2e", border: "1px solid rgba(255,255,255,0.12)",
-                      borderRadius: "8px", boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-                      maxHeight: "200px", overflowY: "auto",
-                    }}>
-                      {agentesInternos.map(nombre => {
-                        const checked = agentesSelected.includes(nombre)
-                        return (
-                          <label
-                            key={nombre}
-                            style={{
-                              display: "flex", alignItems: "center", gap: "10px",
-                              padding: "9px 12px", cursor: "pointer",
-                              fontSize: "13px", fontFamily: "inherit",
-                              color: checked ? "#f1f5f9" : "rgba(255,255,255,0.65)",
-                              background: checked ? "rgba(255,255,255,0.06)" : "transparent",
-                              transition: "background 0.1s",
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => toggleAgente(nombre)}
-                              style={{ accentColor: "#E31837", width: "15px", height: "15px", cursor: "pointer", flexShrink: 0 }}
-                            />
-                            {nombre}
-                          </label>
-                        )
-                      })}
-                    </div>
-                  )}
+              <div style={{ marginBottom: "14px" }}>
+                <div style={{
+                  fontSize: "11px", fontWeight: 700, letterSpacing: "0.8px",
+                  textTransform: "uppercase", color: "rgba(255,255,255,0.45)", marginBottom: "10px",
+                }}>
+                  Agentes
                 </div>
-              </Field>
+
+                {/* Vendedor | Comprador */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "10px" }}>
+
+                  {/* Agente Vendedor */}
+                  <div>
+                    <div style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.35)", marginBottom: "5px" }}>
+                      Agente Vendedor
+                    </div>
+                    <select
+                      value={vendedor}
+                      onChange={e => setVendedor(e.target.value)}
+                      style={inp}
+                    >
+                      <option value="">— Sin asignar —</option>
+                      {agentesInternos.map(n => <option key={n} value={n}>{n}</option>)}
+                      <option value="Otra inmobiliaria">Otra inmobiliaria</option>
+                    </select>
+                    {vendedor === "Otra inmobiliaria" && (
+                      <input
+                        type="text"
+                        placeholder="Nombre de la inmobiliaria"
+                        value={vendedorExt}
+                        onChange={e => setVendedorExt(e.target.value)}
+                        style={{ ...inp, marginTop: "6px" }}
+                      />
+                    )}
+                  </div>
+
+                  {/* Agente Comprador */}
+                  <div>
+                    <div style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.35)", marginBottom: "5px" }}>
+                      Agente Comprador
+                    </div>
+                    <select
+                      value={dosPuntas ? vendedor : comprador}
+                      onChange={e => setComprador(e.target.value)}
+                      disabled={dosPuntas}
+                      style={{ ...inp, opacity: dosPuntas ? 0.4 : 1, cursor: dosPuntas ? "not-allowed" : "pointer" }}
+                    >
+                      <option value="">— Sin asignar —</option>
+                      {agentesInternos.map(n => <option key={n} value={n}>{n}</option>)}
+                      <option value="Otra inmobiliaria">Otra inmobiliaria</option>
+                    </select>
+                    {!dosPuntas && comprador === "Otra inmobiliaria" && (
+                      <input
+                        type="text"
+                        placeholder="Nombre de la inmobiliaria"
+                        value={compradorExt}
+                        onChange={e => setCompradorExt(e.target.value)}
+                        style={{ ...inp, marginTop: "6px" }}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                {/* Checkbox 2 puntas */}
+                <label style={{
+                  display: "inline-flex", alignItems: "center", gap: "8px",
+                  cursor: "pointer", fontSize: "13px", color: "rgba(255,255,255,0.5)",
+                  userSelect: "none",
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={dosPuntas}
+                    onChange={e => {
+                      const checked = e.target.checked
+                      setDosPuntas(checked)
+                      if (checked) { setComprador(""); setCompradorExt("") }
+                    }}
+                    style={{ accentColor: "#E31837", width: "15px", height: "15px", cursor: "pointer" }}
+                  />
+                  Mismo agente (2 puntas)
+                </label>
+              </div>
 
               {/* Moneda */}
               <Field label="Moneda de comisiones">
