@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition, useEffect, useCallback, useMemo } from "react"
+import { useState, useTransition, useEffect, useCallback, useMemo, Fragment } from "react"
 import { useRouter } from "next/navigation"
 import { crearAgente, actualizarAgente, actualizarPagaFee, type AgenteFormData } from "./actions"
 import { Users, X, Loader2, MessageCircle, AlertCircle } from "lucide-react"
@@ -228,20 +228,26 @@ export default function AgentesClient({
       .sort((a, b) => a.diasRestantes - b.diasRestantes)
   }, [agentes])
 
-  // ── Sorted agentes ────────────────────────────────
+  // ── Sorted agentes (activos primero, inactivos al final) ──
   const sorted = useMemo(() => {
-    const arr = [...agentes]
-    if (sortMode === "az")           return arr.sort((a, b) => a.nombre.localeCompare(b.nombre))
-    if (sortMode === "recientes")    return arr.sort((a, b) => b.fecha_alta.localeCompare(a.fecha_alta))
-    if (sortMode === "antiguos")     return arr.sort((a, b) => a.fecha_alta.localeCompare(b.fecha_alta))
-    if (sortMode === "facturacion") {
-      return arr.sort((a, b) => {
-        const fa = facturacionPorNombre[a.nombre.toLowerCase().trim()] ?? 0
-        const fb = facturacionPorNombre[b.nombre.toLowerCase().trim()] ?? 0
-        return fb - fa
-      })
+    function applySort(arr: typeof agentes) {
+      const a = [...arr]
+      if (sortMode === "az")        return a.sort((x, y) => x.nombre.localeCompare(y.nombre))
+      if (sortMode === "recientes") return a.sort((x, y) => y.fecha_alta.localeCompare(x.fecha_alta))
+      if (sortMode === "antiguos")  return a.sort((x, y) => x.fecha_alta.localeCompare(y.fecha_alta))
+      if (sortMode === "facturacion") {
+        return a.sort((x, y) => {
+          const fx = facturacionPorNombre[x.nombre.toLowerCase().trim()] ?? 0
+          const fy = facturacionPorNombre[y.nombre.toLowerCase().trim()] ?? 0
+          return fy - fx
+        })
+      }
+      return a
     }
-    return arr
+    return [
+      ...applySort(agentes.filter(a => a.activo)),
+      ...applySort(agentes.filter(a => !a.activo)),
+    ]
   }, [agentes, sortMode, facturacionPorNombre])
 
   // ── WhatsApp reporte por agente ───────────────────
@@ -485,8 +491,24 @@ export default function AgentesClient({
             ) : (
               sorted.map((ag, i) => {
                 const facturacion = facturacionPorNombre[ag.nombre.toLowerCase().trim()] ?? 0
+                const isSeparator = !ag.activo && (i === 0 || sorted[i - 1].activo)
                 return (
-                  <div key={ag.id} className="flex items-center gap-3 px-4 py-3.5">
+                  <Fragment key={ag.id}>
+                  {isSeparator && (
+                    <div style={{
+                      display: "flex", alignItems: "center", gap: "10px",
+                      padding: "8px 16px",
+                      background: "rgba(255,255,255,0.02)",
+                      borderTop: "1px solid rgba(255,255,255,0.08)",
+                      borderBottom: "1px solid rgba(255,255,255,0.05)",
+                    }}>
+                      <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.8px", color: "rgba(255,255,255,0.3)" }}>
+                        Agentes inactivos
+                      </span>
+                      <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.07)" }} />
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3 px-4 py-3.5" style={{ opacity: ag.activo ? 1 : 0.5 }}>
                     <div style={{
                       width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0,
                       background: AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length],
@@ -532,6 +554,7 @@ export default function AgentesClient({
                       </button>
                     </div>
                   </div>
+                  </Fragment>
                 )
               })
             )}
@@ -565,10 +588,29 @@ export default function AgentesClient({
                 ) : (
                   sorted.map((ag, i) => {
                     const facturacion = facturacionPorNombre[ag.nombre.toLowerCase().trim()] ?? 0
+                    const isSeparator = !ag.activo && (i === 0 || sorted[i - 1].activo)
                     return (
+                      <Fragment key={ag.id}>
+                      {isSeparator && (
+                        <tr>
+                          <td colSpan={9} style={{ padding: 0 }}>
+                            <div style={{
+                              display: "flex", alignItems: "center", gap: "10px",
+                              padding: "10px 16px",
+                              background: "rgba(255,255,255,0.02)",
+                              borderTop: "1px solid rgba(255,255,255,0.08)",
+                              borderBottom: "1px solid rgba(255,255,255,0.05)",
+                            }}>
+                              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.8px", color: "rgba(255,255,255,0.3)" }}>
+                                Agentes inactivos
+                              </span>
+                              <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.07)" }} />
+                            </div>
+                          </td>
+                        </tr>
+                      )}
                       <tr
-                        key={ag.id}
-                        style={{ borderBottom: i === sorted.length - 1 ? "none" : "1px solid rgba(255,255,255,0.06)" }}
+                        style={{ borderBottom: i === sorted.length - 1 ? "none" : "1px solid rgba(255,255,255,0.06)", opacity: ag.activo ? 1 : 0.5 }}
                         className="hover:bg-[rgba(255,255,255,0.03)]"
                       >
                         {/* Nombre con avatar */}
@@ -657,6 +699,7 @@ export default function AgentesClient({
                           </button>
                         </td>
                       </tr>
+                      </Fragment>
                     )
                   })
                 )}
