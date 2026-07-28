@@ -32,6 +32,19 @@ const DEFAULT_CONFIG: ConfigEntry[] = [
     etiqueta: "Mensaje WhatsApp de cobro",
     grupo:    "comunicacion",
   },
+  // Objetivos de Cartelería mes a mes
+  { clave: "obj_carteles_enero",       valor: "0", etiqueta: "Objetivo Enero",       grupo: "carteles" },
+  { clave: "obj_carteles_febrero",     valor: "0", etiqueta: "Objetivo Febrero",     grupo: "carteles" },
+  { clave: "obj_carteles_marzo",       valor: "0", etiqueta: "Objetivo Marzo",       grupo: "carteles" },
+  { clave: "obj_carteles_abril",       valor: "0", etiqueta: "Objetivo Abril",       grupo: "carteles" },
+  { clave: "obj_carteles_mayo",        valor: "0", etiqueta: "Objetivo Mayo",        grupo: "carteles" },
+  { clave: "obj_carteles_junio",       valor: "0", etiqueta: "Objetivo Junio",       grupo: "carteles" },
+  { clave: "obj_carteles_julio",       valor: "0", etiqueta: "Objetivo Julio",       grupo: "carteles" },
+  { clave: "obj_carteles_agosto",      valor: "0", etiqueta: "Objetivo Agosto",      grupo: "carteles" },
+  { clave: "obj_carteles_septiembre",  valor: "0", etiqueta: "Objetivo Septiembre",  grupo: "carteles" },
+  { clave: "obj_carteles_octubre",     valor: "0", etiqueta: "Objetivo Octubre",     grupo: "carteles" },
+  { clave: "obj_carteles_noviembre",   valor: "0", etiqueta: "Objetivo Noviembre",   grupo: "carteles" },
+  { clave: "obj_carteles_diciembre",   valor: "0", etiqueta: "Objetivo Diciembre",   grupo: "carteles" },
 ]
 
 const GRUPO_LABELS: Record<string, string> = {
@@ -40,12 +53,17 @@ const GRUPO_LABELS: Record<string, string> = {
   kpis:         "Objetivos de KPIs",
   facturacion:  "Facturación",
   comunicacion: "Comunicación",
+  carteles:     "Objetivos de Cartelería",
 }
 
-// ── Estacionalidad ────────────────────────────────────
+// ── Estacionalidad y Cartelería ───────────────────────
 const MONTH_NAMES = [
   "Enero","Febrero","Marzo","Abril","Mayo","Junio",
   "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
+]
+const MONTH_KEYS = [
+  "enero","febrero","marzo","abril","mayo","junio",
+  "julio","agosto","septiembre","octubre","noviembre","diciembre",
 ]
 const ESTACIONALIDAD_PCT = [4.72, 5.41, 7.12, 6.82, 8.41, 9.15, 8.66, 9.64, 9.42, 9.65, 9.78, 11.22]
 
@@ -62,10 +80,11 @@ const inp: React.CSSProperties = {
 
 // ── Props ─────────────────────────────────────────────
 interface Props {
-  initialEntries: ConfigEntry[]
+  initialEntries:    ConfigEntry[]
+  recuperadosPorMes: number[]
 }
 
-export default function ConfiguracionClient({ initialEntries }: Props) {
+export default function ConfiguracionClient({ initialEntries, recuperadosPorMes }: Props) {
   // Merge defaults with loaded entries (DB values take priority)
   const merged = DEFAULT_CONFIG.map(def => {
     const found = initialEntries.find(e => e.clave === def.clave)
@@ -105,8 +124,8 @@ export default function ConfiguracionClient({ initialEntries }: Props) {
     })
   }
 
-  // Group config by grupo
-  const grupos = Array.from(new Set(DEFAULT_CONFIG.map(e => e.grupo)))
+  // Group config by grupo — "carteles" se renderiza aparte como tabla
+  const grupos = Array.from(new Set(DEFAULT_CONFIG.map(e => e.grupo))).filter(g => g !== "carteles")
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -277,6 +296,74 @@ export default function ConfiguracionClient({ initialEntries }: Props) {
                           </td>
                           <td style={{ padding: "10px 20px", fontSize: "13px", fontWeight: 600, color: "#f1f5f9" }}>
                             USD {obj.toLocaleString("es-AR")}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* ── Objetivos de Cartelería (mes a mes) ── */}
+            <div style={{
+              background: "#13131a", borderRadius: "14px",
+              border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
+            }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: "8px",
+                padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)",
+                background: "rgba(255,255,255,0.04)",
+              }}>
+                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "#f1f5f9" }}>
+                  Objetivos de Cartelería — Carteles a recuperar por mes
+                </span>
+              </div>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                      {["Mes", "Objetivo", "Recuperados (año actual)"].map(h => (
+                        <th key={h} style={{
+                          padding: "8px 20px", textAlign: "left",
+                          fontSize: "10.5px", fontWeight: 700,
+                          textTransform: "uppercase" as const,
+                          letterSpacing: "0.8px", color: "rgba(255,255,255,0.35)",
+                        }}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {MONTH_NAMES.map((nombre, idx) => {
+                      const clave  = `obj_carteles_${MONTH_KEYS[idx]}`
+                      const rec    = recuperadosPorMes[idx] ?? 0
+                      const isLast = idx === 11
+                      return (
+                        <tr key={nombre} style={{ borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)" }}>
+                          <td style={{ padding: "10px 20px", fontSize: "13px", fontWeight: 600, color: "#f1f5f9", width: "150px" }}>
+                            {nombre}
+                          </td>
+                          <td style={{ padding: "8px 20px", width: "180px" }}>
+                            <input
+                              type="number"
+                              min="0"
+                              value={values[clave] ?? "0"}
+                              onChange={e => handleChange(clave, e.target.value)}
+                              style={{ ...inp, width: "100px" }}
+                            />
+                          </td>
+                          <td style={{ padding: "10px 20px" }}>
+                            <span style={{
+                              background: rec > 0 ? "rgba(74,222,128,0.12)" : "rgba(255,255,255,0.06)",
+                              color: rec > 0 ? "#4ade80" : "rgba(255,255,255,0.45)",
+                              padding: "2px 10px", borderRadius: "20px",
+                              fontSize: "12px", fontWeight: 700,
+                            }}>
+                              {rec}
+                            </span>
                           </td>
                         </tr>
                       )

@@ -2,13 +2,18 @@ import { createServerClient } from "@/lib/supabase"
 import ResumenClient from "./ResumenClient"
 import type { KpiRow } from "./ResumenClient"
 
-// Monthly seasonality fractions — sum ≈ 1.00
-// Jan  Feb  Mar  Apr  May  Jun  Jul  Aug  Sep  Oct  Nov  Dec
-const SEASON = [0.07, 0.07, 0.08, 0.08, 0.09, 0.07, 0.06, 0.08, 0.10, 0.11, 0.11, 0.08]
+// Estacionalidad — mismos valores que ConfiguracionClient.tsx ESTACIONALIDAD_PCT
+// Jan    Feb    Mar    Apr    May    Jun    Jul    Aug    Sep    Oct    Nov    Dec
+const SEASON_PCT = [4.72, 5.41, 7.12, 6.82, 8.41, 9.15, 8.66, 9.64, 9.42, 9.65, 9.78, 11.22]
 
 const MONTH_NAMES = [
   "Enero","Febrero","Marzo","Abril","Mayo","Junio",
   "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
+]
+
+const MONTH_KEYS = [
+  "enero","febrero","marzo","abril","mayo","junio",
+  "julio","agosto","septiembre","octubre","noviembre","diciembre",
 ]
 
 function nextMonthDate(year: number, month: number) {
@@ -23,32 +28,6 @@ function getConceptGroup(concepto: string): "FEE" | "CRM" | "Mainstreet" | "Otro
   return "Otros"
 }
 
-// ── Airtable: carteles con vencimiento en el mes (aún activos) ───────────────
-interface AirtableRecord {
-  id: string
-  fields: Record<string, unknown>
-}
-
-async function fetchAirtableVencimientosEnMes(start: string, end: string): Promise<number | null> {
-  try {
-    const params = new URLSearchParams()
-    params.append("fields[]", "fldnLaQjKRCD8vezt")   // vencimiento
-    params.set("returnFieldsByFieldId", "true")
-    params.set("pageSize", "100")
-    const res = await fetch(
-      `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${process.env.AIRTABLE_CARTELERIA_TABLE_ID}?${params}`,
-      { headers: { Authorization: `Bearer ${process.env.AIRTABLE_TOKEN}` }, cache: "no-store" }
-    )
-    if (!res.ok) return null
-    const json = (await res.json()) as { records?: AirtableRecord[] }
-    return (json.records ?? []).filter(r => {
-      const venc = (r.fields["fldnLaQjKRCD8vezt"] as string) ?? ""
-      return venc >= start && venc < end
-    }).length
-  } catch {
-    return null
-  }
-}
 
 export default async function ResumenPage({
   searchParams,
@@ -64,6 +43,8 @@ export default async function ResumenPage({
   const startDate = `${year}-${String(month).padStart(2, "0")}-01`
   const endDate   = nextMonthDate(year, month)
 
+  const objCartelesMesKey = `obj_carteles_${MONTH_KEYS[month - 1]}`
+
   const [
     { data: pagos },
     { data: agentes },
@@ -71,7 +52,6 @@ export default async function ResumenPage({
     { data: operaciones },
     { data: configs },
     { count: cartelesDevueltosCount },
-    atVencEnMes,
   ] = await Promise.all([
     supabase.from("pagos")
       .select("agente_id, monto_debe, monto_pagado, estado, concepto")
@@ -88,21 +68,20 @@ export default async function ResumenPage({
       .gte("fecha", startDate).lt("fecha", endDate),
     supabase.from("config")
       .select("clave, valor")
-      .in("clave", ["obj_facturacion_anual", "obj_encuestas_pct", "obj_carteles"]),
+      .in("clave", ["obj_facturacion_anual", "obj_encuestas_pct", objCartelesMesKey]),
     supabase.from("carteles_devueltos")
       .select("*", { count: "exact", head: true })
       .gte("fecha_devolucion", startDate)
       .lt("fecha_devolucion", endDate),
-    fetchAirtableVencimientosEnMes(startDate, endDate),
   ])
 
   const cartelesCount = cartelesDevueltosCount ?? 0
 
   // ── Config values ────────────────────────────────────────
-  const configMap   = Object.fromEntries((configs ?? []).map(c => [c.clave, c.valor]))
+  const configMap    = Object.fromEntries((configs ?? []).map(c => [c.clave, c.valor]))
   const objFactAnual = parseFloat(configMap.obj_facturacion_anual ?? "710000") || 710000
   const objEncPct    = parseInt(configMap.obj_encuestas_pct       ?? "60")     || 60
-  const objCarteles  = parseInt(configMap.obj_carteles            ?? "20")     || 20
+  const objCartelesMes = parseInt(configMap[objCartelesMesKey]    ?? "0")      || 0
 
   // ── Cobros — fórmula ponderada: SUMA(cobrado)/SUMA(total) × 100 ─────────────
   const pagosData    = pagos ?? []
@@ -138,18 +117,12 @@ export default async function ResumenPage({
   const cobrosPct    = Math.round(((feePagados + crmPagados + mainPagados) / (agentesFee + agentesCrm + agentesMainstreet)) * 100)
   const cobrosACobrar = cobrosPct >= 100 ? 100 : 0
 
-  // ── Cartelería — fórmula dinámica: recuperados/pendientes × 100 ─────────────
-  // pendientes del mes = carteles aún activos en Airtable con venc. en el mes + ya recuperados
-  const pendientesTotales = atVencEnMes !== null ? atVencEnMes + cartelesCount : null
-  const pctCartDin = pendientesTotales !== null && pendientesTotales > 0
-    ? Math.round((cartelesCount / pendientesTotales) * 100)
+  // ── Cartelería — fórmula: recuperados / objetivo_mes × 100 ─────────────────
+  const pctCartMes = objCartelesMes > 0
+    ? Math.round((cartelesCount / objCartelesMes) * 100)
     : null
 
-  const cartelesACobrar = (() => {
-    if (pctCartDin === null)         return cartelesCount >= objCarteles ? 100 : 0
-    if (pendientesTotales === 0)     return cartelesCount >= objCarteles ? 100 : 0
-    return pctCartDin >= 100 ? 100 : 0
-  })()
+  const cartelesACobrar = objCartelesMes > 0 && cartelesCount >= objCartelesMes ? 100 : 0
 
   // ── Encuestas — tasa de respuesta: (enc.)/(ops×2) ≥ obj% ────────────────────
   const encuestasData  = encuestas ?? []
@@ -162,7 +135,7 @@ export default async function ResumenPage({
 
   // ── Facturación ──────────────────────────────────────────
   const comisionTotal  = (operaciones ?? []).reduce((s, o) => s + (Number(o.comision_bruta) || 0), 0)
-  const objFactMensual = objFactAnual * SEASON[month - 1]
+  const objFactMensual = objFactAnual * SEASON_PCT[month - 1] / 100
   const factRatio      = objFactMensual > 0 ? comisionTotal / objFactMensual : 0
   const factACobrar    = factRatio >= 1 ? 100 : 0
 
@@ -181,12 +154,12 @@ export default async function ResumenPage({
     },
     {
       label:    "Cartelería",
-      objetivo: pendientesTotales !== null ? "100% de pendientes del mes" : `${objCarteles} carteles recuperados`,
-      cumplido: pctCartDin !== null
-        ? `${cartelesCount}/${pendientesTotales} recuperados (${pctCartDin}%)`
-        : pendientesTotales === 0
-          ? `Sin vencimientos este mes (${cartelesCount} recuperados igualmente)`
-          : `${cartelesCount} cartel${cartelesCount !== 1 ? "es" : ""} recuperado${cartelesCount !== 1 ? "s" : ""}`,
+      objetivo: objCartelesMes === 0
+        ? "Sin objetivo definido"
+        : `${objCartelesMes} carteles a recuperar`,
+      cumplido: objCartelesMes === 0
+        ? `${cartelesCount} recuperado${cartelesCount !== 1 ? "s" : ""} · no genera bono`
+        : `${cartelesCount}/${objCartelesMes} recuperados (${pctCartMes}%)`,
       aCobrar:  cartelesACobrar,
     },
     {
