@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -222,13 +222,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-const inp: React.CSSProperties = {
-  width: "100%", padding: "9px 12px",
-  borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
-  fontSize: "13px", fontFamily: "inherit",
-  color: "var(--crm-text)", outline: "none", background: "var(--crm-input-bg)",
-  boxSizing: "border-box",
-}
 
 // ═══════════════════════════════════════════════════════
 //  MAIN COMPONENT
@@ -806,18 +799,18 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
             </div>
             <form onSubmit={handleSubmitEstado} style={{ padding: "20px" }}>
               <Field label="Nuevo estado *">
-                <select value={nuevoEstado} onChange={e => setNuevoEstado(e.target.value)} style={inp} required>
+                <select value={nuevoEstado} onChange={e => setNuevoEstado(e.target.value)} className="crm-input" required>
                   {ESTADOS.map(e => <option key={e} value={e}>{e}</option>)}
                 </select>
               </Field>
               <Field label="Descripción *">
                 <textarea value={descEstado} onChange={e => setDescEstado(e.target.value)}
                   rows={3} placeholder="¿Qué pasó? Describí el motivo del cambio..."
-                  style={{ ...inp, resize: "vertical" as const }} required />
+                  className="crm-input resize-y" required />
               </Field>
               <Field label="Monto (USD, opcional)">
                 <input type="number" value={montoEstado} onChange={e => setMontoEstado(e.target.value)}
-                  min="0" step="100" placeholder="Si hubo movimiento de dinero" style={inp} />
+                  min="0" step="100" placeholder="Si hubo movimiento de dinero" className="crm-input" />
               </Field>
               {errEstado && (
                 <div style={{
@@ -900,18 +893,18 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
             </div>
             <form onSubmit={handleSubmitMov} style={{ padding: "20px" }}>
               <Field label="Tipo *">
-                <select value={tipoMov} onChange={e => setTipoMov(e.target.value)} style={inp} required>
+                <select value={tipoMov} onChange={e => setTipoMov(e.target.value)} className="crm-input" required>
                   {TIPOS_MOVIMIENTO.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </Field>
               <Field label="Descripción *">
                 <textarea value={descMov} onChange={e => setDescMov(e.target.value)}
                   rows={3} placeholder="Describí el movimiento..."
-                  style={{ ...inp, resize: "vertical" as const }} required />
+                  className="crm-input resize-y" required />
               </Field>
               <Field label="Monto (USD, opcional)">
                 <input type="number" value={montoMov} onChange={e => setMontoMov(e.target.value)}
-                  min="0" step="100" placeholder="Si hubo movimiento de dinero" style={inp} />
+                  min="0" step="100" placeholder="Si hubo movimiento de dinero" className="crm-input" />
               </Field>
               {errMov && (
                 <div style={{
@@ -1001,17 +994,17 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               <Field label="Dirección *">
                 <input type="text" value={editForm.direccion}
                   onChange={e => setEF("direccion", e.target.value)}
-                  placeholder="Av. San Martín 1250, Resistencia" style={inp} required />
+                  placeholder="Av. San Martín 1250, Resistencia" className="crm-input" required />
               </Field>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <Field label="Tipología *">
-                  <select value={editForm.tipologia} onChange={e => setEF("tipologia", e.target.value)} style={inp} required>
+                  <select value={editForm.tipologia} onChange={e => setEF("tipologia", e.target.value)} className="crm-input" required>
                     {TIPOLOGIAS_OPS.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </Field>
                 <Field label="Tipo de operación *">
-                  <select value={editForm.tipo_operacion} onChange={e => setEF("tipo_operacion", e.target.value)} style={inp} required>
+                  <select value={editForm.tipo_operacion} onChange={e => setEF("tipo_operacion", e.target.value)} className="crm-input" required>
                     {TIPOS_OP.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </Field>
@@ -1026,7 +1019,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                       const v = e.target.value
                       setEditForm(f => ({ ...f, agente_vendedor_id: v, agente_vendedor_externo: v ? "" : f.agente_vendedor_externo }))
                     }}
-                    style={inp}
+                    className="crm-input"
                   >
                     <option value="">— Sin agente interno —</option>
                     {agentes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
@@ -1039,7 +1032,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                       const v = e.target.value
                       setEditForm(f => ({ ...f, agente_comprador_id: v, agente_comprador_externo: v ? "" : f.agente_comprador_externo }))
                     }}
-                    style={inp}
+                    className="crm-input"
                   >
                     <option value="">— Sin agente interno —</option>
                     {agentes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
@@ -1056,7 +1049,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                       setEditForm(f => ({ ...f, agente_vendedor_externo: v, agente_vendedor_id: v ? "" : f.agente_vendedor_id }))
                     }}
                     placeholder="Nombre y/o inmobiliaria"
-                    style={inp}
+                    className="crm-input"
                   />
                 </Field>
                 <Field label="Comprador externo (otra inmobiliaria)">
@@ -1068,7 +1061,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                       setEditForm(f => ({ ...f, agente_comprador_externo: v, agente_comprador_id: v ? "" : f.agente_comprador_id }))
                     }}
                     placeholder="Nombre y/o inmobiliaria"
-                    style={inp}
+                    className="crm-input"
                   />
                 </Field>
               </div>
@@ -1080,19 +1073,19 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <Field label="Monto ofertado">
                   <input type="number" min="0" step="100" value={editForm.monto_ofertado_usd}
-                    onChange={e => setEF("monto_ofertado_usd", e.target.value)} placeholder="0" style={inp} />
+                    onChange={e => setEF("monto_ofertado_usd", e.target.value)} placeholder="0" className="crm-input" />
                 </Field>
                 <Field label="Precio publicación">
                   <input type="number" min="0" step="100" value={editForm.precio_publicacion_usd}
-                    onChange={e => setEF("precio_publicacion_usd", e.target.value)} placeholder="0" style={inp} />
+                    onChange={e => setEF("precio_publicacion_usd", e.target.value)} placeholder="0" className="crm-input" />
                 </Field>
                 <Field label="Precio acordado">
                   <input type="number" min="0" step="100" value={editForm.precio_acordado_usd}
-                    onChange={e => setEF("precio_acordado_usd", e.target.value)} placeholder="0" style={inp} />
+                    onChange={e => setEF("precio_acordado_usd", e.target.value)} placeholder="0" className="crm-input" />
                 </Field>
                 <Field label="Valor escritura">
                   <input type="number" min="0" step="100" value={editForm.valor_escritura_usd}
-                    onChange={e => setEF("valor_escritura_usd", e.target.value)} placeholder="0" style={inp} />
+                    onChange={e => setEF("valor_escritura_usd", e.target.value)} placeholder="0" className="crm-input" />
                 </Field>
               </div>
 
@@ -1100,11 +1093,11 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <Field label="Monto reserva">
                   <input type="number" min="0" step="100" value={editForm.monto_reserva_usd}
-                    onChange={e => setEF("monto_reserva_usd", e.target.value)} placeholder="0" style={inp} />
+                    onChange={e => setEF("monto_reserva_usd", e.target.value)} placeholder="0" className="crm-input" />
                 </Field>
                 <Field label="Monto refuerzo">
                   <input type="number" min="0" step="100" value={editForm.monto_refuerzo_usd}
-                    onChange={e => setEF("monto_refuerzo_usd", e.target.value)} placeholder="0" style={inp} />
+                    onChange={e => setEF("monto_refuerzo_usd", e.target.value)} placeholder="0" className="crm-input" />
                 </Field>
               </div>
 
@@ -1143,7 +1136,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               {editForm.es_bis && (
                 <Field label="Número oferta padre">
                   <input type="number" min="1" step="1" value={editForm.numero_padre}
-                    onChange={e => setEF("numero_padre", e.target.value)} placeholder="123" style={inp} />
+                    onChange={e => setEF("numero_padre", e.target.value)} placeholder="123" className="crm-input" />
                 </Field>
               )}
 
@@ -1151,7 +1144,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               <Field label="Notas">
                 <textarea value={editForm.notas} onChange={e => setEF("notas", e.target.value)}
                   rows={3} placeholder="Observaciones adicionales..."
-                  style={{ ...inp, resize: "vertical" as const }} />
+                  className="crm-input resize-y" />
               </Field>
 
               {errEditar && (
@@ -1235,11 +1228,11 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
             <form onSubmit={handleSubmitCierre} style={{ padding: "20px" }}>
               <Field label="Fecha de cierre *">
                 <input type="date" value={cierreFecha} onChange={e => setCierreFecha(e.target.value)}
-                  style={{ ...inp, colorScheme: "dark" as const }} required />
+                  className="crm-input" style={{ colorScheme: "dark" as const }} required />
               </Field>
               <Field label="Precio de cierre (USD) *">
                 <input type="number" value={cierrePrecio} onChange={e => setCierrePrecio(e.target.value)}
-                  min="0" placeholder="0" style={inp} required />
+                  min="0" placeholder="0" className="crm-input" required />
               </Field>
               <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", margin: "-6px 0 14px" }}>
                 La comisión se calculará automáticamente: 3% por cada agente interno.

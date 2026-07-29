@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
@@ -94,13 +94,6 @@ function TipoBadge({ tipo }: { tipo: string }) {
   )
 }
 
-const inp: React.CSSProperties = {
-  width: "100%", padding: "9px 12px",
-  borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
-  fontSize: "13px", fontFamily: "inherit",
-  color: "var(--crm-text)", outline: "none", background: "var(--crm-input-bg)",
-  boxSizing: "border-box",
-}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -381,10 +374,6 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
     })
   }
 
-  const cardStyle: React.CSSProperties = {
-    background: "var(--crm-surface-2)", borderRadius: "14px",
-    border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
-  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -459,7 +448,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
         </div>
 
         {/* ── Historial por mes ─────────────────── */}
-        <div style={cardStyle}>
+        <div className="crm-card">
           <div style={{
             display: "flex", alignItems: "center", gap: "8px",
             padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)",
@@ -721,14 +710,14 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                       <input type="text" placeholder="Ej: 1234"
                         value={editForm.referencia}
                         onChange={e => setEditForm(f => f ? { ...f, referencia: e.target.value } : f)}
-                        style={inp} required autoFocus />
+                        className="crm-input" required autoFocus />
                     </Field>
                   ) : (
                     <Field label="Agente *">
                       <select
                         value={editForm.referencia}
                         onChange={e => setEditForm(f => f ? { ...f, referencia: e.target.value } : f)}
-                        style={{ ...inp, appearance: "none", WebkitAppearance: "none", cursor: "pointer" }}
+                        className="crm-input appearance-none cursor-pointer"
                         required disabled={loadingAgentes}
                       >
                         <option value="" disabled>{loadingAgentes ? "Cargando..." : "Seleccionar agente..."}</option>
@@ -767,7 +756,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                     <Field label="Fecha *">
                       <input type="date" value={editForm.fecha}
                         onChange={e => setEditForm(f => f ? { ...f, fecha: e.target.value } : f)}
-                        style={inp} required />
+                        className="crm-input" required />
                     </Field>
                   )}
                 </div>
@@ -776,7 +765,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                   <Field label="Fecha *">
                     <input type="date" value={editForm.fecha}
                       onChange={e => setEditForm(f => f ? { ...f, fecha: e.target.value } : f)}
-                      style={inp} required />
+                      className="crm-input" required />
                   </Field>
                 )}
 
@@ -785,7 +774,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                     placeholder="Opcional — ej: 7"
                     value={editForm.nps}
                     onChange={e => setEditForm(f => f ? { ...f, nps: e.target.value } : f)}
-                    style={inp}
+                    className="crm-input"
                   />
                   {editForm.nps !== "" && (
                     <div style={{ marginTop: "5px" }}>
@@ -801,7 +790,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                   <textarea rows={2} placeholder="Feedback libre (opcional)"
                     value={editForm.comentario}
                     onChange={e => setEditForm(f => f ? { ...f, comentario: e.target.value } : f)}
-                    style={{ ...inp, resize: "vertical", lineHeight: 1.5 }}
+                    className="crm-input resize-y" style={{ lineHeight: 1.5 }}
                   />
                 </Field>
 
@@ -1071,7 +1060,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                       placeholder="Ej: 1234"
                       value={form.referencia}
                       onChange={e => setForm(f => ({ ...f, referencia: e.target.value }))}
-                      style={inp} required autoFocus
+                      className="crm-input" required autoFocus
                     />
                   </Field>
                 ) : (
@@ -1079,7 +1068,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                     <select
                       value={form.referencia}
                       onChange={e => setForm(f => ({ ...f, referencia: e.target.value }))}
-                      style={{ ...inp, appearance: "none", WebkitAppearance: "none", cursor: "pointer" }}
+                      className="crm-input appearance-none cursor-pointer"
                       required
                       disabled={loadingAgentes}
                     >
@@ -1121,7 +1110,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                   <Field label="Fecha *">
                     <input type="date" value={form.fecha}
                       onChange={e => setForm(f => ({ ...f, fecha: e.target.value }))}
-                      style={inp} required />
+                      className="crm-input" required />
                   </Field>
                 )}
               </div>
@@ -1130,7 +1119,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                 <Field label="Fecha *">
                   <input type="date" value={form.fecha}
                     onChange={e => setForm(f => ({ ...f, fecha: e.target.value }))}
-                    style={inp} required />
+                    className="crm-input" required />
                 </Field>
               )}
 
@@ -1141,7 +1130,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                   placeholder="Opcional — ej: 7"
                   value={form.nps}
                   onChange={e => setForm(f => ({ ...f, nps: e.target.value }))}
-                  style={inp}
+                  className="crm-input"
                 />
                 {form.nps !== "" && (
                   <div style={{ marginTop: "5px" }}>
@@ -1159,7 +1148,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                   rows={2} placeholder="Feedback libre (opcional)"
                   value={form.comentario}
                   onChange={e => setForm(f => ({ ...f, comentario: e.target.value }))}
-                  style={{ ...inp, resize: "vertical", lineHeight: 1.5 }}
+                  className="crm-input resize-y" style={{ lineHeight: 1.5 }}
                 />
               </Field>
 

@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
@@ -186,13 +186,6 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
   )
 }
 
-const inp: React.CSSProperties = {
-  width: "100%", padding: "9px 12px",
-  borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)",
-  fontSize: "13px", fontFamily: "inherit",
-  color: "var(--crm-text)", outline: "none", background: "rgba(255,255,255,0.06)",
-  boxSizing: "border-box",
-}
 
 function filterBtnStyle(key: string, selected: boolean): React.CSSProperties {
   const base: React.CSSProperties = {
@@ -733,28 +726,6 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
     }
   }
 
-  const cardStyle: React.CSSProperties = {
-    background: "var(--crm-surface-2)", borderRadius: "14px",
-    border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden",
-  }
-
-  const btnSave: React.CSSProperties = {
-    padding: "9px 24px", borderRadius: "8px", border: "none",
-    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
-    color: "white", fontSize: "13px", fontWeight: 700,
-    cursor: isPending ? "not-allowed" : "pointer",
-    fontFamily: "inherit",
-    display: "flex", alignItems: "center", gap: "6px",
-    boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
-  }
-
-  const btnCancel: React.CSSProperties = {
-    padding: "9px 20px", borderRadius: "8px",
-    border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.06)",
-    fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.45)",
-    cursor: "pointer", fontFamily: "inherit",
-  }
-
   function ErrorBox() {
     if (!error) return null
     return (
@@ -863,8 +834,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
         </div>
 
         {/* ── % general ──────────────────────────────── */}
-        <div style={{
-          ...cardStyle,
+        <div className="crm-card" style={{
           display: "flex", alignItems: "center", gap: "16px",
           padding: "12px 20px", marginBottom: "16px", overflow: "visible",
         }}>
@@ -885,8 +855,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
         </div>
 
         {/* ── Filtros ──────────────────────────────── */}
-        <div style={{
-          ...cardStyle,
+        <div className="crm-card" style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "12px 18px", marginBottom: "16px", overflow: "visible",
         }}>
@@ -927,7 +896,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
         </div>
 
         {/* ── Tabla por agente ─────────────────────── */}
-        <div style={cardStyle}>
+        <div className="crm-card">
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
             padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
@@ -1377,7 +1346,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 <select
                   value={nuevoForm.agente_id}
                   onChange={e => setNuevoForm(f => ({ ...f, agente_id: e.target.value }))}
-                  style={inp}
+                  className="crm-input"
                   required
                 >
                   {agentesActivos.map(a => (
@@ -1390,7 +1359,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                   <select
                     value={nuevoForm.concepto}
                     onChange={e => setNuevoForm(f => ({ ...f, concepto: e.target.value }))}
-                    style={inp}
+                    className="crm-input"
                     required
                   >
                     {CONCEPTOS_PAGO.map(c => <option key={c} value={c}>{c}</option>)}
@@ -1399,14 +1368,14 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 <Field label="Fecha *">
                   <input type="date" value={nuevoForm.fecha}
                     onChange={e => setNuevoForm(f => ({ ...f, fecha: e.target.value }))}
-                    style={inp} required />
+                    className="crm-input" required />
                 </Field>
               </div>
               <Field label="Monto pagado (USD) *">
                 <input type="number" min="0" step="0.01" placeholder="95.25"
                   value={nuevoForm.monto_pagado}
                   onChange={e => setNuevoForm(f => ({ ...f, monto_pagado: e.target.value }))}
-                  style={inp} required />
+                  className="crm-input" required />
               </Field>
               <div style={{
                 display: "flex", alignItems: "center", gap: "8px",
@@ -1425,8 +1394,8 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                   </div>
                 ) : (
                   <>
-                    <button type="button" onClick={closeModal} disabled={isPending} className="w-full sm:w-auto min-h-[44px]" style={btnCancel}>Cancelar</button>
-                    <button type="submit" disabled={isPending} className="w-full sm:w-auto min-h-[44px] justify-center" style={btnSave}>
+                    <button type="button" onClick={closeModal} disabled={isPending} className="crm-btn-secondary w-full sm:w-auto min-h-[44px] px-5 py-[9px]">Cancelar</button>
+                    <button type="submit" disabled={isPending} className="crm-btn-primary w-full sm:w-auto min-h-[44px] justify-center px-6 py-[9px]">
                       {isPending && <Loader2 size={14} className="animate-spin" />}
                       {isPending ? "Guardando..." : <><Save size={14} /> Guardar</>}
                     </button>
@@ -1460,7 +1429,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                     setCreditoOpcion("no")
                     setCreditoParcialMonto("")
                   }}
-                  style={inp} required
+                  className="crm-input" required
                 >
                   {agentesActivos.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
                 </select>
@@ -1471,7 +1440,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                     type="text" placeholder="Ej: FEE mensual"
                     value={gastoForm.concepto}
                     onChange={e => setGastoForm(f => ({ ...f, concepto: e.target.value }))}
-                    style={inp} required
+                    className="crm-input" required
                   />
                 </Field>
                 <Field label="Tipo">
@@ -1500,12 +1469,12 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                   <input type="number" min="0" step="0.01" placeholder="0"
                     value={gastoForm.monto_debe}
                     onChange={e => setGastoForm(f => ({ ...f, monto_debe: e.target.value }))}
-                    style={inp} required />
+                    className="crm-input" required />
                 </Field>
                 <Field label="Fecha *">
                   <input type="date" value={gastoForm.fecha}
                     onChange={e => setGastoForm(f => ({ ...f, fecha: e.target.value }))}
-                    style={inp} required />
+                    className="crm-input" required />
                 </Field>
               </div>
 
@@ -1543,7 +1512,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                       placeholder={`Máx. ${fmtUSD(saldoGastoAgente)}`}
                       value={creditoParcialMonto}
                       onChange={e => setCreditoParcialMonto(e.target.value)}
-                      style={{ ...inp, marginTop: "8px" }}
+                      className="crm-input mt-2"
                     />
                   )}
                 </div>
@@ -1587,8 +1556,8 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                   </div>
                 ) : (
                   <>
-                    <button type="button" onClick={closeModal} disabled={isPending} className="w-full sm:w-auto min-h-[44px]" style={btnCancel}>Cancelar</button>
-                    <button type="submit" disabled={isPending} className="w-full sm:w-auto min-h-[44px] justify-center" style={btnSave}>
+                    <button type="button" onClick={closeModal} disabled={isPending} className="crm-btn-secondary w-full sm:w-auto min-h-[44px] px-5 py-[9px]">Cancelar</button>
+                    <button type="submit" disabled={isPending} className="crm-btn-primary w-full sm:w-auto min-h-[44px] justify-center px-6 py-[9px]">
                       {isPending && <Loader2 size={14} className="animate-spin" />}
                       {isPending ? "Guardando..." : <><Save size={14} /> Registrar gasto</>}
                     </button>
@@ -1617,7 +1586,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                   <select
                     value={gastoRec.concepto}
                     onChange={e => setGastoRec(f => ({ ...f, concepto: e.target.value }))}
-                    style={inp} required
+                    className="crm-input" required
                   >
                     {CONCEPTOS_RECURRENTE.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
@@ -1625,7 +1594,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 <Field label="Fecha *">
                   <input type="date" value={gastoRec.fecha}
                     onChange={e => setGastoRec(f => ({ ...f, fecha: e.target.value }))}
-                    style={inp} required />
+                    className="crm-input" required />
                 </Field>
               </div>
 
@@ -1702,15 +1671,11 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
 
               <ErrorBox />
               <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center mt-auto pt-2">
-                <button type="button" onClick={closeModal} disabled={isPending} className="w-full sm:w-auto min-h-[44px]" style={btnCancel}>Cancelar</button>
+                <button type="button" onClick={closeModal} disabled={isPending} className="crm-btn-secondary w-full sm:w-auto min-h-[44px] px-5 py-[9px]">Cancelar</button>
                 <button
                   type="submit" disabled={isPending}
-                  className="w-full sm:w-auto min-h-[44px] justify-center"
-                  style={{
-                    ...btnSave,
-                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#7C3AED 0%,#5B21B6 100%)",
-                    boxShadow: isPending ? "none" : "0 2px 8px rgba(124,58,237,0.3)",
-                  }}
+                  className="crm-btn-primary w-full sm:w-auto min-h-[44px] justify-center px-6 py-[9px]"
+                  style={{ background: isPending ? "rgba(255,255,255,0.15)" : "linear-gradient(135deg,#7C3AED 0%,#5B21B6 100%)", boxShadow: isPending ? "none" : "0 2px 8px rgba(124,58,237,0.3)" }}
                 >
                   {isPending && <Loader2 size={14} className="animate-spin" />}
                   {isPending ? "Aplicando..." : `Aplicar a ${selectedAgentesRec.size} agente${selectedAgentesRec.size !== 1 ? "s" : ""}`}
@@ -1746,7 +1711,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                   type="number" min="0" max={Number(selectedPago.monto_debe)} step="0.01"
                   value={editForm.monto_pagado}
                   onChange={e => setEditForm({ monto_pagado: e.target.value })}
-                  style={inp} required autoFocus
+                  className="crm-input" required autoFocus
                 />
               </Field>
               <div style={{
@@ -1765,8 +1730,8 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
               </div>
               <ErrorBox />
               <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center pt-1">
-                <button type="button" onClick={closeModal} disabled={isPending} className="w-full sm:w-auto min-h-[44px]" style={btnCancel}>Cancelar</button>
-                <button type="submit" disabled={isPending} className="w-full sm:w-auto min-h-[44px] justify-center" style={btnSave}>
+                <button type="button" onClick={closeModal} disabled={isPending} className="crm-btn-secondary w-full sm:w-auto min-h-[44px] px-5 py-[9px]">Cancelar</button>
+                <button type="submit" disabled={isPending} className="crm-btn-primary w-full sm:w-auto min-h-[44px] justify-center px-6 py-[9px]">
                   {isPending && <Loader2 size={14} className="animate-spin" />}
                   {isPending ? "Guardando..." : "Actualizar pago"}
                 </button>
@@ -1794,7 +1759,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 <select
                   value={saldoFavorForm.agente_id}
                   onChange={e => setSaldoFavorForm(f => ({ ...f, agente_id: e.target.value }))}
-                  style={inp} required
+                  className="crm-input" required
                 >
                   {agentesActivos.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
                 </select>
@@ -1805,26 +1770,22 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                     type="number" min="0.01" step="0.01" placeholder="0.00"
                     value={saldoFavorForm.monto}
                     onChange={e => setSaldoFavorForm(f => ({ ...f, monto: e.target.value }))}
-                    style={inp} required autoFocus
+                    className="crm-input" required autoFocus
                   />
                 </Field>
                 <Field label="Fecha *">
                   <input type="date" value={saldoFavorForm.fecha}
                     onChange={e => setSaldoFavorForm(f => ({ ...f, fecha: e.target.value }))}
-                    style={inp} required />
+                    className="crm-input" required />
                 </Field>
               </div>
               <ErrorBox />
               <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center pt-1">
-                <button type="button" onClick={closeModal} disabled={isPending} className="w-full sm:w-auto min-h-[44px]" style={btnCancel}>Cancelar</button>
+                <button type="button" onClick={closeModal} disabled={isPending} className="crm-btn-secondary w-full sm:w-auto min-h-[44px] px-5 py-[9px]">Cancelar</button>
                 <button
                   type="submit" disabled={isPending}
-                  className="w-full sm:w-auto min-h-[44px] justify-center"
-                  style={{
-                    ...btnSave,
-                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#059669 0%,#047857 100%)",
-                    boxShadow: isPending ? "none" : "0 2px 8px rgba(5,150,105,0.3)",
-                  }}
+                  className="crm-btn-primary w-full sm:w-auto min-h-[44px] justify-center px-6 py-[9px]"
+                  style={{ background: isPending ? "rgba(255,255,255,0.15)" : "linear-gradient(135deg,#059669 0%,#047857 100%)", boxShadow: isPending ? "none" : "0 2px 8px rgba(5,150,105,0.3)" }}
                 >
                   {isPending && <Loader2 size={14} className="animate-spin" />}
                   {isPending ? "Guardando..." : <><Save size={14} /> Guardar</>}
@@ -1875,8 +1836,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                   type="button"
                   onClick={() => setDeleteTarget(null)}
                   disabled={deleteLoading}
-                  className="w-full sm:w-auto min-h-[44px]"
-                  style={btnCancel}
+                  className="crm-btn-secondary w-full sm:w-auto min-h-[44px] px-5 py-[9px]"
                 >
                   Cancelar
                 </button>
@@ -1884,12 +1844,8 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                   type="button"
                   onClick={handleConfirmEliminar}
                   disabled={deleteLoading}
-                  className="w-full sm:w-auto min-h-[44px] justify-center"
-                  style={{
-                    ...btnSave,
-                    background: deleteLoading ? "#F87171" : "var(--crm-accent)",
-                    borderColor: "var(--crm-accent)",
-                  }}
+                  className="crm-btn-primary w-full sm:w-auto min-h-[44px] justify-center px-6 py-[9px]"
+                  style={{ background: deleteLoading ? "#F87171" : "var(--crm-accent)" }}
                 >
                   {deleteLoading && <Loader2 size={14} className="animate-spin" />}
                   {deleteLoading ? "Eliminando..." : "Eliminar registro"}

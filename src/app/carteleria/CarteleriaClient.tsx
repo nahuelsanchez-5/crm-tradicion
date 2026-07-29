@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -97,14 +97,6 @@ function fmtDateTime(iso: string): string {
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
-// ── Shared styles ─────────────────────────────────────
-const inp: React.CSSProperties = {
-  width: "100%", padding: "9px 12px",
-  borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
-  fontSize: "13px", fontFamily: "inherit",
-  color: "var(--crm-text)", outline: "none", background: "var(--crm-input-bg)",
-  boxSizing: "border-box",
-}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -322,10 +314,6 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
   }
 
   // ── Styles ─────────────────────────────────────────
-  const cardStyle: React.CSSProperties = {
-    background: "var(--crm-surface-2)", borderRadius: "14px",
-    border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
-  }
 
   const hasFilters = busqueda || filtroAgente || filtroTipo
 
@@ -564,7 +552,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
               placeholder="Buscar por dirección, Nº de cartel o MLS-ID..."
               value={busqueda}
               onChange={e => setBusqueda(e.target.value)}
-              style={{ ...inp, paddingLeft: "33px" }}
+              className="crm-input" style={{ paddingLeft: "33px" }}
             />
           </div>
 
@@ -572,7 +560,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
           <select
             value={filtroAgente}
             onChange={e => setFiltroAgente(e.target.value)}
-            style={{ ...inp, width: "auto", minWidth: "170px", cursor: "pointer" }}
+            className="crm-input cursor-pointer" style={{ width: "auto", minWidth: "170px" }}
           >
             <option value="">Todos los agentes</option>
             {agentOptions.map(a => <option key={a} value={a}>{a}</option>)}
@@ -582,7 +570,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
           <select
             value={filtroTipo}
             onChange={e => setFiltroTipo(e.target.value)}
-            style={{ ...inp, width: "auto", minWidth: "150px", cursor: "pointer" }}
+            className="crm-input cursor-pointer" style={{ width: "auto", minWidth: "150px" }}
           >
             <option value="">Todos los tipos</option>
             {tipoOptions.map(t => <option key={t} value={t}>{t}</option>)}
@@ -605,7 +593,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
         </div>
 
         {/* ── Tabla ──────────────────────────────────── */}
-        <div style={cardStyle}>
+        <div className="crm-card">
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
             padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)",
@@ -803,7 +791,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                 <select
                   value={devueltosMes}
                   onChange={e => setDevueltosMes(Number(e.target.value))}
-                  style={{ ...inp, width: "auto", minWidth: "130px", cursor: "pointer" }}
+                  className="crm-input cursor-pointer" style={{ width: "auto", minWidth: "130px" }}
                 >
                   {MONTH_NAMES.map((n, i) => (
                     <option key={i + 1} value={i + 1}>{n}</option>
@@ -812,7 +800,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                 <select
                   value={devueltosAnio}
                   onChange={e => setDevueltosAnio(Number(e.target.value))}
-                  style={{ ...inp, width: "auto", minWidth: "90px", cursor: "pointer" }}
+                  className="crm-input cursor-pointer" style={{ width: "auto", minWidth: "90px" }}
                 >
                   {Array.from({ length: new Date().getFullYear() - 2023 }, (_, i) => 2024 + i).map(y => (
                     <option key={y} value={y}>{y}</option>
@@ -929,7 +917,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                     value={form.numero}
                     onChange={patch("numero")}
                     placeholder="296"
-                    style={inp}
+                    className="crm-input"
                     required
                     autoFocus
                   />
@@ -940,7 +928,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                     value={form.mlsId}
                     onChange={patch("mlsId")}
                     placeholder="421871024-95"
-                    style={inp}
+                    className="crm-input"
                   />
                 </Field>
               </div>
@@ -952,7 +940,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                   value={form.direccion}
                   onChange={patch("direccion")}
                   placeholder="Av. San Martín 1234"
-                  style={inp}
+                  className="crm-input"
                   required
                 />
               </Field>
@@ -963,7 +951,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                   <select
                     value={form.tipo}
                     onChange={patch("tipo")}
-                    style={{ ...inp, cursor: "pointer" }}
+                    className="crm-input cursor-pointer"
                     required
                   >
                     <option value="">Seleccionar...</option>
@@ -975,7 +963,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                     type="date"
                     value={form.vencimiento}
                     onChange={patch("vencimiento")}
-                    style={inp}
+                    className="crm-input"
                     required
                   />
                 </Field>
@@ -986,7 +974,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                 <select
                   value={form.agente}
                   onChange={patch("agente")}
-                  style={{ ...inp, cursor: "pointer" }}
+                  className="crm-input cursor-pointer"
                   required
                 >
                   <option value="">Seleccionar agente...</option>

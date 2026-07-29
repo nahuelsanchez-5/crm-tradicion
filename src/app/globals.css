@@ -211,11 +211,16 @@
 
   /* ── Form inputs ── */
   .crm-input {
-    @apply w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-all duration-150;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid var(--crm-divider);
-    color: var(--crm-text);
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 13px;
     font-family: inherit;
+    outline: none;
+    transition: border-color 150ms, box-shadow 150ms;
+    background: var(--crm-input-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--crm-text);
     box-sizing: border-box;
     min-height: 44px;
   }
@@ -232,12 +237,58 @@
     color: var(--crm-text);
   }
   select.crm-input {
-    background: var(--crm-surface-2);
     color-scheme: dark;
   }
   .crm-label {
     @apply block text-[10.5px] font-semibold uppercase tracking-wide mb-1.5;
     color: var(--crm-text-muted);
+  }
+
+  /* ── Card container ── */
+  .crm-card {
+    background: var(--crm-surface-2);
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    overflow: hidden;
+  }
+
+  /* ── Inner section header (flex row with icon + title + border-bottom) ── */
+  .crm-inner-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  /* ── Readonly field display ── */
+  .crm-readonly-field {
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--crm-divider);
+    background: rgba(255, 255, 255, 0.04);
+    font-size: 13px;
+    color: var(--crm-text-muted);
+    box-sizing: border-box;
+  }
+
+  /* ── Modal close button ── */
+  .crm-close-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: none;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--crm-text-muted);
+    flex-shrink: 0;
+    transition: background 150ms;
+  }
+  .crm-close-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
   }
 
   /* ── Page header ── */
@@ -359,8 +410,9 @@
     border: none;
     border-radius: 8px;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
+    font-family: inherit;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -383,6 +435,7 @@
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
+    font-family: inherit;
     transition: background 150ms, color 150ms;
   }
   .crm-btn-secondary:hover:not(:disabled) {
