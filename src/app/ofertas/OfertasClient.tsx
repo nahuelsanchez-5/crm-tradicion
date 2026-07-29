@@ -124,7 +124,7 @@ function pctNeg(ofertado: number | null, publicacion: number | null): string {
 
 // ── Sub-components ────────────────────────────────────
 function EstadoBadge({ estado }: { estado: string }) {
-  const s = ESTADO_STYLE[estado] ?? { bg: "#F1F5F9", color: "#64748B" }
+  const s = ESTADO_STYLE[estado] ?? { bg: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }
   return (
     <span style={{
       ...s, padding: "3px 9px", borderRadius: "20px",
@@ -136,7 +136,7 @@ function EstadoBadge({ estado }: { estado: string }) {
 }
 
 function TipologiaBadge({ tipo }: { tipo: string }) {
-  const s = TIPOLOGIA_STYLE[tipo] ?? { bg: "#F1F5F9", color: "#64748B" }
+  const s = TIPOLOGIA_STYLE[tipo] ?? { bg: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }
   return (
     <span style={{
       ...s, padding: "2px 8px", borderRadius: "20px",
@@ -192,13 +192,13 @@ function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: bool
         display: "flex", alignItems: "center", gap: "10px",
         padding: "9px 14px", borderRadius: "8px", width: "100%",
         border: `1.5px solid ${value ? "#6EE7B7" : "rgba(255,255,255,0.1)"}`,
-        background: value ? "#ECFDF5" : "rgba(255,255,255,0.04)",
+        background: value ? "rgba(74,222,128,0.12)" : "rgba(255,255,255,0.04)",
         cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
       }}
     >
       <div style={{
         width: "36px", height: "20px", borderRadius: "10px",
-        background: value ? "#059669" : "rgba(255,255,255,0.2)",
+        background: value ? "#4ade80" : "rgba(255,255,255,0.2)",
         position: "relative", transition: "background 0.2s", flexShrink: 0,
       }}>
         <div style={{
@@ -209,7 +209,7 @@ function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: bool
           boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
         }} />
       </div>
-      <span style={{ fontSize: "13px", color: value ? "#059669" : "rgba(255,255,255,0.45)", fontWeight: 500 }}>
+      <span style={{ fontSize: "13px", color: value ? "#4ade80" : "rgba(255,255,255,0.45)", fontWeight: 500 }}>
         {label}: <strong>{value ? "Sí" : "No"}</strong>
       </span>
     </button>
@@ -573,7 +573,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
               <div style={{ display: "flex", gap: "14px", minWidth: "fit-content" }}>
                 {ESTADOS.map(estado => {
                   const colOfertas = filtered.filter(o => o.estado === estado)
-                  const colStyle   = ESTADO_STYLE[estado] ?? { bg: "#F1F5F9", color: "#64748B" }
+                  const colStyle   = ESTADO_STYLE[estado] ?? { bg: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }
                   return (
                     <div key={estado} style={{ width: "240px", flexShrink: 0 }}>
                       <div style={{
@@ -670,10 +670,10 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                     <tr>
                       <td colSpan={10} style={{ padding: "48px 40px", textAlign: "center" }}>
                         <div style={{ fontSize: "28px", marginBottom: "10px", opacity: 0.4 }}>🤝</div>
-                        <div style={{ fontWeight: 600, fontSize: "14px", color: "#64748B", marginBottom: "4px" }}>
+                        <div style={{ fontWeight: 600, fontSize: "14px", color: "rgba(255,255,255,0.45)", marginBottom: "4px" }}>
                           No hay ofertas con estos filtros
                         </div>
-                        <div style={{ fontSize: "12px", color: "#94A3B8" }}>
+                        <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>
                           Ajustá los filtros o creá una nueva oferta con el botón &quot;+ Nueva Oferta&quot;.
                         </div>
                       </td>
@@ -954,7 +954,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                       className="w-full sm:w-auto min-h-[44px]"
                       style={{
                         padding: "9px 24px", borderRadius: "8px", border: "none",
-                        background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
+                        background: isPending ? "rgba(255,255,255,0.15)" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
                         color: "white", fontSize: "13px", fontWeight: 700,
                         cursor: isPending ? "not-allowed" : "pointer",
                         fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",

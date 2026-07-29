@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -67,7 +67,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label style={{
         display: "block", fontSize: "11px", fontWeight: 700,
         letterSpacing: "0.8px", textTransform: "uppercase" as const,
-        color: "#64748B", marginBottom: "5px",
+        color: "var(--crm-text-muted)", marginBottom: "5px",
       }}>
         {label}
       </label>
@@ -78,9 +78,9 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const inp: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
-  borderRadius: "8px", border: "1.5px solid #EAECF2",
+  borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
   fontSize: "13px", fontFamily: "inherit",
-  color: "#0F172A", outline: "none", background: "white",
+  color: "var(--crm-text)", outline: "none", background: "var(--crm-input-bg)",
   boxSizing: "border-box",
 }
 
@@ -90,9 +90,9 @@ function ProgressBar({ value, isFuture }: { value: number; isFuture: boolean }) 
   const over   = value > 100
 
   const barColor = isFuture
-    ? "#CBD5E1"
+    ? "rgba(255,255,255,0.15)"
     : over
-      ? "#059669"
+      ? "#4ade80"
       : value >= 80
         ? "#0D9488"
         : value >= 50
@@ -103,7 +103,7 @@ function ProgressBar({ value, isFuture }: { value: number; isFuture: boolean }) 
     <div style={{ position: "relative" }}>
       <div style={{
         width: "100%", height: "8px", borderRadius: "4px",
-        background: "#F1F5F9", overflow: "hidden",
+        background: "rgba(255,255,255,0.06)", overflow: "hidden",
       }}>
         <div style={{
           width: `${isFuture ? 0 : capped}%`,
@@ -117,7 +117,7 @@ function ProgressBar({ value, isFuture }: { value: number; isFuture: boolean }) 
         position: "absolute", top: "-4px",
         left: "100%", transform: "translateX(-1px)",
         width: "1px", height: "16px",
-        background: "#CBD5E1",
+        background: "rgba(255,255,255,0.15)",
       }} />
     </div>
   )
@@ -129,7 +129,7 @@ function EstadoBadge({ p, isFuture, real }: { p: number; isFuture: boolean; real
     return (
       <span style={{
         padding: "2px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700,
-        background: "#F1F5F9", color: "#94A3B8",
+        background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)",
       }}>
         Pendiente
       </span>
@@ -139,7 +139,7 @@ function EstadoBadge({ p, isFuture, real }: { p: number; isFuture: boolean; real
     return (
       <span style={{
         padding: "2px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700,
-        background: "#ECFDF5", color: "#059669",
+        background: "rgba(74,222,128,0.12)", color: "#4ade80",
       }}>
         ✓ Sobre objetivo
       </span>
@@ -148,7 +148,7 @@ function EstadoBadge({ p, isFuture, real }: { p: number; isFuture: boolean; real
   return (
     <span style={{
       padding: "2px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700,
-      background: "#FFF1F2", color: "var(--crm-accent)",
+      background: "rgba(227,24,55,0.12)", color: "var(--crm-accent)",
     }}>
       Bajo objetivo
     </span>
@@ -242,12 +242,6 @@ export default function FacturacionClient({ rows }: Props) {
     })
   }
 
-  // ── Card style ─────────────────────────────────────
-  const cardStyle: React.CSSProperties = {
-    background: "white", borderRadius: "14px",
-    border: "1.5px solid #EAECF2", overflow: "hidden",
-  }
-
   // ═══════════════════════════════════════════════════
   //  RENDER
   // ═══════════════════════════════════════════════════
@@ -258,20 +252,20 @@ export default function FacturacionClient({ rows }: Props) {
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
         minHeight: "62px", padding: "0 24px",
-        background: "white", borderBottom: "1px solid #EAECF2", flexShrink: 0,
+        background: "var(--crm-card)", borderBottom: "1px solid rgba(255,255,255,0.07)", flexShrink: 0,
       }}>
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.3px", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
             Facturación
           </h1>
-          <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "1px" }}>
+          <p style={{ fontSize: "12px", color: "var(--crm-text-muted)", margin: 0, marginTop: "1px" }}>
             Objetivos mensuales y facturación real — {ANIO}
           </p>
         </div>
         <div style={{
           padding: "6px 14px", borderRadius: "8px",
-          background: "#F8F9FC", border: "1.5px solid #EAECF2",
-          fontSize: "13px", fontWeight: 700, color: "#64748B",
+          background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
+          fontSize: "13px", fontWeight: 700, color: "var(--crm-text-muted)",
         }}>
           Año {ANIO}
         </div>
@@ -286,36 +280,36 @@ export default function FacturacionClient({ rows }: Props) {
             title="Facturación anual acumulada"
             value={fmtUSD(stats.totalReal)}
             badge={`de ${fmtUSD(stats.totalObj)} objetivo`}
-            iconBg="bg-teal-50"
-            iconColor="text-teal-600"
+            iconBg="bg-teal-500/15"
+            iconColor="text-teal-400"
             icon={<DollarSign size={18} />}
           />
           <KpiCard
             title="% Cumplimiento anual"
             value={`${stats.pctAnual}%`}
             badge={stats.pctAnual >= 100 ? "✓ Objetivo superado" : stats.pctAnual >= 80 ? "Buen ritmo" : "Por mejorar"}
-            iconBg={stats.pctAnual >= 100 ? "bg-emerald-50" : stats.pctAnual >= 80 ? "bg-violet-50" : "bg-amber-50"}
-            iconColor={stats.pctAnual >= 100 ? "text-emerald-600" : stats.pctAnual >= 80 ? "text-violet-600" : "text-amber-600"}
+            iconBg={stats.pctAnual >= 100 ? "bg-emerald-500/[0.12]" : stats.pctAnual >= 80 ? "bg-violet-500/[0.12]" : "bg-amber-500/[0.12]"}
+            iconColor={stats.pctAnual >= 100 ? "text-emerald-400" : stats.pctAnual >= 80 ? "text-violet-400" : "text-amber-400"}
             icon={<TrendingUp size={18} />}
           />
           <KpiCard
             title="Mejor mes"
             value={stats.mejorMes ? stats.mejorMes.nombre : "—"}
             badge={stats.mejorMes ? fmtUSD(stats.mejorMes.real_usd) : "Sin datos"}
-            iconBg="bg-rose-50"
-            iconColor="text-rose-600"
+            iconBg="bg-rose-500/[0.12]"
+            iconColor="text-rose-400"
             icon={<Award size={18} />}
           />
         </div>
 
         {/* ── Tabla anual ──────────────────────────── */}
-        <div style={cardStyle}>
+        <div style={{ background: "var(--crm-surface-2)", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden" }}>
           <div style={{
             display: "flex", alignItems: "center", gap: "8px",
-            padding: "14px 20px", borderBottom: "1px solid #EAECF2",
+            padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)",
           }}>
             <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-            <span style={{ fontSize: "14px", fontWeight: 700, color: "#0F172A" }}>
+            <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--crm-text)" }}>
               Detalle mensual {ANIO}
             </span>
           </div>
@@ -323,7 +317,7 @@ export default function FacturacionClient({ rows }: Props) {
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ background: "#F8F9FC", borderBottom: "1px solid #EAECF2" }}>
+                <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
                   {["Mes","Objetivo","Real","% Cumplimiento","Progreso","Estado",""].map(h => (
                     <th key={h} style={{
                       padding: "10px 16px", textAlign: "left",
@@ -347,7 +341,7 @@ export default function FacturacionClient({ rows }: Props) {
                     <tr
                       key={m.mes}
                       style={{
-                        borderBottom: isLast ? "none" : "1px solid #F3F4F6",
+                        borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)",
                         background: isCurrent ? "rgba(227,24,55,0.03)" : undefined,
                       }}
                     >
@@ -356,14 +350,14 @@ export default function FacturacionClient({ rows }: Props) {
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                           <span style={{
                             fontSize: "13px", fontWeight: isCurrent ? 800 : 600,
-                            color: isCurrent ? "#E31837" : "#0F172A",
+                            color: isCurrent ? "#E31837" : "var(--crm-text)",
                           }}>
                             {m.nombre}
                           </span>
                           {isCurrent && (
                             <span style={{
                               fontSize: "10px", fontWeight: 700,
-                              background: "#FFF1F2", color: "var(--crm-accent)",
+                              background: "rgba(227,24,55,0.12)", color: "var(--crm-accent)",
                               padding: "1px 7px", borderRadius: "10px",
                             }}>
                               HOY
@@ -373,19 +367,19 @@ export default function FacturacionClient({ rows }: Props) {
                       </td>
 
                       {/* Objetivo */}
-                      <td style={{ padding: "14px 16px", fontSize: "13px", color: "#64748B", whiteSpace: "nowrap" }}>
-                        {m.objetivo_usd > 0 ? fmtUSD(m.objetivo_usd) : <span style={{ color: "#CBD5E1" }}>—</span>}
+                      <td style={{ padding: "14px 16px", fontSize: "13px", color: "var(--crm-text-muted)", whiteSpace: "nowrap" }}>
+                        {m.objetivo_usd > 0 ? fmtUSD(m.objetivo_usd) : <span style={{ color: "rgba(255,255,255,0.15)" }}>—</span>}
                       </td>
 
                       {/* Real */}
                       <td style={{ padding: "14px 16px", fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap",
-                        color: m.real_usd > 0 ? "#0F172A" : "#CBD5E1" }}>
+                        color: m.real_usd > 0 ? "var(--crm-text)" : "rgba(255,255,255,0.15)" }}>
                         {m.real_usd > 0 ? fmtUSD(m.real_usd) : "—"}
                       </td>
 
                       {/* % */}
                       <td style={{ padding: "14px 16px", fontWeight: 700, fontSize: "14px", whiteSpace: "nowrap",
-                        color: m.isFuture || m.real_usd === 0 ? "#CBD5E1" : p >= 100 ? "#059669" : p >= 80 ? "#0D9488" : "var(--crm-accent)" }}>
+                        color: m.isFuture || m.real_usd === 0 ? "rgba(255,255,255,0.15)" : p >= 100 ? "#4ade80" : p >= 80 ? "#0D9488" : "var(--crm-accent)" }}>
                         {m.isFuture || (m.objetivo_usd === 0 && m.real_usd === 0) ? "—" : `${p}%`}
                       </td>
 
@@ -407,12 +401,12 @@ export default function FacturacionClient({ rows }: Props) {
                           onClick={() => openModal(m)}
                           style={{
                             padding: "5px 14px", borderRadius: "7px",
-                            border: "1.5px solid #EAECF2", background: "white",
-                            fontSize: "12px", fontWeight: 600, color: "#0F172A",
+                            border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                            fontSize: "12px", fontWeight: 600, color: "var(--crm-text)",
                             cursor: "pointer", fontFamily: "inherit",
                             whiteSpace: "nowrap",
                           }}
-                          className="hover:bg-[#F8F9FC]"
+                          className="hover:bg-[rgba(255,255,255,0.1)]"
                         >
                           {m.id ? "Editar" : "Cargar"}
                         </button>
@@ -424,18 +418,18 @@ export default function FacturacionClient({ rows }: Props) {
 
               {/* Footer total row */}
               <tfoot>
-                <tr style={{ background: "#F8F9FC", borderTop: "2px solid #EAECF2" }}>
-                  <td style={{ padding: "12px 16px", fontWeight: 800, fontSize: "13px", color: "#0F172A" }}>
+                <tr style={{ background: "rgba(255,255,255,0.04)", borderTop: "2px solid rgba(255,255,255,0.1)" }}>
+                  <td style={{ padding: "12px 16px", fontWeight: 800, fontSize: "13px", color: "var(--crm-text)" }}>
                     TOTAL {ANIO}
                   </td>
-                  <td style={{ padding: "12px 16px", fontWeight: 700, fontSize: "13px", color: "#64748B" }}>
+                  <td style={{ padding: "12px 16px", fontWeight: 700, fontSize: "13px", color: "var(--crm-text-muted)" }}>
                     {fmtUSD(meses.reduce((s, m) => s + m.objetivo_usd, 0))}
                   </td>
-                  <td style={{ padding: "12px 16px", fontWeight: 700, fontSize: "13px", color: "#0F172A" }}>
+                  <td style={{ padding: "12px 16px", fontWeight: 700, fontSize: "13px", color: "var(--crm-text)" }}>
                     {fmtUSD(stats.totalReal)}
                   </td>
                   <td style={{ padding: "12px 16px", fontWeight: 800, fontSize: "14px",
-                    color: stats.pctAnual >= 100 ? "#059669" : stats.pctAnual >= 80 ? "#0D9488" : "var(--crm-accent)" }}>
+                    color: stats.pctAnual >= 100 ? "#4ade80" : stats.pctAnual >= 80 ? "#0D9488" : "var(--crm-accent)" }}>
                     {stats.pctAnual}%
                   </td>
                   <td colSpan={3} />
@@ -462,29 +456,29 @@ export default function FacturacionClient({ rows }: Props) {
           <div
             onClick={e => e.stopPropagation()}
             style={{
-              background: "white", borderRadius: "16px",
+              background: "var(--crm-card)", borderRadius: "16px",
               width: "100%", maxWidth: "420px",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.2)", overflow: "hidden",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.5)", overflow: "hidden",
             }}
           >
             {/* Header */}
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "18px 20px", borderBottom: "1px solid #EAECF2",
+              padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
             }}>
               <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#0F172A", margin: 0 }}>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
                   {modalMes.id ? "Editar facturación" : "Cargar facturación"}
                 </h2>
-                <p style={{ fontSize: "12px", color: "#64748B", margin: 0, marginTop: "2px" }}>
+                <p style={{ fontSize: "12px", color: "var(--crm-text-muted)", margin: 0, marginTop: "2px" }}>
                   {modalMes.nombre} {ANIO}
                 </p>
               </div>
               <button onClick={closeModal} style={{
-                background: "#F8F9FC", border: "none", borderRadius: "8px",
+                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
                 width: "32px", height: "32px", display: "flex",
                 alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "#64748B",
+                cursor: "pointer", color: "var(--crm-text-muted)",
               }}>
                 <X size={16} />
               </button>
@@ -495,15 +489,15 @@ export default function FacturacionClient({ rows }: Props) {
               {modalMes && (
                 <Field label="Objetivo mensual (calculado automáticamente)">
                   <div style={{
-                    ...inp, background: "#F8F9FC", color: "#64748B",
-                    border: "1.5px solid #F1F5F9", cursor: "default",
+                    ...inp, background: "rgba(255,255,255,0.04)", color: "var(--crm-text-muted)",
+                    border: "1px solid rgba(255,255,255,0.06)", cursor: "default",
                     display: "flex", alignItems: "center", justifyContent: "space-between",
                   }}>
-                    <span style={{ fontWeight: 700, color: "#0F172A" }}>
+                    <span style={{ fontWeight: 700, color: "var(--crm-text)" }}>
                       {fmtUSD(calcObjetivoMes(modalMes.mes))}
                     </span>
                     <span style={{
-                      fontSize: "11px", background: "#EFF6FF", color: "#2563EB",
+                      fontSize: "11px", background: "rgba(96,165,250,0.12)", color: "#60a5fa",
                       padding: "2px 8px", borderRadius: "6px", fontWeight: 600,
                     }}>
                       {ESTACIONALIDAD_PCT[modalMes.mes - 1]}% × {fmtUSD(OBJETIVO_ANUAL_USD)}
@@ -530,17 +524,17 @@ export default function FacturacionClient({ rows }: Props) {
                 <div style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
                   padding: "10px 12px", borderRadius: "8px",
-                  background: "#F8F9FC", border: "1px solid #EAECF2",
+                  background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
                   marginBottom: "14px",
                 }}>
-                  <span style={{ fontSize: "12px", color: "#64748B", fontWeight: 500 }}>
+                  <span style={{ fontSize: "12px", color: "var(--crm-text-muted)", fontWeight: 500 }}>
                     % Cumplimiento:
                   </span>
                   <span style={{
                     fontWeight: 800, fontSize: "16px",
                     color: (() => {
                       const p = pct(parseFloat(form.real_usd) || 0, calcObjetivoMes(modalMes.mes))
-                      return p >= 100 ? "#059669" : p >= 80 ? "#0D9488" : "var(--crm-accent)"
+                      return p >= 100 ? "#4ade80" : p >= 80 ? "#0D9488" : "var(--crm-accent)"
                     })(),
                   }}>
                     {pct(parseFloat(form.real_usd) || 0, calcObjetivoMes(modalMes.mes))}%
@@ -550,7 +544,7 @@ export default function FacturacionClient({ rows }: Props) {
 
               {error && (
                 <div style={{
-                  background: "#FFF1F2", border: "1px solid #FECDD3",
+                  background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
                   fontSize: "12.5px", color: "var(--crm-accent)", marginBottom: "14px",
                 }}>
@@ -562,8 +556,8 @@ export default function FacturacionClient({ rows }: Props) {
                 <button type="button" onClick={closeModal} disabled={isPending}
                   style={{
                     padding: "9px 20px", borderRadius: "8px",
-                    border: "1.5px solid #EAECF2", background: "white",
-                    fontSize: "13px", fontWeight: 600, color: "#64748B",
+                    border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                    fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
                     cursor: "pointer", fontFamily: "inherit",
                   }}>
                   Cancelar
@@ -571,7 +565,7 @@ export default function FacturacionClient({ rows }: Props) {
                 <button type="submit" disabled={isPending}
                   style={{
                     padding: "9px 24px", borderRadius: "8px", border: "none",
-                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
+                    background: isPending ? "rgba(255,255,255,0.15)" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
                     color: "white", fontSize: "13px", fontWeight: 700,
                     cursor: isPending ? "not-allowed" : "pointer",
                     fontFamily: "inherit",

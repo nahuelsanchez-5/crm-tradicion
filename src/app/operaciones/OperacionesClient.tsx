@@ -175,7 +175,7 @@ function Toggle({
         display: "flex", alignItems: "center", gap: "10px",
         padding: "9px 14px", borderRadius: "8px", width: "100%",
         border: `1.5px solid ${value ? "#6EE7B7" : "rgba(255,255,255,0.1)"}`,
-        background: value ? "#ECFDF5" : "rgba(255,255,255,0.04)",
+        background: value ? "rgba(74,222,128,0.12)" : "rgba(255,255,255,0.04)",
         cursor: "pointer", fontFamily: "inherit",
         transition: "all 0.15s",
       }}
@@ -183,7 +183,7 @@ function Toggle({
       {/* pill */}
       <div style={{
         width: "36px", height: "20px", borderRadius: "10px",
-        background: value ? "#059669" : "rgba(255,255,255,0.2)",
+        background: value ? "#4ade80" : "rgba(255,255,255,0.2)",
         position: "relative", transition: "background 0.2s", flexShrink: 0,
       }}>
         <div style={{
@@ -194,7 +194,7 @@ function Toggle({
           boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
         }} />
       </div>
-      <span style={{ fontSize: "13px", color: value ? "#059669" : "rgba(255,255,255,0.45)", fontWeight: 500 }}>
+      <span style={{ fontSize: "13px", color: value ? "#4ade80" : "rgba(255,255,255,0.45)", fontWeight: 500 }}>
         {label}: <strong>{value ? "Sí" : "No"}</strong>
       </span>
     </button>
@@ -806,7 +806,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
                 <button type="submit" disabled={isPending}
                   style={{
                     padding: "9px 24px", borderRadius: "8px", border: "none",
-                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
+                    background: isPending ? "rgba(255,255,255,0.15)" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
                     color: "white", fontSize: "13px", fontWeight: 700,
                     cursor: isPending ? "not-allowed" : "pointer",
                     fontFamily: "inherit",
@@ -868,7 +868,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
                 </button>
                 <button type="button" onClick={handleDelete} disabled={isPending} style={{
                   padding: "9px 24px", borderRadius: "8px", border: "none",
-                  background: isPending ? "#CBD5E1" : "#dc2626",
+                  background: isPending ? "rgba(255,255,255,0.15)" : "#dc2626",
                   color: "white", fontSize: "13px", fontWeight: 700,
                   cursor: isPending ? "not-allowed" : "pointer",
                   fontFamily: "inherit",

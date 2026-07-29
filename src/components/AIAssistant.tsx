@@ -231,13 +231,13 @@ export default function AIAssistant() {
       {/* Chat panel */}
       {isOpen && (
         <div
-          className="fixed z-40 flex flex-col rounded-2xl shadow-2xl border border-slate-200 overflow-hidden"
+          className="fixed z-40 flex flex-col rounded-2xl shadow-2xl border border-[rgba(255,255,255,0.1)] overflow-hidden"
           style={{
             bottom: "5.5rem",
             right: "1rem",
             width: "min(90vw, 24rem)",
             height: "500px",
-            backgroundColor: "white",
+            backgroundColor: "var(--crm-card)",
           }}
         >
           {/* Header */}
@@ -289,10 +289,11 @@ export default function AIAssistant() {
                     className={`px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap break-words ${
                       msg.role === "user"
                         ? "text-white rounded-2xl rounded-br-sm ml-8"
-                        : "text-slate-800 rounded-2xl rounded-bl-sm"
+                        : "rounded-2xl rounded-bl-sm"
                     }`}
                     style={{
-                      backgroundColor: msg.role === "user" ? "#2563eb" : "var(--crm-text)",
+                      backgroundColor: msg.role === "user" ? "#2563eb" : "rgba(255,255,255,0.08)",
+                      color: msg.role === "user" ? undefined : "var(--crm-text)",
                     }}
                   >
                     {msg.content}
@@ -340,7 +341,7 @@ export default function AIAssistant() {
                 </div>
                 <div
                   className="px-3 py-2 rounded-2xl rounded-bl-sm text-sm flex items-center gap-1"
-                  style={{ backgroundColor: "var(--crm-text)", color: "#64748b" }}
+                  style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "var(--crm-text-muted)" }}
                 >
                   Pensando
                   <span className="flex gap-0.5 ml-1">
@@ -368,7 +369,7 @@ export default function AIAssistant() {
           </div>
 
           {/* Input bar */}
-          <div className="flex items-center gap-2 px-3 py-3 border-t border-slate-200 flex-shrink-0 bg-white">
+          <div className="flex items-center gap-2 px-3 py-3 border-t border-[rgba(255,255,255,0.1)] flex-shrink-0" style={{ backgroundColor: "var(--crm-card)" }}>
             <input
               type="text"
               value={input}
@@ -381,7 +382,8 @@ export default function AIAssistant() {
               }}
               placeholder="Escribí tu mensaje..."
               disabled={isLoading}
-              className="flex-1 text-sm border border-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent disabled:opacity-50 bg-white"
+              className="flex-1 text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-transparent disabled:opacity-50"
+              style={{ border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", color: "var(--crm-text)" }}
             />
             {hasMic && (
               <button
@@ -389,11 +391,11 @@ export default function AIAssistant() {
                 disabled={isLoading}
                 aria-label={isRecording ? "Detener grabación" : "Grabar voz"}
                 className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors disabled:opacity-50"
-                style={{ backgroundColor: isRecording ? "#dc2626" : "var(--crm-text)" }}
+                style={{ backgroundColor: isRecording ? "#dc2626" : "rgba(255,255,255,0.08)" }}
               >
                 <Mic
                   size={16}
-                  style={{ color: isRecording ? "white" : "#64748b" }}
+                  style={{ color: isRecording ? "white" : "var(--crm-text-muted)" }}
                 />
               </button>
             )}
