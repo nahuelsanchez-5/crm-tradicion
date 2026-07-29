@@ -114,7 +114,7 @@ export default async function DashboardPage() {
     { data: encuestasData },
     { data: pagosRaw },
   ] = await Promise.all([
-    supabase.from("agentes").select("id").eq("activo", true),
+    supabase.from("agentes").select("id, activo, fecha_alta, fecha_baja"),
     supabase.from("agentes").select("id, nombre").eq("activo", true).order("nombre"),
     supabase.from("operaciones").select("id, comision_bruta")
       .gte("fecha", `${ANIO}-${mesStr}-01`)
@@ -159,7 +159,21 @@ export default async function DashboardPage() {
       .limit(5),
   ])
 
-  const agentesCount        = agentesData?.length ?? 0
+  const agentesActivos = (agentesData ?? []).filter((a: { activo: boolean }) => a.activo === true).length
+
+  const hoy = new Date()
+  const primerDiaMesActual = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+  const ultimoDiaMesAnterior = new Date(primerDiaMesActual.getTime() - 1)
+
+  const agentesActivosMesAnterior = (agentesData ?? []).filter((a: { activo: boolean; fecha_alta: string | null; fecha_baja: string | null }) => {
+    const alta = a.fecha_alta ? new Date(a.fecha_alta + "T00:00:00") : null
+    const baja = a.fecha_baja ? new Date(a.fecha_baja + "T00:00:00") : null
+    if (!alta || alta > ultimoDiaMesAnterior) return false
+    if (!baja) return true
+    return baja > ultimoDiaMesAnterior
+  }).length
+
+  const variacionAgentes = agentesActivos - agentesActivosMesAnterior
   const opsMesCount         = opsMesData?.length  ?? 0
   const ofertasEnCurso      = ofertasEnCursoCount ?? 0
   const ofertasSinActividad = (ofertasSinActividadRaw ?? []) as OfertaSinActividad[]
@@ -213,11 +227,19 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-5 md:mb-6">
           <KpiCard
             title="Agentes activos"
-            value={agentesCount}
+            value={agentesActivos}
             iconBg="bg-rose-500/15"
             iconColor="text-rose-400"
             icon={<Users size={18} />}
-            trend="Sin cambios"
+            trend={
+              variacionAgentes === 0
+                ? "Sin cambios vs mes anterior"
+                : variacionAgentes > 0
+                ? `+${variacionAgentes} vs mes anterior`
+                : `${variacionAgentes} vs mes anterior`
+            }
+            trendUp={variacionAgentes > 0}
+            trendDown={variacionAgentes < 0}
             animate
           />
           <KpiCard
