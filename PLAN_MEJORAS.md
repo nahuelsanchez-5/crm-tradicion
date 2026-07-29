@@ -55,7 +55,7 @@ Cómo usar este plan: cada checkbox es una mejora atómica. Al completar un mód
 - [ ] Buscador por dirección/número en la vista lista
 - [ ] Historial: orden descendente o auto-scroll al último movimiento
 - [ ] `agenteMap` con `useMemo` y cleanup de `setTimeout` en unmount
-- [ ] Migrar estilos inline a clases `crm-*`/Tailwind
+- [x] Migrar estilos inline a clases `crm-*`/Tailwind
 
 ## 3. Cuentas (Pagos)
 - [ ] Matar restos light: botones Tipo blancos, chips `bg-emerald-50`/`bg-rose-50`, `bg-slate-50` del ModalHeader, `#CBD5E1` (×4); unificar verdes/rojos a `#4ade80`/`#f87171` (hoy conviven tonos 600 y 400)
