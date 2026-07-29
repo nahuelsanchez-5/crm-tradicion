@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -52,7 +52,7 @@ function ModalShell({ title, subtitle, onClose, children }: {
         <div className="crm-modal-header">
           <div>
             <h2 className="text-[17px] font-bold m-0" style={{ color: "var(--crm-text)" }}>{title}</h2>
-            <p className="text-[12px] m-0 mt-0.5" style={{ color: "var(--crm-text-muted)" }}>{subtitle}</p>
+            <p className="text-crm-sm m-0 mt-0.5" style={{ color: "var(--crm-text-muted)" }}>{subtitle}</p>
           </div>
           <button
             onClick={onClose}
@@ -264,7 +264,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
 
   const ErrorBox = () => error ? (
     <div
-      className="rounded-lg px-3 py-2.5 text-[12.5px] mb-4"
+      className="rounded-lg px-3 py-2.5 text-crm-sm mb-4"
       style={{ background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)", color: "var(--crm-accent-light)" }}
     >
       ⚠️ {error}
@@ -303,8 +303,8 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
               <Icon size={18} className={iconColor} strokeWidth={1.75} />
             </div>
             <div className="text-center leading-tight">
-              <p className="text-[9.5px] md:text-[10.5px] font-medium text-white/50 m-0">{label}</p>
-              <p className="text-[12px] md:text-[13px] font-bold text-white m-0 mt-0.5">{sublabel}</p>
+              <p className="text-[9.5px] md:text-crm-xs font-medium text-white/50 m-0">{label}</p>
+              <p className="text-crm-sm md:text-crm-md font-bold text-white m-0 mt-0.5">{sublabel}</p>
             </div>
           </button>
         ))}
@@ -505,7 +505,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
                 { key: "encuesta_comprador" as const, label: "Encuesta comprador" },
                 { key: "encuesta_vendedor"  as const, label: "Encuesta vendedor" },
               ] as const).map(({ key, label }) => (
-                <label key={key} className="flex items-center gap-2 text-[13px] cursor-pointer" style={{ color: "var(--crm-text-muted)" }}>
+                <label key={key} className="flex items-center gap-2 text-crm-md cursor-pointer" style={{ color: "var(--crm-text-muted)" }}>
                   <input type="checkbox" checked={opForm[key]} onChange={e => setOpForm(f => ({ ...f, [key]: e.target.checked }))} className="w-4 h-4 accent-[#E31837]" />
                   {label}
                 </label>
@@ -580,7 +580,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
         <ModalShell title="Actualizar Oferta" subtitle="Agregar movimiento a una oferta activa" onClose={closeModal}>
           <form onSubmit={handleActualizar} className="p-6">
             {ofertasActivas.length === 0 ? (
-              <div className="py-8 text-center text-[13px]" style={{ color: "var(--crm-text-muted)" }}>
+              <div className="py-8 text-center text-crm-md" style={{ color: "var(--crm-text-muted)" }}>
                 No hay ofertas activas en este momento
               </div>
             ) : (

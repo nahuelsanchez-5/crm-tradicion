@@ -4,6 +4,7 @@ import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } fr
 import { useRouter } from "next/navigation"
 import { crearPago, actualizarPago, crearGasto, crearGastoRecurrente, eliminarPago, registrarSaldoFavor, crearGastoConCredito } from "./actions"
 import { DollarSign, X, Loader2, MessageCircle, TrendingDown, TrendingUp, Repeat, CheckCircle2, Save, Trash2 } from "lucide-react"
+import StatusBadge from "@/components/StatusBadge"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -36,11 +37,6 @@ const CONCEPTO_CONFIG_KEY: Record<string, string> = {
   "Licencia CRM PRO+": "bono_pro_plus",
 }
 
-const ESTADO_STYLES: Record<string, { bg: string; color: string }> = {
-  Pagado:    { bg: "rgba(74,222,128,0.12)",  color: "#4ade80" },
-  Parcial:   { bg: "rgba(251,191,36,0.12)",  color: "#fbbf24" },
-  Pendiente: { bg: "rgba(248,113,113,0.12)", color: "#f87171" },
-}
 
 // ── Types ────────────────────────────────────────────
 export interface PagoRow {
@@ -139,15 +135,6 @@ function mesLabel(monthVal: string): string {
 }
 
 // ── Sub-components ───────────────────────────────────
-function EstadoBadge({ estado }: { estado: string }) {
-  const s = ESTADO_STYLES[estado] ?? { bg: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)" }
-  return (
-    <span style={{ ...s, padding: "3px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700 }}>
-      {estado}
-    </span>
-  )
-}
-
 function ProgressBar({ pct }: { pct: number }) {
   const color = pct >= 80 ? "#059669" : pct >= 50 ? "#D97706" : "var(--crm-accent)"
   return (
@@ -967,7 +954,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                         <span style={{ fontSize: "13px", fontWeight: 700, color: ag.saldo > 0 ? "var(--crm-accent)" : "#059669" }}>
                           {ag.saldo > 0 ? `- ${fmtUSD(ag.saldo)}` : ag.saldo < 0 ? `+ ${fmtUSD(-ag.saldo)}` : fmtUSD(0)}
                         </span>
-                        <EstadoBadge estado={ag.estadoGral} />
+                        <StatusBadge estado={ag.estadoGral} />
                       </div>
                     </div>
                     {isExpanded && (
@@ -992,7 +979,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                 <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginTop: "2px" }}>{fmtFecha(p.fecha)}</div>
                               </div>
                               <div className="flex flex-col items-end gap-1">
-                                <EstadoBadge estado={p.estado} />
+                                <StatusBadge estado={p.estado} />
                                 {p.concepto === "Saldo a favor"
                                   ? <span style={{ fontSize: "12px", fontWeight: 700, color: "#059669" }}>+{fmtUSD(Number(p.monto_pagado))}</span>
                                   : <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--crm-accent)" }}>{fmtUSD(Number(p.monto_debe))}</span>
@@ -1158,7 +1145,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                             {ag.saldo > 0 ? `- ${fmtUSD(ag.saldo)}` : ag.saldo < 0 ? `+ ${fmtUSD(-ag.saldo)}` : fmtUSD(0)}
                           </td>
                           <td style={{ padding: "12px 16px" }}>
-                            <EstadoBadge estado={ag.estadoGral} />
+                            <StatusBadge estado={ag.estadoGral} />
                           </td>
                           <td style={{ padding: "12px 16px" }}>
                             {ag.telefono ? (
@@ -1218,7 +1205,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                   </span>
                                   <span>
                                     <span style={{ color: "rgba(255,255,255,0.45)" }}>Estado: </span>
-                                    <EstadoBadge estado={ag.estadoGral} />
+                                    <StatusBadge estado={ag.estadoGral} />
                                   </span>
                                 </div>
 
@@ -1265,7 +1252,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                               : Number(p.monto_pagado) > 0 ? fmtUSD(Number(p.monto_pagado)) : "—"}
                                           </td>
                                           <td style={{ padding: "10px 14px" }}>
-                                            <EstadoBadge estado={p.estado} />
+                                            <StatusBadge estado={p.estado} />
                                           </td>
                                           <td style={{ padding: "10px 14px" }}>
                                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -1384,7 +1371,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 marginBottom: "14px",
               }}>
                 <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>Estado calculado:</span>
-                <EstadoBadge estado={nuevoEstado} />
+                <StatusBadge estado={nuevoEstado} />
               </div>
               <ErrorBox />
               <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center pt-1">
@@ -1721,7 +1708,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 marginBottom: "14px",
               }}>
                 <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>Nuevo estado:</span>
-                <EstadoBadge estado={editEstado} />
+                <StatusBadge estado={editEstado} />
                 <span style={{ marginLeft: "auto", fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>
                   Saldo: <strong style={{ color: editEstado === "Pagado" ? "#059669" : "var(--crm-accent)" }}>
                     {fmtUSD(Math.max(0, Number(selectedPago.monto_debe) - (parseFloat(editForm.monto_pagado) || 0)))}

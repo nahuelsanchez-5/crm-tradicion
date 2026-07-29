@@ -82,7 +82,7 @@ export default function KpiCard({
         <p className="crm-kpi-title">{title}</p>
         <p className="crm-kpi-value">{displayValue}</p>
         {trend && (
-          <p className={`text-[11px] font-medium mt-1.5 ${trendColor}`}>
+          <p className={`text-crm-xs font-medium mt-1.5 ${trendColor}`}>
             {trend}
           </p>
         )}

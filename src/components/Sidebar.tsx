@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState } from "react"
 import Link from "next/link"
@@ -115,11 +115,11 @@ export default function Sidebar({ agenteCount }: Props) {
       {/* User footer */}
       <div className="px-3 pb-4 pt-2" style={{ borderTop: "1px solid var(--crm-divider)" }}>
         <div className="flex items-center gap-3 px-2 py-2 rounded-xl">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[12px] font-bold text-white flex-shrink-0" style={{ background: "rgba(227,24,55,0.2)", border: "1px solid rgba(227,24,55,0.3)" }}>
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-crm-sm font-bold text-white flex-shrink-0" style={{ background: "rgba(227,24,55,0.2)", border: "1px solid rgba(227,24,55,0.3)" }}>
             {userInitial}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-600 text-white/80 leading-none truncate">{userName}</p>
+            <p className="text-crm-sm font-600 text-white/80 leading-none truncate">{userName}</p>
             <p className="text-[10px] text-white/30 mt-0.5 uppercase tracking-wide">Staff</p>
           </div>
           <button
@@ -199,7 +199,7 @@ function NavItemLink({
       href={item.href}
       onClick={onNavClick}
       className={[
-        "flex items-center gap-2.5 px-2.5 py-3 md:py-2.5 rounded-lg text-[13px] mb-0.5 transition-all duration-150 no-underline min-h-[44px]",
+        "flex items-center gap-2.5 px-2.5 py-3 md:py-2.5 rounded-lg text-crm-md mb-0.5 transition-all duration-150 no-underline min-h-[44px]",
         isActive
           ? "bg-[rgba(227,24,55,0.15)] text-[var(--crm-accent-light)] font-semibold border-l-2 border-[#E31837] pl-[9px]"
           : "text-white/45 font-medium hover:bg-white/[0.05] hover:text-white/75",

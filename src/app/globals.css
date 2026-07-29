@@ -244,6 +244,11 @@
     color: var(--crm-text-muted);
   }
 
+  /* ── Typography scale ── */
+  .text-crm-xs  { font-size: 11px; }
+  .text-crm-sm  { font-size: 12px; }
+  .text-crm-md  { font-size: 13px; }
+
   /* ── Card container ── */
   .crm-card {
     background: var(--crm-surface-2);

@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -510,7 +510,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                     type="button"
                     onClick={() => setMobileKanbanTab(estado)}
                     className={[
-                      "flex-shrink-0 px-3 py-2 rounded-lg text-[11px] font-bold border transition-all whitespace-nowrap",
+                      "flex-shrink-0 px-3 py-2 rounded-lg text-crm-xs font-bold border transition-all whitespace-nowrap",
                       mobileKanbanTab === estado
                         ? "bg-[rgba(255,255,255,0.15)] text-white border-[rgba(255,255,255,0.2)]"
                         : "bg-[rgba(255,255,255,0.06)] text-white/40 border-[rgba(255,255,255,0.1)]",

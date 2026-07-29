@@ -42,18 +42,18 @@ export default function DolarWidget() {
         Dólar hoy
       </p>
       {loading ? (
-        <p className="text-[11px] text-white/30">...</p>
+        <p className="text-crm-xs text-white/30">...</p>
       ) : (
         <div className="flex flex-col gap-1">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-white/40">Blue venta</span>
-            <span className="text-[12px] font-bold text-emerald-400">
+            <span className="text-crm-xs text-white/40">Blue venta</span>
+            <span className="text-crm-sm font-bold text-emerald-400">
               {blue !== null ? fmtPeso(blue) : "—"}
             </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-white/40">Oficial venta</span>
-            <span className="text-[12px] font-semibold text-white/50">
+            <span className="text-crm-xs text-white/40">Oficial venta</span>
+            <span className="text-crm-sm font-semibold text-white/50">
               {oficial !== null ? fmtPeso(oficial) : "—"}
             </span>
           </div>

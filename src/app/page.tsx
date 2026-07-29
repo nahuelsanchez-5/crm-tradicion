@@ -1,7 +1,8 @@
-﻿import { createServerClient } from "@/lib/supabase"
+import { createServerClient } from "@/lib/supabase"
 import KpiCard from "@/components/KpiCard"
 import DashboardActions from "./DashboardActions"
 import DashboardClock from "./DashboardClock"
+import StatusBadge from "@/components/StatusBadge"
 import Image from "next/image"
 import Link from "next/link"
 import { Users, Building2, DollarSign, Handshake, Clock } from "lucide-react"
@@ -71,23 +72,6 @@ export interface OfertaActiva {
   estado: string
 }
 
-function StatusBadge({ estado }: { estado: string }) {
-  const map: Record<string, string> = {
-    Pendiente: "bg-rose-500/15 text-rose-400 border-rose-500/25",
-    Parcial:   "bg-amber-500/15 text-amber-400 border-amber-500/25",
-    Pagado:    "bg-emerald-500/15 text-emerald-400 border-emerald-500/25",
-    "PRO+":    "bg-violet-500/15 text-violet-400 border-violet-500/25",
-    PRO:       "bg-cyan-500/15 text-cyan-400 border-cyan-500/25",
-    B_QR:      "bg-cyan-500/15 text-cyan-400 border-cyan-500/25",
-    B_OFI:     "bg-cyan-500/15 text-cyan-400 border-cyan-500/25",
-  }
-  const cls = map[estado] ?? "bg-white/[0.08] text-white/50 border-white/15"
-  return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${cls}`}>
-      {estado}
-    </span>
-  )
-}
 
 export default async function DashboardPage() {
   const supabase  = createServerClient()
@@ -210,7 +194,7 @@ export default async function DashboardPage() {
         </div>
         <div className="flex-1 flex justify-end">
           <div
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] md:text-[12.5px] font-semibold"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-crm-xs md:text-crm-sm font-semibold"
             style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--crm-text)" }}
           >
             <span style={{ color: "var(--crm-text-muted)" }}>📅</span>
@@ -287,7 +271,7 @@ export default async function DashboardPage() {
                 </div>
                 <h2 className="crm-section-title">Ofertas sin actividad +5 días</h2>
                 <span
-                  className="text-[11px] font-bold px-2.5 py-0.5 rounded-full"
+                  className="text-crm-xs font-bold px-2.5 py-0.5 rounded-full"
                   style={{ background: "rgba(245,158,11,0.15)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.25)" }}
                 >
                   {ofertasSinActividad.length}
@@ -304,15 +288,15 @@ export default async function DashboardPage() {
                   <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <span className="crm-num-badge">#{o.numero}</span>
                     <div className="min-w-0">
-                      <p className="text-[13px] font-semibold m-0 truncate" style={{ color: "var(--crm-text)" }}>{o.direccion}</p>
-                      <p className="text-[11px] mt-0.5 m-0" style={{ color: "var(--crm-text-muted)" }}>
+                      <p className="text-crm-md font-semibold m-0 truncate" style={{ color: "var(--crm-text)" }}>{o.direccion}</p>
+                      <p className="text-crm-xs mt-0.5 m-0" style={{ color: "var(--crm-text-muted)" }}>
                         {o.estado} · {fmtFechaRelativa(o.updated_at)}
                       </p>
                     </div>
                   </div>
                   <Link
                     href={`/ofertas/${o.id}`}
-                    className="flex-shrink-0 px-3 py-2 rounded-lg text-white text-[12px] font-semibold no-underline transition-all duration-150 hover:brightness-110"
+                    className="flex-shrink-0 px-3 py-2 rounded-lg text-white text-crm-sm font-semibold no-underline transition-all duration-150 hover:brightness-110"
                     style={{ background: "var(--crm-accent)" }}
                   >
                     Ver →
@@ -341,7 +325,7 @@ export default async function DashboardPage() {
                 </Link>
               </div>
               {pagos.length === 0 ? (
-                <div className="px-5 py-8 text-center text-[13px]" style={{ color: "var(--crm-text-muted)" }}>
+                <div className="px-5 py-8 text-center text-crm-md" style={{ color: "var(--crm-text-muted)" }}>
                   ✓ No hay pagos pendientes este mes
                 </div>
               ) : (
@@ -364,7 +348,7 @@ export default async function DashboardPage() {
                           <tr key={i}>
                             <td>
                               <p className="font-semibold m-0" style={{ color: "var(--crm-text)" }}>{nombre}</p>
-                              <p className="text-[11px] mt-0.5 m-0" style={{ color: "var(--crm-text-muted)" }}>{MES_LABEL}</p>
+                              <p className="text-crm-xs mt-0.5 m-0" style={{ color: "var(--crm-text-muted)" }}>{MES_LABEL}</p>
                             </td>
                             <td><StatusBadge estado={plan} /></td>
                             <td className="font-bold" style={{ color: "var(--crm-text)" }}>{fmtUSD(p.monto_debe)}</td>
@@ -388,10 +372,10 @@ export default async function DashboardPage() {
                           style={i < pagos.length - 1 ? { borderBottom: "1px solid var(--crm-divider)" } : {}}
                         >
                           <div className="min-w-0">
-                            <p className="text-[13px] font-semibold m-0 truncate" style={{ color: "var(--crm-text)" }}>{nombre}</p>
+                            <p className="text-crm-md font-semibold m-0 truncate" style={{ color: "var(--crm-text)" }}>{nombre}</p>
                             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                               <StatusBadge estado={plan} />
-                              <span className="text-[11px]" style={{ color: "var(--crm-text-muted)" }}>{fmtUSD(p.monto_debe)}</span>
+                              <span className="text-crm-xs" style={{ color: "var(--crm-text-muted)" }}>{fmtUSD(p.monto_debe)}</span>
                             </div>
                           </div>
                           <StatusBadge estado={p.estado} />
@@ -424,7 +408,7 @@ export default async function DashboardPage() {
                     style={{ border: "1px solid rgba(255,255,255,0.08)" }}
                   >
                     <p className="text-[22px] font-bold leading-none m-0">{n}</p>
-                    <p className="text-[10.5px] font-semibold mt-1.5 m-0 opacity-80">{label}</p>
+                    <p className="text-crm-xs font-semibold mt-1.5 m-0 opacity-80">{label}</p>
                   </div>
                 ))}
               </div>
@@ -444,7 +428,7 @@ export default async function DashboardPage() {
             </div>
             <div className="flex-1">
               {opsFeed.length === 0 ? (
-                <div className="px-5 py-8 text-center text-[13px]" style={{ color: "var(--crm-text-muted)" }}>
+                <div className="px-5 py-8 text-center text-crm-md" style={{ color: "var(--crm-text-muted)" }}>
                   No hay operaciones registradas
                 </div>
               ) : (
@@ -462,9 +446,9 @@ export default async function DashboardPage() {
                         {!isLast && <div className="w-px flex-1 mt-1" style={{ background: "var(--crm-divider)" }} />}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[12.5px] font-semibold truncate m-0" style={{ color: "var(--crm-text)" }}>{op.direccion}</p>
-                        <p className="text-[11px] mt-0.5 truncate m-0" style={{ color: "var(--crm-text-muted)" }}>{op.tipo} · {op.agentes}</p>
-                        <p className="text-[10.5px] mt-1 m-0" style={{ color: "var(--crm-text-muted)" }}>
+                        <p className="text-crm-sm font-semibold truncate m-0" style={{ color: "var(--crm-text)" }}>{op.direccion}</p>
+                        <p className="text-crm-xs mt-0.5 truncate m-0" style={{ color: "var(--crm-text-muted)" }}>{op.tipo} · {op.agentes}</p>
+                        <p className="text-crm-xs mt-1 m-0" style={{ color: "var(--crm-text-muted)" }}>
                           {fmtFecha(op.fecha)} ·{" "}
                           <span className="font-semibold" style={{ color }}>{fmtUSD(op.comision_neta)}</span>
                         </p>
