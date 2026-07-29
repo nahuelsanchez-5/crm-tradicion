@@ -537,3 +537,18 @@
     padding: 16px 0 !important;
   }
 }
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-in {
+  animation: pageIn 0.25s ease-out;
+}

@@ -37,7 +37,9 @@ export default async function RootLayout({
               <Sidebar agenteCount={count ?? 0} />
             </div>
             <main style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
-              {children}
+              <div className="animate-page-in" style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                {children}
+              </div>
             </main>
           </div>
           <div className="no-print">

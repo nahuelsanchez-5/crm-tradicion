@@ -201,11 +201,11 @@ function NavItemLink({
       className={[
         "flex items-center gap-2.5 px-2.5 py-3 md:py-2.5 rounded-lg text-crm-md mb-0.5 transition-all duration-150 no-underline min-h-[44px]",
         isActive
-          ? "bg-[rgba(227,24,55,0.15)] text-[var(--crm-accent-light)] font-semibold border-l-2 border-[#E31837] pl-[9px]"
-          : "text-white/45 font-medium hover:bg-white/[0.05] hover:text-white/75",
+          ? "bg-[rgba(227,24,55,0.18)] text-[#ff8a9a] font-semibold border-l-[3px] border-[#E31837] pl-[8px] shadow-[inset_0_0_12px_rgba(227,24,55,0.08)]"
+          : "text-white/45 font-medium hover:bg-white/[0.06] hover:text-white/75 hover:translate-x-0.5",
       ].join(" ")}
     >
-      <item.icon size={15} className="flex-shrink-0" />
+      <item.icon size={15} className="flex-shrink-0" style={isActive ? { filter: "drop-shadow(0 0 4px rgba(227,24,55,0.5))" } : undefined} />
       <span className="flex-1">{item.label}</span>
       {item.badge !== undefined && (
         <span
