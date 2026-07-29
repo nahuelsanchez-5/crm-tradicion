@@ -61,6 +61,7 @@ export interface AgenteInfo {
   activo: boolean
   paga_fee: boolean | null
   fecha_mainstreet: string | null
+  tipo_plan: string | null
 }
 
 interface NuevoForm {
@@ -295,6 +296,7 @@ interface Props {
 export default function PagosClient({ pagos, agentes, configBonos }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const agentesActivos = agentes.filter(a => a.activo)
 
   // ── Filters ────────────────────────────────────────
   const [selectedEstado, setSelectedEstado] = useState("todos")
@@ -315,14 +317,14 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
   const todayStr = new Date().toISOString().split("T")[0]
 
   const [nuevoForm, setNuevoForm] = useState<NuevoForm>({
-    agente_id:    agentes[0]?.id ?? "",
+    agente_id:    agentesActivos[0]?.id ?? "",
     concepto:     CONCEPTOS_PAGO[0],
     monto_pagado: "",
     fecha:        todayStr,
   })
 
   const [gastoForm, setGastoForm] = useState<GastoForm>({
-    agente_id: agentes[0]?.id ?? "",
+    agente_id: agentesActivos[0]?.id ?? "",
     concepto:  "",
     monto_debe: "",
     fecha:     todayStr,
@@ -343,7 +345,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
   const [editForm, setEditForm] = useState<EditForm>({ monto_pagado: "0" })
 
   const [saldoFavorForm, setSaldoFavorForm] = useState<SaldoFavorForm>({
-    agente_id: agentes[0]?.id ?? "",
+    agente_id: agentesActivos[0]?.id ?? "",
     monto: "",
     fecha: todayStr,
   })
@@ -360,11 +362,10 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
       selectedMonth === "todos" || p.fecha.startsWith(selectedMonth)
     )
 
-    const agentesActivos      = agentes.filter(a => a.activo)
     const agentesActivosCount = agentesActivos.length
     const agentesFeeCount     = agentes.filter(a => a.paga_fee === true).length
     const agentesCrmCount     = agentes.filter(a =>
-      a.activo && a.paga_fee === true
+      a.activo && (a.tipo_plan === "PRO" || a.tipo_plan === "PRO+")
     ).length
 
     // FEE
@@ -436,20 +437,47 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
       grouped.set(p.agente_id, arr)
     }
 
-    const rows = Array.from(grouped.entries()).map(([agente_id, agentePagos]) => {
+    const rows = agentes.map(info => {
+      const agentePagos = grouped.get(info.id) ?? []
+      if (agentePagos.length === 0) {
+        return {
+          agente_id: info.id,
+          nombre: info.nombre,
+          telefono: info.telefono ?? null,
+          activo: info.activo,
+          saldo: 0,
+          totalDebe: 0,
+          totalPagado: 0,
+          estadoGral: "Sin movimientos",
+          ultimoMov: "",
+          pagos: [] as PagoRow[],
+        }
+      }
       const totalDebe   = agentePagos.reduce((s, p) => s + Number(p.monto_debe),   0)
       const totalPagado = agentePagos.reduce((s, p) => s + Number(p.monto_pagado), 0)
       const saldo       = totalDebe - totalPagado
       const estadoGral  = calcEstadoGeneral(totalDebe, totalPagado)
       const ultimoMov   = agentePagos.reduce((mx, p) => p.fecha > mx ? p.fecha : mx, "")
-      const nombre      = (agentePagos[0].agentes as { nombre: string } | null)?.nombre ?? "—"
-      const info        = agentes.find(a => a.id === agente_id)
-      return { agente_id, nombre, telefono: info?.telefono ?? null, saldo, totalDebe, totalPagado, estadoGral, ultimoMov, pagos: agentePagos }
+      return {
+        agente_id: info.id,
+        nombre: info.nombre,
+        telefono: info.telefono ?? null,
+        activo: info.activo,
+        saldo,
+        totalDebe,
+        totalPagado,
+        estadoGral,
+        ultimoMov,
+        pagos: agentePagos,
+      }
     })
 
     return rows
       .filter(r => selectedEstado === "todos" || r.estadoGral === selectedEstado)
-      .sort((a, b) => b.saldo - a.saldo)
+      .sort((a, b) => {
+        if (a.activo !== b.activo) return a.activo ? -1 : 1
+        return b.saldo - a.saldo
+      })
   }, [pagos, agentes, selectedMonth, selectedEstado])
 
   // ── Saldo a favor por agente (todos los pagos) ────
@@ -496,7 +524,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
   // ── Open modals ────────────────────────────────────
   function openNuevo(preAgente?: string) {
     setNuevoForm({
-      agente_id:    preAgente ?? agentes[0]?.id ?? "",
+      agente_id:    preAgente ?? agentesActivos[0]?.id ?? "",
       concepto:     CONCEPTOS_PAGO[0],
       monto_pagado: "",
       fecha:        todayStr,
@@ -507,7 +535,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
 
   function openGasto(preAgente?: string) {
     setGastoForm({
-      agente_id: preAgente ?? agentes[0]?.id ?? "",
+      agente_id: preAgente ?? agentesActivos[0]?.id ?? "",
       concepto:  "",
       monto_debe: "",
       fecha:     todayStr,
@@ -521,7 +549,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
 
   function openSaldoFavor() {
     setSaldoFavorForm({
-      agente_id: agentes[0]?.id ?? "",
+      agente_id: agentesActivos[0]?.id ?? "",
       monto:     "",
       fecha:     todayStr,
     })
@@ -922,11 +950,27 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 No hay registros para el filtro seleccionado.
               </div>
             ) : (
-              agentesPagos.map(ag => {
+              agentesPagos.map((ag, i) => {
                 const isExpanded = expandedAgent === ag.agente_id
                 const enMora     = enMoraAgentes.has(ag.agente_id)
+                const showSeparator = !ag.activo && (i === 0 || agentesPagos[i - 1].activo)
                 return (
-                  <div key={ag.agente_id}>
+                  <Fragment key={ag.agente_id}>
+                    {showSeparator && (
+                      <div style={{
+                        display: "flex", alignItems: "center", gap: "10px",
+                        padding: "8px 16px",
+                        background: "rgba(255,255,255,0.02)",
+                        borderTop: "1px solid rgba(255,255,255,0.08)",
+                        borderBottom: "1px solid rgba(255,255,255,0.05)",
+                      }}>
+                        <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", color: "rgba(255,255,255,0.3)" }}>
+                          Cuentas inactivas
+                        </span>
+                        <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.07)" }} />
+                      </div>
+                    )}
+                    <div style={{ opacity: ag.activo ? 1 : 0.5 }}>
                     <div
                       onClick={() => setExpandedAgent(isExpanded ? null : ag.agente_id)}
                       className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-white/[0.03]"
@@ -1047,6 +1091,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                       </div>
                     )}
                   </div>
+                  </Fragment>
                 )
               })
             )}
@@ -1082,8 +1127,27 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                     const isExpanded = expandedAgent === ag.agente_id
                     const isLast     = i === agentesPagos.length - 1
                     const enMora     = enMoraAgentes.has(ag.agente_id)
+                    const showSeparator = !ag.activo && (i === 0 || agentesPagos[i - 1].activo)
                     return (
                       <Fragment key={ag.agente_id}>
+                        {showSeparator && (
+                          <tr>
+                            <td colSpan={6} style={{ padding: 0 }}>
+                              <div style={{
+                                display: "flex", alignItems: "center", gap: "10px",
+                                padding: "8px 16px",
+                                background: "rgba(255,255,255,0.02)",
+                                borderTop: "1px solid rgba(255,255,255,0.08)",
+                                borderBottom: "1px solid rgba(255,255,255,0.05)",
+                              }}>
+                                <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", color: "rgba(255,255,255,0.3)" }}>
+                                  Cuentas inactivas
+                                </span>
+                                <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.07)" }} />
+                              </div>
+                            </td>
+                          </tr>
+                        )}
                         {/* ── Main row ── */}
                         <tr
                           onClick={() => setExpandedAgent(isExpanded ? null : ag.agente_id)}
@@ -1092,6 +1156,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                             cursor: "pointer",
                             background: isExpanded ? "rgba(255,255,255,0.05)" : "#13131a",
                             transition: "background 0.1s",
+                            opacity: ag.activo ? 1 : 0.5,
                           }}
                         >
                           <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: "13px", color: "#f1f5f9", whiteSpace: "nowrap" }}>
@@ -1315,7 +1380,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                   style={inp}
                   required
                 >
-                  {agentes.map(a => (
+                  {agentesActivos.map(a => (
                     <option key={a.id} value={a.id}>{a.nombre}</option>
                   ))}
                 </select>
@@ -1397,7 +1462,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                   }}
                   style={inp} required
                 >
-                  {agentes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                  {agentesActivos.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
                 </select>
               </Field>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1731,7 +1796,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                   onChange={e => setSaldoFavorForm(f => ({ ...f, agente_id: e.target.value }))}
                   style={inp} required
                 >
-                  {agentes.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+                  {agentesActivos.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
                 </select>
               </Field>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
