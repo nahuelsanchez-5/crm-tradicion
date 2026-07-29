@@ -24,7 +24,16 @@ export default function DashboardClock() {
     return () => clearInterval(id)
   }, [])
 
-  if (!now) return <div style={{ width: "200px" }} />
+  if (!now) return (
+    <div style={{ minWidth: "200px" }}>
+      <div style={{ fontSize: "12.5px", lineHeight: "1.5", marginBottom: "2px", visibility: "hidden" }}>
+        Placeholder fecha
+      </div>
+      <div style={{ fontSize: "24px", lineHeight: 1, visibility: "hidden" }}>
+        00:00:00
+      </div>
+    </div>
+  )
 
   return (
     <div>

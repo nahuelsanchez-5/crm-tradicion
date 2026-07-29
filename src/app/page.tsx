@@ -232,7 +232,6 @@ export default async function DashboardPage() {
             iconBg="bg-amber-500/15"
             iconColor="text-amber-400"
             icon={<Handshake size={18} />}
-            trend="Activas"
             animate
           />
           <KpiCard
@@ -241,8 +240,7 @@ export default async function DashboardPage() {
             iconBg="bg-violet-500/15"
             iconColor="text-violet-400"
             icon={<Building2 size={18} />}
-            trend={`↑ ${MES_LABEL}`}
-            trendUp
+            trend={MES_LABEL}
             animate
           />
           <KpiCard
@@ -318,7 +316,7 @@ export default async function DashboardPage() {
               <div className="crm-section-hd">
                 <div className="flex items-center gap-2.5">
                   <div className="w-2 h-2 rounded-full bg-rose-500" />
-                  <h2 className="crm-section-title">Pagos pendientes — {MES_LABEL}</h2>
+                  <h2 className="crm-section-title">Pagos pendientes</h2>
                 </div>
                 <Link href="/pagos" className="crm-link-sm">
                   Ver todos →
