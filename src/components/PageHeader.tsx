@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+﻿import type { ReactNode } from "react"
 
 interface PageHeaderProps {
   title: string
@@ -10,7 +10,7 @@ export default function PageHeader({ title, description, children }: PageHeaderP
   return (
     <div className="crm-page-header">
       <div>
-        <h1 className="text-[18px] font-extrabold tracking-tight leading-tight m-0" style={{ color: "#f1f5f9", letterSpacing: "-0.3px" }}>
+        <h1 className="text-[18px] font-extrabold tracking-tight leading-tight m-0" style={{ color: "var(--crm-text)", letterSpacing: "-0.3px" }}>
           {title}
         </h1>
         {description && (

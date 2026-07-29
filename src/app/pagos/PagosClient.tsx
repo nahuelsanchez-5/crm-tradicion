@@ -149,7 +149,7 @@ function EstadoBadge({ estado }: { estado: string }) {
 }
 
 function ProgressBar({ pct }: { pct: number }) {
-  const color = pct >= 80 ? "#059669" : pct >= 50 ? "#D97706" : "#E11D48"
+  const color = pct >= 80 ? "#059669" : pct >= 50 ? "#D97706" : "var(--crm-accent)"
   return (
     <div style={{ width: "100%", height: "5px", borderRadius: "3px", background: "rgba(255,255,255,0.06)", overflow: "hidden", marginTop: "6px" }}>
       <div style={{ width: `${Math.min(pct, 100)}%`, height: "100%", background: color, borderRadius: "3px", transition: "width 0.4s" }} />
@@ -190,7 +190,7 @@ const inp: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
   borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)",
   fontSize: "13px", fontFamily: "inherit",
-  color: "#f1f5f9", outline: "none", background: "rgba(255,255,255,0.06)",
+  color: "var(--crm-text)", outline: "none", background: "rgba(255,255,255,0.06)",
   boxSizing: "border-box",
 }
 
@@ -203,7 +203,7 @@ function filterBtnStyle(key: string, selected: boolean): React.CSSProperties {
   }
   if (!selected) return { ...base, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.45)" }
   const active: Record<string, React.CSSProperties> = {
-    todos:     { border: "1px solid rgba(255,255,255,0.3)",   background: "rgba(255,255,255,0.12)", color: "#f1f5f9" },
+    todos:     { border: "1px solid rgba(255,255,255,0.3)",   background: "rgba(255,255,255,0.12)", color: "var(--crm-text)" },
     Pagado:    { border: "1px solid rgba(74,222,128,0.4)",    background: "rgba(74,222,128,0.12)",  color: "#4ade80" },
     Parcial:   { border: "1px solid rgba(251,191,36,0.4)",    background: "rgba(251,191,36,0.12)",  color: "#fbbf24" },
     Pendiente: { border: "1px solid rgba(248,113,113,0.4)",   background: "rgba(248,113,113,0.12)", color: "#f87171" },
@@ -268,7 +268,7 @@ function ModalHeader({ title, subtitle, onClose, icon, iconBg }: { title: string
           </div>
         )}
         <div>
-          <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>{title}</h2>
+          <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>{title}</h2>
           {subtitle && <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>{subtitle}</p>}
         </div>
       </div>
@@ -734,13 +734,13 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
   }
 
   const cardStyle: React.CSSProperties = {
-    background: "#13131a", borderRadius: "14px",
+    background: "var(--crm-surface-2)", borderRadius: "14px",
     border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden",
   }
 
   const btnSave: React.CSSProperties = {
     padding: "9px 24px", borderRadius: "8px", border: "none",
-    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
     color: "white", fontSize: "13px", fontWeight: 700,
     cursor: isPending ? "not-allowed" : "pointer",
     fontFamily: "inherit",
@@ -777,7 +777,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
       {/* ── Page Header ──────────────────────────── */}
       <div className="crm-page-header flex-shrink-0">
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
             Cuentas
           </h1>
           <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
@@ -800,19 +800,19 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
           <button
             onClick={() => openGasto()}
             style={{
-              background: "#13131a", color: "#f1f5f9",
+              background: "var(--crm-surface-2)", color: "var(--crm-text)",
               border: "1px solid rgba(255,255,255,0.08)",
               padding: "8px 16px", borderRadius: "9px",
               fontSize: "13px", fontWeight: 700, cursor: "pointer",
               fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
             }}
           >
-            <TrendingDown size={14} color="#E11D48" /> Registrar gasto
+            <TrendingDown size={14} color="var(--crm-accent)" /> Registrar gasto
           </button>
           <button
             onClick={() => openNuevo()}
             style={{
-              background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+              background: "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
               color: "white", border: "none",
               padding: "8px 18px", borderRadius: "9px",
               fontSize: "13px", fontWeight: 700, cursor: "pointer",
@@ -870,9 +870,9 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1 }}>
             <DollarSign size={14} color="#E31837" />
-            <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#f1f5f9" }}>
+            <span style={{ fontSize: "12.5px", fontWeight: 700, color: "var(--crm-text)" }}>
               Cobranza general: <strong style={{
-                color: kpiStats.pctGeneral >= 80 ? "#059669" : kpiStats.pctGeneral >= 50 ? "#D97706" : "#E11D48"
+                color: kpiStats.pctGeneral >= 80 ? "#059669" : kpiStats.pctGeneral >= 50 ? "#D97706" : "var(--crm-accent)"
               }}>{kpiStats.pctGeneral}%</strong>
             </span>
             <div style={{ flex: 1, maxWidth: "200px" }}>
@@ -912,7 +912,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
               style={{
                 padding: "6px 10px", borderRadius: "8px",
                 border: "1px solid rgba(255,255,255,0.08)", fontSize: "12.5px",
-                fontWeight: 500, color: "#f1f5f9", background: "rgba(255,255,255,0.06)",
+                fontWeight: 500, color: "var(--crm-text)", background: "rgba(255,255,255,0.06)",
                 cursor: "pointer", fontFamily: "inherit", outline: "none",
               }}
             >
@@ -934,7 +934,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-              <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>
+              <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--crm-text)" }}>
                 Estado de cobros por agente
               </span>
             </div>
@@ -982,7 +982,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                       }}>▶</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span style={{ fontWeight: 600, fontSize: "13px", color: "#f1f5f9" }}>{ag.nombre}</span>
+                          <span style={{ fontWeight: 600, fontSize: "13px", color: "var(--crm-text)" }}>{ag.nombre}</span>
                           {enMora && (
                             <span style={{
                               background: "rgba(248,113,113,0.12)", color: "#f87171",
@@ -995,7 +995,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                         <div style={{ fontSize: "11px", color: "#94A3B8", marginTop: "2px" }}>{fmtFecha(ag.ultimoMov)}</div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <span style={{ fontSize: "13px", fontWeight: 700, color: ag.saldo > 0 ? "#E11D48" : "#059669" }}>
+                        <span style={{ fontSize: "13px", fontWeight: 700, color: ag.saldo > 0 ? "var(--crm-accent)" : "#059669" }}>
                           {ag.saldo > 0 ? `- ${fmtUSD(ag.saldo)}` : ag.saldo < 0 ? `+ ${fmtUSD(-ag.saldo)}` : fmtUSD(0)}
                         </span>
                         <EstadoBadge estado={ag.estadoGral} />
@@ -1005,7 +1005,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                       <div style={{ background: "rgba(255,255,255,0.04)", borderTop: "1px solid rgba(255,255,255,0.06)", padding: "12px 16px" }}>
                         <div className="flex gap-3 mb-3 flex-wrap" style={{ fontSize: "12px" }}>
                           <span><span style={{ color: "rgba(255,255,255,0.45)" }}>Pagado: </span><strong style={{ color: "#059669" }}>{fmtUSD(ag.totalPagado)}</strong></span>
-                          <span><span style={{ color: "rgba(255,255,255,0.45)" }}>Pendiente: </span><strong style={{ color: "#E11D48" }}>{fmtUSD(Math.max(0, ag.saldo))}</strong></span>
+                          <span><span style={{ color: "rgba(255,255,255,0.45)" }}>Pendiente: </span><strong style={{ color: "var(--crm-accent)" }}>{fmtUSD(Math.max(0, ag.saldo))}</strong></span>
                         </div>
                         {ag.pagos.map((p, pi) => (
                           <div key={p.id} style={{
@@ -1018,7 +1018,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                 {p.concepto === "Saldo a favor" ? (
                                   <span style={{ background: "rgba(74,222,128,0.12)", color: "#4ade80", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>Saldo a favor</span>
                                 ) : (
-                                  <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#f1f5f9" }}>{p.concepto}</div>
+                                  <div style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--crm-text)" }}>{p.concepto}</div>
                                 )}
                                 <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginTop: "2px" }}>{fmtFecha(p.fecha)}</div>
                               </div>
@@ -1026,7 +1026,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                 <EstadoBadge estado={p.estado} />
                                 {p.concepto === "Saldo a favor"
                                   ? <span style={{ fontSize: "12px", fontWeight: 700, color: "#059669" }}>+{fmtUSD(Number(p.monto_pagado))}</span>
-                                  : <span style={{ fontSize: "12px", fontWeight: 700, color: "#E11D48" }}>{fmtUSD(Number(p.monto_debe))}</span>
+                                  : <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--crm-accent)" }}>{fmtUSD(Number(p.monto_debe))}</span>
                                 }
                               </div>
                             </div>
@@ -1038,7 +1038,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                   style={{
                                     padding: "6px 12px", borderRadius: "7px",
                                     border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.06)",
-                                    fontSize: "12px", fontWeight: 600, color: "#f1f5f9",
+                                    fontSize: "12px", fontWeight: 600, color: "var(--crm-text)",
                                     cursor: "pointer", fontFamily: "inherit",
                                   }}
                                 >
@@ -1080,7 +1080,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                               style={{
                                 padding: "8px 16px", borderRadius: "8px",
                                 border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.06)",
-                                fontSize: "12px", fontWeight: 600, color: "#f1f5f9",
+                                fontSize: "12px", fontWeight: 600, color: "var(--crm-text)",
                                 cursor: "pointer", fontFamily: "inherit",
                               }}
                             >
@@ -1154,12 +1154,12 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                           style={{
                             borderBottom: (isLast && !isExpanded) ? "none" : "1px solid rgba(255,255,255,0.06)",
                             cursor: "pointer",
-                            background: isExpanded ? "rgba(255,255,255,0.05)" : "#13131a",
+                            background: isExpanded ? "rgba(255,255,255,0.05)" : "var(--crm-surface-2)",
                             transition: "background 0.1s",
                             opacity: ag.activo ? 1 : 0.5,
                           }}
                         >
-                          <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: "13px", color: "#f1f5f9", whiteSpace: "nowrap" }}>
+                          <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: "13px", color: "var(--crm-text)", whiteSpace: "nowrap" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                               <span style={{
                                 fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: 400,
@@ -1184,7 +1184,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                           </td>
                           <td style={{
                             padding: "12px 16px", fontWeight: 700, fontSize: "13px", whiteSpace: "nowrap",
-                            color: ag.saldo > 0 ? "#E11D48" : "#059669",
+                            color: ag.saldo > 0 ? "var(--crm-accent)" : "#059669",
                           }}>
                             {ag.saldo > 0 ? `- ${fmtUSD(ag.saldo)}` : ag.saldo < 0 ? `+ ${fmtUSD(-ag.saldo)}` : fmtUSD(0)}
                           </td>
@@ -1216,7 +1216,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                 style={{
                                   padding: "5px 14px", borderRadius: "7px",
                                   border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.06)",
-                                  fontSize: "12px", fontWeight: 600, color: "#f1f5f9",
+                                  fontSize: "12px", fontWeight: 600, color: "var(--crm-text)",
                                   cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
                                 }}
                               >
@@ -1245,7 +1245,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                   </span>
                                   <span>
                                     <span style={{ color: "rgba(255,255,255,0.45)" }}>Total pendiente: </span>
-                                    <strong style={{ color: "#E11D48" }}>{fmtUSD(Math.max(0, ag.saldo))}</strong>
+                                    <strong style={{ color: "var(--crm-accent)" }}>{fmtUSD(Math.max(0, ag.saldo))}</strong>
                                   </span>
                                   <span>
                                     <span style={{ color: "rgba(255,255,255,0.45)" }}>Estado: </span>
@@ -1280,14 +1280,14 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                           <td style={{ padding: "10px 14px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
                                             {fmtFecha(p.fecha)}
                                           </td>
-                                          <td style={{ padding: "10px 14px", fontSize: "12px", color: "#f1f5f9" }}>
+                                          <td style={{ padding: "10px 14px", fontSize: "12px", color: "var(--crm-text)" }}>
                                             {isSaldoFavor ? (
                                               <span style={{ background: "rgba(74,222,128,0.12)", color: "#4ade80", padding: "2px 9px", borderRadius: "12px", fontSize: "11px", fontWeight: 700 }}>
                                                 Saldo a favor
                                               </span>
                                             ) : p.concepto}
                                           </td>
-                                          <td style={{ padding: "10px 14px", fontSize: "12px", fontWeight: 600, color: "#E11D48", whiteSpace: "nowrap" }}>
+                                          <td style={{ padding: "10px 14px", fontSize: "12px", fontWeight: 600, color: "var(--crm-accent)", whiteSpace: "nowrap" }}>
                                             {isSaldoFavor ? "—" : fmtUSD(Number(p.monto_debe))}
                                           </td>
                                           <td style={{ padding: "10px 14px", fontSize: "12px", color: "#059669", fontWeight: 600, whiteSpace: "nowrap" }}>
@@ -1306,7 +1306,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                                   style={{
                                                     padding: "3px 10px", borderRadius: "6px",
                                                     border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.06)",
-                                                    fontSize: "11px", fontWeight: 600, color: "#f1f5f9",
+                                                    fontSize: "11px", fontWeight: 600, color: "var(--crm-text)",
                                                     cursor: "pointer", fontFamily: "inherit",
                                                   }}
                                                 >
@@ -1337,7 +1337,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                                 <div style={{
                                   marginTop: "10px", textAlign: "right",
                                   fontSize: "14px", fontWeight: 700,
-                                  color: ag.saldo > 0 ? "#E11D48" : "#059669",
+                                  color: ag.saldo > 0 ? "var(--crm-accent)" : "#059669",
                                 }}>
                                   Saldo: {ag.saldo > 0
                                     ? `- ${fmtUSD(ag.saldo)}`
@@ -1486,7 +1486,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                           cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
                           border: gastoForm.tipo === t ? "1.5px solid #E31837" : "1px solid rgba(255,255,255,0.08)",
                           background: gastoForm.tipo === t ? "#FFF1F2" : "white",
-                          color: gastoForm.tipo === t ? "#E11D48" : "#64748B",
+                          color: gastoForm.tipo === t ? "var(--crm-accent)" : "#64748B",
                         }}
                       >
                         {t}
@@ -1557,7 +1557,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 marginBottom: "14px",
               }}>
                 <div>
-                  <div style={{ fontSize: "12.5px", fontWeight: 700, color: "#f1f5f9" }}>
+                  <div style={{ fontSize: "12.5px", fontWeight: 700, color: "var(--crm-text)" }}>
                     ¿Aplicar a múltiples agentes?
                   </div>
                   <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginTop: "2px" }}>
@@ -1649,7 +1649,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 <div style={{
                   border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px",
                   overflow: "auto", maxHeight: "200px",
-                  background: "#13131a",
+                  background: "var(--crm-surface-2)",
                 }}>
                   <div style={{
                     display: "flex", alignItems: "center", gap: "8px",
@@ -1694,7 +1694,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                         }}
                         style={{ accentColor: "#7C3AED", width: "14px", height: "14px" }}
                       />
-                      <span style={{ fontSize: "13px", fontWeight: 500, color: "#f1f5f9" }}>{a.nombre}</span>
+                      <span style={{ fontSize: "13px", fontWeight: 500, color: "var(--crm-text)" }}>{a.nombre}</span>
                     </label>
                   ))}
                 </div>
@@ -1758,7 +1758,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>Nuevo estado:</span>
                 <EstadoBadge estado={editEstado} />
                 <span style={{ marginLeft: "auto", fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>
-                  Saldo: <strong style={{ color: editEstado === "Pagado" ? "#059669" : "#E11D48" }}>
+                  Saldo: <strong style={{ color: editEstado === "Pagado" ? "#059669" : "var(--crm-accent)" }}>
                     {fmtUSD(Math.max(0, Number(selectedPago.monto_debe) - (parseFloat(editForm.monto_pagado) || 0)))}
                   </strong>
                 </span>
@@ -1854,7 +1854,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)",
                 marginBottom: "18px",
               }}>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "#f1f5f9", marginBottom: "4px" }}>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--crm-text)", marginBottom: "4px" }}>
                   {deleteTarget.concepto}
                 </div>
                 <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>
@@ -1865,7 +1865,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                 <div style={{
                   padding: "10px 12px", borderRadius: "8px",
                   background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.25)",
-                  fontSize: "12px", color: "#E11D48", marginBottom: "14px",
+                  fontSize: "12px", color: "var(--crm-accent)", marginBottom: "14px",
                 }}>
                   {deleteError}
                 </div>
@@ -1887,8 +1887,8 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                   className="w-full sm:w-auto min-h-[44px] justify-center"
                   style={{
                     ...btnSave,
-                    background: deleteLoading ? "#F87171" : "#E11D48",
-                    borderColor: "#E11D48",
+                    background: deleteLoading ? "#F87171" : "var(--crm-accent)",
+                    borderColor: "var(--crm-accent)",
                   }}
                 >
                   {deleteLoading && <Loader2 size={14} className="animate-spin" />}

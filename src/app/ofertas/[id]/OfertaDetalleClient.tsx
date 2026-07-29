@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -172,7 +172,7 @@ function DataRow({ label, value }: { label: string; value: React.ReactNode }) {
       <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", fontWeight: 600, minWidth: "180px", flexShrink: 0 }}>
         {label}
       </span>
-      <span style={{ fontSize: "13px", color: "#f1f5f9", fontWeight: 500 }}>
+      <span style={{ fontSize: "13px", color: "var(--crm-text)", fontWeight: 500 }}>
         {value}
       </span>
     </div>
@@ -182,7 +182,7 @@ function DataRow({ label, value }: { label: string; value: React.ReactNode }) {
 function SectionCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div style={{
-      background: "#13131a", borderRadius: "14px",
+      background: "var(--crm-surface-2)", borderRadius: "14px",
       border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
       marginBottom: "16px",
     }}>
@@ -192,13 +192,13 @@ function SectionCard({ title, icon, children }: { title: string; icon: React.Rea
       }}>
         <div style={{
           width: "28px", height: "28px", borderRadius: "8px",
-          background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+          background: "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
           display: "flex", alignItems: "center", justifyContent: "center",
           flexShrink: 0,
         }}>
           {icon}
         </div>
-        <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>{title}</span>
+        <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--crm-text)" }}>{title}</span>
       </div>
       <div style={{ padding: "0 20px 4px" }}>
         {children}
@@ -226,7 +226,7 @@ const inp: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
   borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
   fontSize: "13px", fontFamily: "inherit",
-  color: "#f1f5f9", outline: "none", background: "#1e1e2e",
+  color: "var(--crm-text)", outline: "none", background: "var(--crm-input-bg)",
   boxSizing: "border-box",
 }
 
@@ -476,11 +476,11 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
           <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "rgba(255,255,255,0.35)", fontSize: "12px" }}>
             <Link href="/ofertas" style={{ color: "rgba(255,255,255,0.35)", textDecoration: "none" }}>Ofertas</Link>
             <ChevronRight size={12} />
-            <span style={{ color: "#f1f5f9", fontWeight: 600 }}>#{oferta.numero}</span>
+            <span style={{ color: "var(--crm-text)", fontWeight: 600 }}>#{oferta.numero}</span>
           </div>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
+              <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
                 Oferta #{oferta.numero}
               </h1>
               <EstadoBadge estado={oferta.estado} large />
@@ -494,7 +494,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
           <button
             onClick={openEditar}
             style={{
-              background: "rgba(255,255,255,0.06)", color: "#f1f5f9",
+              background: "rgba(255,255,255,0.06)", color: "var(--crm-text)",
               border: "1px solid rgba(255,255,255,0.12)",
               padding: "8px 18px", borderRadius: "9px",
               fontSize: "13px", fontWeight: 700, cursor: "pointer",
@@ -526,7 +526,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
           <button
             onClick={() => { setNuevoEstado(oferta.estado); setDescEstado(""); setMontoEstado(""); setModalEstado(true) }}
             style={{
-              background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+              background: "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
               color: "white", border: "none",
               padding: "8px 18px", borderRadius: "9px",
               fontSize: "13px", fontWeight: 700, cursor: "pointer",
@@ -572,7 +572,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                   background: "rgba(255,255,255,0.06)", borderRadius: "10px", padding: "10px 12px",
                 }}>
                   <div style={{ fontSize: "10.5px", color: "rgba(255,255,255,0.35)", fontWeight: 600, marginBottom: "4px" }}>{label}</div>
-                  <div style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>
+                  <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--crm-text)" }}>
                     {text ?? fmtUSD(val)}
                   </div>
                 </div>
@@ -610,7 +610,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
           <DataRow label="Comisión cobrada" value={oferta.comision_cobrada ? "Sí" : "No"} />
           {oferta.notas && (
             <DataRow label="Notas" value={
-              <span style={{ whiteSpace: "pre-wrap", fontSize: "13px", color: "#f1f5f9" }}>
+              <span style={{ whiteSpace: "pre-wrap", fontSize: "13px", color: "var(--crm-text)" }}>
                 {oferta.notas}
               </span>
             } />
@@ -655,7 +655,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                             </span>
                           )}
                         </div>
-                        <p style={{ fontSize: "13px", color: "#f1f5f9", margin: 0 }}>{h.descripcion}</p>
+                        <p style={{ fontSize: "13px", color: "var(--crm-text)", margin: 0 }}>{h.descripcion}</p>
                       </div>
                     </div>
                   )
@@ -685,7 +685,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
             {/* Progreso */}
             <div style={{ padding: "14px 0 10px" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                <span style={{ fontSize: "13px", fontWeight: 600, color: "#f1f5f9" }}>
+                <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--crm-text)" }}>
                   {doneItems} / {totalItems} completados
                 </span>
                 <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)" }}>
@@ -745,7 +745,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                             {done && <span style={{ color: "white", fontSize: "11px", fontWeight: 700 }}>✓</span>}
                           </div>
                           <span style={{
-                            fontSize: "12.5px", color: done ? "#4ade80" : "#f1f5f9",
+                            fontSize: "12.5px", color: done ? "#4ade80" : "var(--crm-text)",
                             fontWeight: done ? 600 : 400,
                             textDecoration: done ? "line-through" : "none",
                           }}>
@@ -790,7 +790,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
             }}>
               <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>Cambiar estado</h2>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>Cambiar estado</h2>
                 <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
                   Oferta #{oferta.numero} — {oferta.direccion}
                 </p>
@@ -823,7 +823,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                 <div style={{
                   background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
+                  fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                 }}>
                   ⚠️ {errEstado}
                 </div>
@@ -841,7 +841,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                 <button type="submit" disabled={isPending}
                   style={{
                     padding: "9px 24px", borderRadius: "8px", border: "none",
-                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
                     color: "white", fontSize: "13px", fontWeight: 700,
                     cursor: isPending ? "not-allowed" : "pointer",
                     fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
@@ -884,7 +884,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
             }}>
               <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>Agregar movimiento</h2>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>Agregar movimiento</h2>
                 <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
                   Registrá un evento en el historial de la oferta
                 </p>
@@ -917,7 +917,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                 <div style={{
                   background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
+                  fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                 }}>
                   ⚠️ {errMov}
                 </div>
@@ -935,7 +935,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                 <button type="submit" disabled={isPending}
                   style={{
                     padding: "9px 24px", borderRadius: "8px", border: "none",
-                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
                     color: "white", fontSize: "13px", fontWeight: 700,
                     cursor: isPending ? "not-allowed" : "pointer",
                     fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
@@ -979,7 +979,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0,
             }}>
               <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>Editar oferta</h2>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>Editar oferta</h2>
                 <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
                   Oferta #{oferta.numero} — {oferta.direccion}
                 </p>
@@ -1158,7 +1158,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                 <div style={{
                   background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
+                  fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                 }}>
                   ⚠️ {errEditar}
                 </div>
@@ -1175,7 +1175,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                 </button>
                 <button type="submit" disabled={isPending} style={{
                   padding: "9px 24px", borderRadius: "8px", border: "none",
-                  background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                  background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
                   color: "white", fontSize: "13px", fontWeight: 700,
                   cursor: isPending ? "not-allowed" : "pointer",
                   fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
@@ -1218,7 +1218,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
             }}>
               <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>Registrar cierre</h2>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>Registrar cierre</h2>
                 <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
                   Oferta #{oferta.numero} — completá los datos de la operación
                 </p>
@@ -1248,7 +1248,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                 <div style={{
                   background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
+                  fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                 }}>
                   ⚠️ {errCierre}
                 </div>

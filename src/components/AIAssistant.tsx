@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useRef, useEffect } from "react"
 import { usePathname } from "next/navigation"
@@ -292,7 +292,7 @@ export default function AIAssistant() {
                         : "text-slate-800 rounded-2xl rounded-bl-sm"
                     }`}
                     style={{
-                      backgroundColor: msg.role === "user" ? "#2563eb" : "#f1f5f9",
+                      backgroundColor: msg.role === "user" ? "#2563eb" : "var(--crm-text)",
                     }}
                   >
                     {msg.content}
@@ -340,7 +340,7 @@ export default function AIAssistant() {
                 </div>
                 <div
                   className="px-3 py-2 rounded-2xl rounded-bl-sm text-sm flex items-center gap-1"
-                  style={{ backgroundColor: "#f1f5f9", color: "#64748b" }}
+                  style={{ backgroundColor: "var(--crm-text)", color: "#64748b" }}
                 >
                   Pensando
                   <span className="flex gap-0.5 ml-1">
@@ -389,7 +389,7 @@ export default function AIAssistant() {
                 disabled={isLoading}
                 aria-label={isRecording ? "Detener grabación" : "Grabar voz"}
                 className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-colors disabled:opacity-50"
-                style={{ backgroundColor: isRecording ? "#dc2626" : "#f1f5f9" }}
+                style={{ backgroundColor: isRecording ? "#dc2626" : "var(--crm-text)" }}
               >
                 <Mic
                   size={16}

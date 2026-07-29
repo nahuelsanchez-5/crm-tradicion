@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useTransition, useEffect, useCallback, useMemo, Fragment } from "react"
 import { useRouter } from "next/navigation"
@@ -72,12 +72,12 @@ const PLAN_LABELS: Record<string, string> = {
 }
 
 const AVATAR_GRADIENTS = [
-  "linear-gradient(135deg,#E31837,#c0122d)",
+  "linear-gradient(135deg,#E31837,var(--crm-accent-hover))",
   "linear-gradient(135deg,#7C3AED,#5b21b6)",
   "linear-gradient(135deg,#0D9488,#0f766e)",
   "linear-gradient(135deg,#D97706,#b45309)",
   "linear-gradient(135deg,#2563EB,#1d4ed8)",
-  "linear-gradient(135deg,#E11D48,#be123c)",
+  "linear-gradient(135deg,var(--crm-accent),#be123c)",
   "linear-gradient(135deg,#0891B2,#0e7490)",
 ]
 
@@ -179,8 +179,8 @@ function EstadoBadge({ activo }: { activo: boolean }) {
 const inputStyle: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
   borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
-  fontSize: "13px", fontFamily: "inherit", color: "#f1f5f9",
-  outline: "none", background: "#1e1e2e", boxSizing: "border-box",
+  fontSize: "13px", fontFamily: "inherit", color: "var(--crm-text)",
+  outline: "none", background: "var(--crm-input-bg)", boxSizing: "border-box",
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -363,7 +363,7 @@ export default function AgentesClient({
       {/* ── Page Header ──────────────────────────── */}
       <div className="crm-page-header flex-shrink-0">
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
             Agentes
           </h1>
           <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
@@ -373,14 +373,14 @@ export default function AgentesClient({
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <Users size={14} color="#94A3B8" />
-            <span style={{ fontSize: "13px", fontWeight: 700, color: "#f1f5f9" }}>
+            <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--crm-text)" }}>
               {agentes.filter(a => a.activo).length} activos
             </span>
           </div>
           <button
             onClick={openNuevo}
             style={{
-              background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+              background: "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
               color: "white", border: "none",
               padding: "8px 18px", borderRadius: "9px",
               fontSize: "13px", fontWeight: 700, cursor: "pointer",
@@ -399,7 +399,7 @@ export default function AgentesClient({
         {/* ── Próximo Mainstreet ─────────────────── */}
         {proximosMainstreet.length > 0 && (
           <div style={{
-            background: "#13131a", borderRadius: "14px",
+            background: "var(--crm-surface-2)", borderRadius: "14px",
             border: "1px solid rgba(251,191,36,0.3)",
             overflow: "hidden", marginBottom: "20px",
           }}>
@@ -427,7 +427,7 @@ export default function AgentesClient({
                     display: "flex", flexDirection: "column", gap: "4px",
                   }}
                 >
-                  <div style={{ fontSize: "13px", fontWeight: 700, color: "#f1f5f9" }}>{ag.nombre}</div>
+                  <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--crm-text)" }}>{ag.nombre}</div>
                   <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.45)" }}>
                     {fmtFecha(ag.mainstreetDate.toISOString().split("T")[0])}
                   </div>
@@ -449,7 +449,7 @@ export default function AgentesClient({
 
         {/* ── Tabla de agentes ─────────────────── */}
         <div style={{
-          background: "#13131a", borderRadius: "14px",
+          background: "var(--crm-surface-2)", borderRadius: "14px",
           border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
         }}>
           {/* Card header with sort filters */}
@@ -460,7 +460,7 @@ export default function AgentesClient({
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-              <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>
+              <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--crm-text)" }}>
                 Lista de agentes
               </span>
               <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginLeft: "4px" }}>
@@ -518,7 +518,7 @@ export default function AgentesClient({
                       {initials(ag.nombre)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div style={{ fontWeight: 600, fontSize: "13px", color: "#f1f5f9" }}>{ag.nombre}</div>
+                      <div style={{ fontWeight: 600, fontSize: "13px", color: "var(--crm-text)" }}>{ag.nombre}</div>
                       <div className="flex flex-wrap gap-1.5 mt-1 items-center">
                         <PlanBadge plan={ag.tipo_plan ?? null} />
                         <EstadoBadge activo={ag.activo} />
@@ -546,7 +546,7 @@ export default function AgentesClient({
                         style={{
                           padding: "6px 14px", borderRadius: "7px",
                           border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
-                          fontSize: "12px", fontWeight: 600, color: "#f1f5f9",
+                          fontSize: "12px", fontWeight: 600, color: "var(--crm-text)",
                           cursor: "pointer", fontFamily: "inherit", minHeight: "34px",
                         }}
                       >
@@ -624,7 +624,7 @@ export default function AgentesClient({
                             }}>
                               {initials(ag.nombre)}
                             </div>
-                            <span style={{ fontWeight: 600, fontSize: "13px", color: "#f1f5f9" }}>
+                            <span style={{ fontWeight: 600, fontSize: "13px", color: "var(--crm-text)" }}>
                               {ag.nombre}
                             </span>
                           </div>
@@ -648,7 +648,7 @@ export default function AgentesClient({
                             onClick={e => e.stopPropagation()}
                             style={{
                               padding: "4px 8px", borderRadius: "7px",
-                              border: "1px solid rgba(255,255,255,0.1)", background: "#1e1e2e",
+                              border: "1px solid rgba(255,255,255,0.1)", background: "var(--crm-input-bg)",
                               fontSize: "12px", fontWeight: 600,
                               color: getEfectivoPagaFee(ag) ? "#4ade80" : "rgba(255,255,255,0.45)",
                               cursor: "pointer", fontFamily: "inherit",
@@ -691,7 +691,7 @@ export default function AgentesClient({
                               padding: "5px 14px", borderRadius: "7px",
                               border: "1px solid rgba(255,255,255,0.1)",
                               background: "rgba(255,255,255,0.06)", fontSize: "12px", fontWeight: 600,
-                              color: "#f1f5f9", cursor: "pointer", fontFamily: "inherit",
+                              color: "var(--crm-text)", cursor: "pointer", fontFamily: "inherit",
                             }}
                             className="hover:bg-[rgba(255,255,255,0.05)]"
                           >
@@ -722,7 +722,7 @@ export default function AgentesClient({
               padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
             }}>
               <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
                   {modal === "nuevo" ? "Nuevo Agente" : "Editar Agente"}
                 </h2>
                 <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
@@ -819,7 +819,7 @@ export default function AgentesClient({
                 <div style={{
                   background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
+                  fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                 }}>
                   ⚠️ {error}
                 </div>
@@ -840,7 +840,7 @@ export default function AgentesClient({
                   className="w-full sm:w-auto min-h-[44px] justify-center"
                   style={{
                     padding: "9px 24px", borderRadius: "8px", border: "none",
-                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
                     color: "white", fontSize: "13px", fontWeight: 700,
                     cursor: isPending ? "not-allowed" : "pointer", fontFamily: "inherit",
                     display: "flex", alignItems: "center", gap: "6px",

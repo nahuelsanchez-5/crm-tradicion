@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useTransition, useState } from "react"
 import dynamic from "next/dynamic"
@@ -66,7 +66,7 @@ export default function CalendarioClient({ eventos, hoy, ofertasInactivas }: Pro
       <div className="crm-page-header">
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <CalendarDays size={17} color="#E31837" />
-          <h1 style={{ fontSize: "17px", fontWeight: 800, color: "#f1f5f9", margin: 0, letterSpacing: "-0.3px" }}>
+          <h1 style={{ fontSize: "17px", fontWeight: 800, color: "var(--crm-text)", margin: 0, letterSpacing: "-0.3px" }}>
             Calendario
           </h1>
         </div>
@@ -107,7 +107,7 @@ export default function CalendarioClient({ eventos, hoy, ofertasInactivas }: Pro
                       #{o.numero}
                     </span>
                     <span style={{
-                      fontSize: "12px", color: "#f1f5f9", fontWeight: 500,
+                      fontSize: "12px", color: "var(--crm-text)", fontWeight: 500,
                       display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                     }}>
                       {o.direccion}
@@ -164,7 +164,7 @@ export default function CalendarioClient({ eventos, hoy, ofertasInactivas }: Pro
                       {fmtFecha(e.date)}
                     </span>
                     <span style={{
-                      fontSize: "12px", color: "#f1f5f9", fontWeight: 500,
+                      fontSize: "12px", color: "var(--crm-text)", fontWeight: 500,
                       display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                     }}>
                       {e.title}
@@ -203,7 +203,7 @@ function PanelCard({
 }) {
   return (
     <div style={{
-      background: "#13131a",
+      background: "var(--crm-surface-2)",
       border: `1px solid ${borderAccent ?? "rgba(255,255,255,0.07)"}`,
       borderRadius: "14px",
       overflow: "hidden",
@@ -214,7 +214,7 @@ function PanelCard({
         borderBottom: "1px solid rgba(255,255,255,0.07)",
       }}>
         {icon}
-        <span style={{ fontSize: "13px", fontWeight: 700, color: titleColor ?? "#f1f5f9" }}>
+        <span style={{ fontSize: "13px", fontWeight: 700, color: titleColor ?? "var(--crm-text)" }}>
           {title}
         </span>
       </div>

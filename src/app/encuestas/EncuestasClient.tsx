@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
@@ -98,7 +98,7 @@ const inp: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
   borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
   fontSize: "13px", fontFamily: "inherit",
-  color: "#f1f5f9", outline: "none", background: "#1e1e2e",
+  color: "var(--crm-text)", outline: "none", background: "var(--crm-input-bg)",
   boxSizing: "border-box",
 }
 
@@ -382,7 +382,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
   }
 
   const cardStyle: React.CSSProperties = {
-    background: "#13131a", borderRadius: "14px",
+    background: "var(--crm-surface-2)", borderRadius: "14px",
     border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
   }
 
@@ -392,7 +392,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
       {/* ── Page Header ──────────────────────────── */}
       <div className="crm-page-header flex-shrink-0">
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
             Encuestas
           </h1>
           <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
@@ -402,7 +402,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
         <button
           onClick={openModal}
           style={{
-            background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+            background: "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
             color: "white", border: "none",
             padding: "8px 18px", borderRadius: "9px",
             fontSize: "13px", fontWeight: 700, cursor: "pointer",
@@ -465,7 +465,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
             padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)",
           }}>
             <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-            <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>
+            <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--crm-text)" }}>
               Historial de encuestas
             </span>
             <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginLeft: "4px" }}>
@@ -510,7 +510,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                           ? <ChevronDown size={14} color="rgba(255,255,255,0.35)" />
                           : <ChevronRight size={14} color="rgba(255,255,255,0.35)" />
                         }
-                        <span style={{ fontSize: "13px", fontWeight: 700, color: "#f1f5f9" }}>
+                        <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--crm-text)" }}>
                           {mesNombre(mesK)}
                         </span>
                         {mesK === mesActualStr && (
@@ -525,7 +525,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                         <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>
-                          <strong style={{ color: "#f1f5f9" }}>{regs.length}</strong> encuestas
+                          <strong style={{ color: "var(--crm-text)" }}>{regs.length}</strong> encuestas
                         </span>
                         {npsAvg !== null && (
                           <span style={{
@@ -590,7 +590,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                                 <td style={{ padding: "10px 16px" }}>
                                   <TipoBadge tipo={r.tipo} />
                                 </td>
-                                <td style={{ padding: "10px 16px", fontSize: "12px", fontWeight: 600, color: "#f1f5f9" }}>
+                                <td style={{ padding: "10px 16px", fontSize: "12px", fontWeight: 600, color: "var(--crm-text)" }}>
                                   {r.referencia}
                                 </td>
                                 <td style={{ padding: "10px 16px", fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>
@@ -667,7 +667,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                   <Pencil size={18} className="text-blue-400" />
                 </div>
                 <div>
-                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>
+                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
                     {editStep === "confirm" ? "Confirmá los cambios" : "Editar Encuesta"}
                   </h2>
                   <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
@@ -737,7 +737,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                           <option value={editForm.referencia}>{editForm.referencia} (inactivo)</option>
                         )}
                         {agentes.map(a => (
-                          <option key={a.id} value={a.nombre} style={{ background: "#1e1e2e" }}>{a.nombre}</option>
+                          <option key={a.id} value={a.nombre} style={{ background: "var(--crm-input-bg)" }}>{a.nombre}</option>
                         ))}
                       </select>
                     </Field>
@@ -809,7 +809,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                   <div style={{
                     background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                     borderRadius: "8px", padding: "10px 12px",
-                    fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
+                    fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                   }}>
                     ⚠️ {editError}
                   </div>
@@ -843,7 +843,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                   background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.2)",
                   borderRadius: "10px", padding: "16px", marginBottom: "20px",
                 }}>
-                  <p style={{ margin: "0 0 10px", fontSize: "13px", fontWeight: 700, color: "#f1f5f9" }}>
+                  <p style={{ margin: "0 0 10px", fontSize: "13px", fontWeight: 700, color: "var(--crm-text)" }}>
                     ¿Confirmás guardar los cambios en esta encuesta?
                   </p>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
@@ -855,14 +855,14 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                     ].map(([k, v]) => (
                       <div key={k} style={{ fontSize: "12px" }}>
                         <span style={{ color: "rgba(255,255,255,0.4)" }}>{k}: </span>
-                        <span style={{ color: "#f1f5f9", fontWeight: 600 }}>{v}</span>
+                        <span style={{ color: "var(--crm-text)", fontWeight: 600 }}>{v}</span>
                       </div>
                     ))}
                   </div>
                   {editForm.comentario && (
                     <div style={{ marginTop: "6px", fontSize: "12px" }}>
                       <span style={{ color: "rgba(255,255,255,0.4)" }}>Comentario: </span>
-                      <span style={{ color: "#f1f5f9" }}>{editForm.comentario}</span>
+                      <span style={{ color: "var(--crm-text)" }}>{editForm.comentario}</span>
                     </div>
                   )}
                 </div>
@@ -871,7 +871,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                   <div style={{
                     background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                     borderRadius: "8px", padding: "10px 12px",
-                    fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
+                    fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                   }}>
                     ⚠️ {editError}
                   </div>
@@ -926,7 +926,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                   <AlertTriangle size={22} color="#f87171" />
                 </div>
                 <div>
-                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: "0 0 6px" }}>
+                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: "0 0 6px" }}>
                     ¿Confirmás eliminar esta encuesta?
                   </h2>
                   <div style={{
@@ -934,11 +934,11 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                     padding: "10px 12px", fontSize: "12.5px",
                   }}>
                     <span style={{ color: "rgba(255,255,255,0.5)" }}>Fecha: </span>
-                    <span style={{ color: "#f1f5f9", fontWeight: 600 }}>{fmtFecha(deleteRow.fecha)}</span>
+                    <span style={{ color: "var(--crm-text)", fontWeight: 600 }}>{fmtFecha(deleteRow.fecha)}</span>
                     <span style={{ color: "rgba(255,255,255,0.3)", margin: "0 8px" }}>·</span>
                     <TipoBadge tipo={deleteRow.tipo} />
                     <span style={{ color: "rgba(255,255,255,0.3)", margin: "0 8px" }}>·</span>
-                    <span style={{ color: "#f1f5f9", fontWeight: 600 }}>{deleteRow.referencia}</span>
+                    <span style={{ color: "var(--crm-text)", fontWeight: 600 }}>{deleteRow.referencia}</span>
                     {deleteRow.nps !== null && (
                       <>
                         <span style={{ color: "rgba(255,255,255,0.3)", margin: "0 8px" }}>·</span>
@@ -956,7 +956,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                 <div style={{
                   background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
+                  fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                 }}>
                   ⚠️ {deleteError}
                 </div>
@@ -973,7 +973,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                 </button>
                 <button type="button" onClick={handleDeleteConfirm} disabled={isDelPending} style={{
                   padding: "9px 20px", borderRadius: "8px", border: "none",
-                  background: isDelPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                  background: isDelPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
                   color: "white", fontSize: "13px", fontWeight: 700,
                   cursor: isDelPending ? "not-allowed" : "pointer", fontFamily: "inherit",
                   display: "flex", alignItems: "center", gap: "6px",
@@ -1008,7 +1008,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                   <ClipboardList size={20} className="text-violet-400" />
                 </div>
                 <div>
-                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>
+                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
                     Registrar Encuesta
                   </h2>
                   <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
@@ -1087,7 +1087,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                         {loadingAgentes ? "Cargando agentes..." : "Seleccionar agente..."}
                       </option>
                       {agentes.map(a => (
-                        <option key={a.id} value={a.nombre} style={{ background: "#1e1e2e" }}>
+                        <option key={a.id} value={a.nombre} style={{ background: "var(--crm-input-bg)" }}>
                           {a.nombre}
                         </option>
                       ))}
@@ -1167,7 +1167,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                 <div style={{
                   background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
+                  fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                 }}>
                   ⚠️ {error}
                 </div>
@@ -1192,7 +1192,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                     <button type="submit" disabled={isPending}
                       style={{
                         padding: "9px 24px", borderRadius: "8px", border: "none",
-                        background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                        background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
                         color: "white", fontSize: "13px", fontWeight: 700,
                         cursor: isPending ? "not-allowed" : "pointer", fontFamily: "inherit",
                         display: "flex", alignItems: "center", gap: "6px",

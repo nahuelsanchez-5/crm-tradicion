@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 import Link from "next/link"
@@ -201,7 +201,7 @@ function NavItemLink({
       className={[
         "flex items-center gap-2.5 px-2.5 py-3 md:py-2.5 rounded-lg text-[13px] mb-0.5 transition-all duration-150 no-underline min-h-[44px]",
         isActive
-          ? "bg-[rgba(227,24,55,0.15)] text-[#ff8a9a] font-semibold border-l-2 border-[#E31837] pl-[9px]"
+          ? "bg-[rgba(227,24,55,0.15)] text-[var(--crm-accent-light)] font-semibold border-l-2 border-[#E31837] pl-[9px]"
           : "text-white/45 font-medium hover:bg-white/[0.05] hover:text-white/75",
       ].join(" ")}
     >

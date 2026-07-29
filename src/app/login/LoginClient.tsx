@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 import Image from "next/image"
@@ -37,7 +37,7 @@ export default function LoginClient({
         style={{
           width: "100%",
           maxWidth: "400px",
-          background: "#13131a",
+          background: "var(--crm-surface-2)",
           border: "1px solid rgba(255,255,255,0.08)",
           borderRadius: "16px",
           padding: "40px 32px",
@@ -58,7 +58,7 @@ export default function LoginClient({
         />
 
         <div style={{ textAlign: "center" }}>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
             CRM Tradición
           </h1>
           <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.55)", marginTop: "6px" }}>
@@ -123,7 +123,7 @@ export default function LoginClient({
             borderRadius: "10px",
             border: "1px solid rgba(255,255,255,0.12)",
             background: loading ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.1)",
-            color: "#f1f5f9",
+            color: "var(--crm-text)",
             fontSize: "14px",
             fontWeight: 700,
             fontFamily: "inherit",

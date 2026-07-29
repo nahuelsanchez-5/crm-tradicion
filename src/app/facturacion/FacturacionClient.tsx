@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -97,7 +97,7 @@ function ProgressBar({ value, isFuture }: { value: number; isFuture: boolean }) 
         ? "#0D9488"
         : value >= 50
           ? "#D97706"
-          : "#E11D48"
+          : "var(--crm-accent)"
 
   return (
     <div style={{ position: "relative" }}>
@@ -148,7 +148,7 @@ function EstadoBadge({ p, isFuture, real }: { p: number; isFuture: boolean; real
   return (
     <span style={{
       padding: "2px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700,
-      background: "#FFF1F2", color: "#E11D48",
+      background: "#FFF1F2", color: "var(--crm-accent)",
     }}>
       Bajo objetivo
     </span>
@@ -363,7 +363,7 @@ export default function FacturacionClient({ rows }: Props) {
                           {isCurrent && (
                             <span style={{
                               fontSize: "10px", fontWeight: 700,
-                              background: "#FFF1F2", color: "#E11D48",
+                              background: "#FFF1F2", color: "var(--crm-accent)",
                               padding: "1px 7px", borderRadius: "10px",
                             }}>
                               HOY
@@ -385,7 +385,7 @@ export default function FacturacionClient({ rows }: Props) {
 
                       {/* % */}
                       <td style={{ padding: "14px 16px", fontWeight: 700, fontSize: "14px", whiteSpace: "nowrap",
-                        color: m.isFuture || m.real_usd === 0 ? "#CBD5E1" : p >= 100 ? "#059669" : p >= 80 ? "#0D9488" : "#E11D48" }}>
+                        color: m.isFuture || m.real_usd === 0 ? "#CBD5E1" : p >= 100 ? "#059669" : p >= 80 ? "#0D9488" : "var(--crm-accent)" }}>
                         {m.isFuture || (m.objetivo_usd === 0 && m.real_usd === 0) ? "—" : `${p}%`}
                       </td>
 
@@ -435,7 +435,7 @@ export default function FacturacionClient({ rows }: Props) {
                     {fmtUSD(stats.totalReal)}
                   </td>
                   <td style={{ padding: "12px 16px", fontWeight: 800, fontSize: "14px",
-                    color: stats.pctAnual >= 100 ? "#059669" : stats.pctAnual >= 80 ? "#0D9488" : "#E11D48" }}>
+                    color: stats.pctAnual >= 100 ? "#059669" : stats.pctAnual >= 80 ? "#0D9488" : "var(--crm-accent)" }}>
                     {stats.pctAnual}%
                   </td>
                   <td colSpan={3} />
@@ -540,7 +540,7 @@ export default function FacturacionClient({ rows }: Props) {
                     fontWeight: 800, fontSize: "16px",
                     color: (() => {
                       const p = pct(parseFloat(form.real_usd) || 0, calcObjetivoMes(modalMes.mes))
-                      return p >= 100 ? "#059669" : p >= 80 ? "#0D9488" : "#E11D48"
+                      return p >= 100 ? "#059669" : p >= 80 ? "#0D9488" : "var(--crm-accent)"
                     })(),
                   }}>
                     {pct(parseFloat(form.real_usd) || 0, calcObjetivoMes(modalMes.mes))}%
@@ -552,7 +552,7 @@ export default function FacturacionClient({ rows }: Props) {
                 <div style={{
                   background: "#FFF1F2", border: "1px solid #FECDD3",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#E11D48", marginBottom: "14px",
+                  fontSize: "12.5px", color: "var(--crm-accent)", marginBottom: "14px",
                 }}>
                   ⚠️ {error}
                 </div>
@@ -571,7 +571,7 @@ export default function FacturacionClient({ rows }: Props) {
                 <button type="submit" disabled={isPending}
                   style={{
                     padding: "9px 24px", borderRadius: "8px", border: "none",
-                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
                     color: "white", fontSize: "13px", fontWeight: 700,
                     cursor: isPending ? "not-allowed" : "pointer",
                     fontFamily: "inherit",

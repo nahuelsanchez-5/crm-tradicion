@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useRouter, usePathname } from "next/navigation"
 import { Printer } from "lucide-react"
@@ -37,7 +37,7 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
   const totalColor =
     totalACobrar >= 300 ? "#059669"
     : totalACobrar >= 150 ? "#D97706"
-    : "#E11D48"
+    : "var(--crm-accent)"
 
   const totalBg =
     totalACobrar >= 300 ? "rgba(74,222,128,0.12)"
@@ -51,7 +51,7 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
       <div className="crm-page-header flex-shrink-0">
         {/* Title */}
         <div style={{ minWidth: 0 }}>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
             Resumen mensual
           </h1>
           <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
@@ -69,7 +69,7 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
               onChange={e => navigate(parseInt(e.target.value), selectedYear)}
               style={{
                 background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: "8px", color: "#f1f5f9", padding: "6px 10px",
+                borderRadius: "8px", color: "var(--crm-text)", padding: "6px 10px",
                 fontSize: "13px", fontWeight: 600, cursor: "pointer", outline: "none",
               }}
             >
@@ -83,7 +83,7 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
               onChange={e => navigate(selectedMonth, parseInt(e.target.value))}
               style={{
                 background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: "8px", color: "#f1f5f9", padding: "6px 10px",
+                borderRadius: "8px", color: "var(--crm-text)", padding: "6px 10px",
                 fontSize: "13px", fontWeight: 600, cursor: "pointer", outline: "none",
               }}
             >
@@ -98,7 +98,7 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
               style={{
                 display: "flex", alignItems: "center", gap: "6px",
                 background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)",
-                borderRadius: "8px", color: "#f1f5f9", padding: "6px 12px",
+                borderRadius: "8px", color: "var(--crm-text)", padding: "6px 12px",
                 fontSize: "13px", fontWeight: 600, cursor: "pointer",
               }}
             >
@@ -123,10 +123,10 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
 
       {/* Content */}
       <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
-        <div style={{ background: "#13131a", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden" }}>
+        <div style={{ background: "var(--crm-surface-2)", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "14px 20px", background: "transparent", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
             <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-            <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>Indicadores clave del mes</span>
+            <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--crm-text)" }}>Indicadores clave del mes</span>
           </div>
 
           {/* Desktop table */}
@@ -149,13 +149,13 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
               <tbody>
                 {kpis.map((kpi, i) => (
                   <tr key={kpi.label} style={{ borderBottom: i < kpis.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
-                    <td style={{ padding: "16px 20px", fontWeight: 700, fontSize: "14px", color: "#f1f5f9" }}>
+                    <td style={{ padding: "16px 20px", fontWeight: 700, fontSize: "14px", color: "var(--crm-text)" }}>
                       {kpi.label}
                     </td>
                     <td style={{ padding: "16px 20px", fontSize: "13px", color: "rgba(255,255,255,0.45)" }}>
                       {kpi.objetivo}
                     </td>
-                    <td style={{ padding: "16px 20px", fontSize: "13px", fontWeight: 600, color: "#f1f5f9" }}>
+                    <td style={{ padding: "16px 20px", fontSize: "13px", fontWeight: 600, color: "var(--crm-text)" }}>
                       {kpi.cumplido}
                     </td>
                     <td style={{ padding: "16px 20px" }}>
@@ -175,7 +175,7 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
                 <tr style={{ background: "rgba(255,255,255,0.04)", borderTop: "1px solid rgba(255,255,255,0.07)" }}>
                   <td colSpan={3} style={{
                     padding: "16px 20px", fontWeight: 800,
-                    fontSize: "14px", color: "#f1f5f9", textAlign: "right",
+                    fontSize: "14px", color: "var(--crm-text)", textAlign: "right",
                   }}>
                     Total a cobrar
                   </td>
@@ -199,7 +199,7 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
             {kpis.map(kpi => (
               <div key={kpi.label} style={{ padding: "16px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
-                  <span style={{ fontWeight: 700, fontSize: "14px", color: "#f1f5f9" }}>{kpi.label}</span>
+                  <span style={{ fontWeight: 700, fontSize: "14px", color: "var(--crm-text)" }}>{kpi.label}</span>
                   <span className={kpi.aCobrar > 0 ? "kpi-badge-pos" : "kpi-badge-neg"} style={{
                     padding: "4px 12px", borderRadius: "20px",
                     fontSize: "12px", fontWeight: 800,
@@ -212,13 +212,13 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
                 <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "4px" }}>
                   Objetivo: {kpi.objetivo}
                 </div>
-                <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#f1f5f9" }}>
+                <div style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--crm-text)" }}>
                   {kpi.cumplido}
                 </div>
               </div>
             ))}
             <div style={{ padding: "16px", background: "rgba(255,255,255,0.04)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontWeight: 800, fontSize: "14px", color: "#f1f5f9" }}>Total a cobrar</span>
+              <span style={{ fontWeight: 800, fontSize: "14px", color: "var(--crm-text)" }}>Total a cobrar</span>
               <span className="kpi-badge-total" style={{
                 padding: "6px 16px", borderRadius: "20px",
                 fontSize: "15px", fontWeight: 800,
@@ -233,10 +233,10 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
         {/* Legend */}
         <div style={{
           marginTop: "16px", padding: "14px 18px",
-          background: "#13131a", borderRadius: "12px",
+          background: "var(--crm-surface-2)", borderRadius: "12px",
           border: "1px solid rgba(255,255,255,0.07)", fontSize: "12px", color: "rgba(255,255,255,0.45)", lineHeight: 1.6,
         }}>
-          <strong style={{ color: "#f1f5f9" }}>Criterio de bono:</strong>{" "}
+          <strong style={{ color: "var(--crm-text)" }}>Criterio de bono:</strong>{" "}
           Cobros, Cartelería, Encuestas y Facturación: USD 100 si se alcanza el objetivo, USD 0 si no.
         </div>
       </div>

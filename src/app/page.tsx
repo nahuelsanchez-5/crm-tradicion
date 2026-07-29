@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase"
+﻿import { createServerClient } from "@/lib/supabase"
 import KpiCard from "@/components/KpiCard"
 import DashboardActions from "./DashboardActions"
 import DashboardClock from "./DashboardClock"
@@ -280,7 +280,7 @@ export default async function DashboardPage() {
         {/* Ofertas sin actividad +5 días */}
         {ofertasSinActividad.length > 0 && (
           <div className="crm-glass-section mb-6">
-            <div className="crm-section-hd" style={{ background: "#13131a", borderRadius: "10px 10px 0 0" }}>
+            <div className="crm-section-hd" style={{ background: "var(--crm-surface-2)", borderRadius: "10px 10px 0 0" }}>
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-lg bg-amber-500/15 flex items-center justify-center">
                   <Clock size={14} className="text-amber-400" />

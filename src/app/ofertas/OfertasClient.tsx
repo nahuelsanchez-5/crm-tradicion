@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -179,7 +179,7 @@ const inp: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
   borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
   fontSize: "13px", fontFamily: "inherit",
-  color: "#f1f5f9", outline: "none", background: "#1e1e2e",
+  color: "var(--crm-text)", outline: "none", background: "var(--crm-input-bg)",
   boxSizing: "border-box",
 }
 
@@ -364,14 +364,14 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
 
   // ── Styles ─────────────────────────────────────────
   const cardStyle: React.CSSProperties = {
-    background: "#13131a", borderRadius: "14px",
+    background: "var(--crm-surface-2)", borderRadius: "14px",
     border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
   }
 
   const selStyle: React.CSSProperties = {
     padding: "6px 10px", borderRadius: "8px",
     border: "1px solid rgba(255,255,255,0.1)", fontSize: "12.5px",
-    fontWeight: 500, color: "#f1f5f9", background: "#1e1e2e",
+    fontWeight: 500, color: "var(--crm-text)", background: "var(--crm-input-bg)",
     cursor: "pointer", fontFamily: "inherit", outline: "none",
   }
 
@@ -384,7 +384,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
       {/* ── Header ──────────────────────────────────── */}
       <div className="crm-page-header flex-shrink-0">
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
             Ofertas
           </h1>
         </div>
@@ -397,7 +397,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                 background: viewMode === mode ? "rgba(255,255,255,0.12)" : "transparent",
                 boxShadow: viewMode === mode ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
                 fontSize: "12px", fontWeight: 600,
-                color: viewMode === mode ? "#f1f5f9" : "rgba(255,255,255,0.35)",
+                color: viewMode === mode ? "var(--crm-text)" : "rgba(255,255,255,0.35)",
                 cursor: "pointer", fontFamily: "inherit",
                 textTransform: "capitalize" as const,
               }}>
@@ -408,7 +408,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
           <button
             onClick={openNueva}
             style={{
-              background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+              background: "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
               color: "white", border: "none",
               padding: "8px 18px", borderRadius: "9px",
               fontSize: "13px", fontWeight: 700, cursor: "pointer",
@@ -543,7 +543,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                   return (
                     <Link key={o.id} href={`/ofertas/${o.id}`} style={{ textDecoration: "none" }}>
                       <div style={{
-                        background: "#13131a", borderRadius: "10px",
+                        background: "var(--crm-surface-2)", borderRadius: "10px",
                         border: "1px solid rgba(255,255,255,0.07)", padding: "14px 16px",
                         cursor: "pointer", transition: "box-shadow 0.15s",
                       }} className="hover:shadow-md">
@@ -551,10 +551,10 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                           <span style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)", padding: "1px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: 700 }}>#{o.numero}</span>
                           <TipologiaBadge tipo={o.tipologia} />
                         </div>
-                        <div style={{ fontSize: "13px", fontWeight: 600, color: "#f1f5f9", lineHeight: 1.3, marginBottom: "4px" }}>{o.direccion}</div>
+                        <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--crm-text)", lineHeight: 1.3, marginBottom: "4px" }}>{o.direccion}</div>
                         <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginBottom: "8px" }}>{vendedor}</div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: "13px", fontWeight: 700, color: "#f1f5f9" }}>{fmtUSD(o.monto_ofertado_usd)}</span>
+                          <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--crm-text)" }}>{fmtUSD(o.monto_ofertado_usd)}</span>
                           {diasAct !== null && (
                             <span style={{ fontSize: "11px", color: diasAct >= 5 ? "#f87171" : "rgba(255,255,255,0.35)", fontWeight: diasAct >= 5 ? 700 : 400 }}>
                               {diasAct === 0 ? "Hoy" : `${diasAct}d`}
@@ -580,7 +580,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                         display: "flex", alignItems: "center", justifyContent: "space-between",
                         marginBottom: "10px", padding: "0 2px",
                       }}>
-                        <span style={{ fontSize: "12px", fontWeight: 700, color: "#f1f5f9" }}>{estado}</span>
+                        <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--crm-text)" }}>{estado}</span>
                         <span style={{ ...colStyle, padding: "2px 8px", borderRadius: "20px", fontSize: "11px", fontWeight: 700 }}>
                           {colOfertas.length}
                         </span>
@@ -603,7 +603,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                             return (
                               <Link key={o.id} href={`/ofertas/${o.id}`} style={{ textDecoration: "none" }}>
                                 <div style={{
-                                  background: "#13131a", borderRadius: "10px",
+                                  background: "var(--crm-surface-2)", borderRadius: "10px",
                                   border: "1px solid rgba(255,255,255,0.07)", padding: "12px 14px",
                                   cursor: "pointer", transition: "box-shadow 0.15s",
                                 }} className="hover:shadow-md">
@@ -611,10 +611,10 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                                     <span style={{ background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)", padding: "1px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: 700 }}>#{o.numero}</span>
                                     <TipologiaBadge tipo={o.tipologia} />
                                   </div>
-                                  <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#f1f5f9", lineHeight: 1.3, marginBottom: "6px" }}>{o.direccion}</div>
+                                  <div style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--crm-text)", lineHeight: 1.3, marginBottom: "6px" }}>{o.direccion}</div>
                                   <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginBottom: "8px" }}>{vendedor}</div>
                                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                    <span style={{ fontSize: "12px", fontWeight: 700, color: "#f1f5f9" }}>{fmtUSD(o.monto_ofertado_usd)}</span>
+                                    <span style={{ fontSize: "12px", fontWeight: 700, color: "var(--crm-text)" }}>{fmtUSD(o.monto_ofertado_usd)}</span>
                                     {diasAct !== null && (
                                       <span style={{ fontSize: "10px", color: diasAct >= 5 ? "#f87171" : "rgba(255,255,255,0.35)", fontWeight: diasAct >= 5 ? 700 : 400 }}>
                                         {diasAct === 0 ? "Hoy" : `${diasAct}d`}
@@ -643,7 +643,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
               padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
             }}>
               <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-              <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>
+              <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--crm-text)" }}>
                 Ofertas en curso
               </span>
             </div>
@@ -685,22 +685,22 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                       const comprador = agenteName(o.agente_comprador_id, o.agente_comprador_externo)
                       return (
                         <tr key={o.id} style={{ borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)" }} className="hover:bg-[rgba(255,255,255,0.03)]">
-                          <td style={{ padding: "12px 14px", fontSize: "13px", fontWeight: 700, color: "#f1f5f9" }}>{o.numero}</td>
-                          <td style={{ padding: "12px 14px", fontSize: "13px", color: "#f1f5f9", maxWidth: "180px" }}>
+                          <td style={{ padding: "12px 14px", fontSize: "13px", fontWeight: 700, color: "var(--crm-text)" }}>{o.numero}</td>
+                          <td style={{ padding: "12px 14px", fontSize: "13px", color: "var(--crm-text)", maxWidth: "180px" }}>
                             <span title={o.direccion} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.direccion}</span>
                           </td>
                           <td style={{ padding: "12px 14px", maxWidth: "160px" }}>
-                            <div style={{ fontSize: "12px", color: "#f1f5f9", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={vendedor}>{vendedor}</div>
+                            <div style={{ fontSize: "12px", color: "var(--crm-text)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={vendedor}>{vendedor}</div>
                             <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={comprador}>{comprador}</div>
                           </td>
                           <td style={{ padding: "12px 14px" }}><TipologiaBadge tipo={o.tipologia} /></td>
-                          <td style={{ padding: "12px 14px", fontSize: "13px", fontWeight: 600, color: "#f1f5f9", whiteSpace: "nowrap" }}>{fmtUSD(o.monto_ofertado_usd)}</td>
+                          <td style={{ padding: "12px 14px", fontSize: "13px", fontWeight: 600, color: "var(--crm-text)", whiteSpace: "nowrap" }}>{fmtUSD(o.monto_ofertado_usd)}</td>
                           <td style={{ padding: "12px 14px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>{pctNeg(o.monto_ofertado_usd, o.precio_publicacion_usd)}</td>
                           <td style={{ padding: "12px 14px" }}><ReservaBadge tiene={o.tiene_reserva} /></td>
                           <td style={{ padding: "12px 14px" }}><EstadoBadge estado={o.estado} /></td>
                           <td style={{ padding: "12px 14px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>{fmtFecha(o.fecha_oferta)}</td>
                           <td style={{ padding: "12px 14px" }}>
-                            <Link href={`/ofertas/${o.id}`} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "5px 12px", borderRadius: "7px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)", fontSize: "12px", fontWeight: 600, color: "#f1f5f9", textDecoration: "none", whiteSpace: "nowrap" }} className="hover:bg-[rgba(255,255,255,0.05)]">
+                            <Link href={`/ofertas/${o.id}`} style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "5px 12px", borderRadius: "7px", border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)", fontSize: "12px", fontWeight: 600, color: "var(--crm-text)", textDecoration: "none", whiteSpace: "nowrap" }} className="hover:bg-[rgba(255,255,255,0.05)]">
                               Ver detalle <ChevronRight size={12} />
                             </Link>
                           </td>
@@ -735,7 +735,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                   <Handshake size={20} className="text-blue-600" />
                 </div>
                 <div>
-                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>Nueva Oferta</h2>
+                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>Nueva Oferta</h2>
                   <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
                     Registrá los datos de la operación
                   </p>
@@ -855,7 +855,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                       padding: "7px 20px", borderRadius: "8px", border: "1.5px solid",
                       borderColor: form.moneda === m ? "#E31837" : "rgba(255,255,255,0.1)",
                       background: form.moneda === m ? "rgba(227,24,55,0.12)" : "rgba(255,255,255,0.06)",
-                      color: form.moneda === m ? "#E11D48" : "rgba(255,255,255,0.45)",
+                      color: form.moneda === m ? "var(--crm-accent)" : "rgba(255,255,255,0.45)",
                       fontWeight: 700, fontSize: "13px", cursor: "pointer", fontFamily: "inherit",
                     }}>{m}</button>
                   ))}
@@ -927,7 +927,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                 <div style={{
                   background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
+                  fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                 }}>
                   ⚠️ {formError}
                 </div>
@@ -954,7 +954,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                       className="w-full sm:w-auto min-h-[44px]"
                       style={{
                         padding: "9px 24px", borderRadius: "8px", border: "none",
-                        background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                        background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
                         color: "white", fontSize: "13px", fontWeight: 700,
                         cursor: isPending ? "not-allowed" : "pointer",
                         fontFamily: "inherit", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",

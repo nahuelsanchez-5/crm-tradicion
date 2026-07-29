@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import FullCalendar from "@fullcalendar/react"
 import dayGridPlugin from "@fullcalendar/daygrid"
@@ -21,10 +21,10 @@ export default function CalendarioFC({ events }: Props) {
           --fc-list-event-hover-bg-color: rgba(255,255,255,0.04);
           --fc-event-bg-color: #3b82f6;
           --fc-event-border-color: #1d4ed8;
-          color: #f1f5f9;
+          color: var(--crm-text);
         }
         .fc-crm .fc-toolbar-title {
-          color: #f1f5f9;
+          color: var(--crm-text);
           font-size: 15px !important;
           font-weight: 700;
         }
@@ -41,13 +41,13 @@ export default function CalendarioFC({ events }: Props) {
         }
         .fc-crm .fc-button-primary:hover {
           background: rgba(255,255,255,0.1) !important;
-          color: #f1f5f9 !important;
+          color: var(--crm-text) !important;
         }
         .fc-crm .fc-button-primary:not(:disabled):active,
         .fc-crm .fc-button-primary:not(:disabled).fc-button-active {
           background: rgba(227,24,55,0.2) !important;
           border-color: rgba(227,24,55,0.4) !important;
-          color: #ff8a9a !important;
+          color: var(--crm-accent-light) !important;
         }
         .fc-crm .fc-col-header-cell-cushion {
           color: rgba(255,255,255,0.4);
@@ -89,7 +89,7 @@ export default function CalendarioFC({ events }: Props) {
       <div
         className="fc-crm"
         style={{
-          background: "#13131a",
+          background: "var(--crm-surface-2)",
           borderRadius: "14px",
           border: "1px solid rgba(255,255,255,0.07)",
           padding: "16px",

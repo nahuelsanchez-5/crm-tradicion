@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -265,7 +265,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
   const ErrorBox = () => error ? (
     <div
       className="rounded-lg px-3 py-2.5 text-[12.5px] mb-4"
-      style={{ background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)", color: "#ff8a9a" }}
+      style={{ background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)", color: "var(--crm-accent-light)" }}
     >
       ⚠️ {error}
     </div>

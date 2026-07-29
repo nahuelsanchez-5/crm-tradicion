@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -75,7 +75,7 @@ interface RecuperadoMesRow {
 function diasColor(d: number): string {
   if (d > 30)  return "#059669"
   if (d >= 10) return "#D97706"
-  return "#E11D48"
+  return "var(--crm-accent)"
 }
 
 function diasBg(d: number): string {
@@ -102,7 +102,7 @@ const inp: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
   borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
   fontSize: "13px", fontFamily: "inherit",
-  color: "#f1f5f9", outline: "none", background: "#1e1e2e",
+  color: "var(--crm-text)", outline: "none", background: "var(--crm-input-bg)",
   boxSizing: "border-box",
 }
 
@@ -323,7 +323,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
 
   // ── Styles ─────────────────────────────────────────
   const cardStyle: React.CSSProperties = {
-    background: "#13131a", borderRadius: "14px",
+    background: "var(--crm-surface-2)", borderRadius: "14px",
     border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
   }
 
@@ -335,7 +335,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
       {/* ── Page Header ──────────────────────────── */}
       <div className="crm-page-header flex-shrink-0">
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
             Cartelería
           </h1>
           <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
@@ -347,7 +347,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
           style={{
             display: "flex", alignItems: "center", gap: "7px",
             padding: "8px 18px", borderRadius: "9px", border: "none",
-            background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+            background: "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
             color: "white", fontSize: "13px", fontWeight: 700,
             cursor: "pointer", fontFamily: "inherit",
             boxShadow: "0 2px 8px rgba(227,24,55,0.3)",
@@ -423,7 +423,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
           marginBottom: panelOpen ? "20px" : "0px",
         }}>
           <div style={{
-            background: "#13131a",
+            background: "var(--crm-surface-2)",
             border: `1px solid ${panelOpen === "vencidos" ? "rgba(239,68,68,0.3)" : panelOpen === "recuperados" ? "rgba(16,185,129,0.3)" : "rgba(245,158,11,0.3)"}`,
             borderRadius: "14px",
             overflow: "hidden",
@@ -482,7 +482,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                           <td style={{ padding: "10px 14px", fontSize: "13px", fontWeight: 700, color: "#10b981", whiteSpace: "nowrap" }}>
                             {d.nro_cartel || "—"}
                           </td>
-                          <td style={{ padding: "10px 14px", fontSize: "13px", color: "#f1f5f9", maxWidth: "280px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <td style={{ padding: "10px 14px", fontSize: "13px", color: "var(--crm-text)", maxWidth: "280px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {d.direccion || "—"}
                           </td>
                           <td style={{ padding: "10px 14px", fontSize: "12px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap" }}>
@@ -498,7 +498,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                         <td style={{ padding: "10px 14px", fontSize: "13px", fontWeight: 700, color: panelOpen === "vencidos" ? "#ef4444" : "#f59e0b", whiteSpace: "nowrap" }}>
                           {c.numero}
                         </td>
-                        <td style={{ padding: "10px 14px", fontSize: "13px", color: "#f1f5f9", maxWidth: "280px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "10px 14px", fontSize: "13px", color: "var(--crm-text)", maxWidth: "280px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {c.direccion || "—"}
                         </td>
                         <td style={{ padding: "10px 14px", fontSize: "12px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap" }}>
@@ -612,7 +612,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-              <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>
+              <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--crm-text)" }}>
                 Carteles activos
               </span>
             </div>
@@ -671,7 +671,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                       {/* Dirección */}
                       <td style={{ padding: "13px 16px", maxWidth: "240px" }}>
                         <span style={{
-                          fontSize: "13px", fontWeight: 600, color: "#f1f5f9",
+                          fontSize: "13px", fontWeight: 600, color: "var(--crm-text)",
                           display: "block", overflow: "hidden",
                           textOverflow: "ellipsis", whiteSpace: "nowrap",
                         }}>
@@ -698,7 +698,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                       </td>
 
                       {/* Agente */}
-                      <td style={{ padding: "13px 16px", fontSize: "13px", color: "#f1f5f9", whiteSpace: "nowrap" }}>
+                      <td style={{ padding: "13px 16px", fontSize: "13px", color: "var(--crm-text)", whiteSpace: "nowrap" }}>
                         {c.agente || <span style={{ color: "rgba(255,255,255,0.2)" }}>—</span>}
                       </td>
 
@@ -733,7 +733,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                             style={{
                               padding: "5px 14px", borderRadius: "7px",
                               border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
-                              fontSize: "12px", fontWeight: 600, color: "#f1f5f9",
+                              fontSize: "12px", fontWeight: 600, color: "var(--crm-text)",
                               cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
                             }}
                           >
@@ -771,7 +771,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
               width: "100%",
               display: "flex", alignItems: "center", justifyContent: "space-between",
               padding: "14px 20px",
-              background: "#13131a",
+              background: "var(--crm-surface-2)",
               border: "1px solid rgba(255,255,255,0.07)",
               borderRadius: devueltosOpen ? "14px 14px 0 0" : "14px",
               cursor: "pointer", fontFamily: "inherit",
@@ -783,7 +783,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                 color="rgba(255,255,255,0.45)"
                 style={{ transform: devueltosOpen ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.2s" }}
               />
-              <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>Carteles Devueltos</span>
+              <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--crm-text)" }}>Carteles Devueltos</span>
             </div>
             {devueltosOpen && !devueltosLoading && (
               <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", fontWeight: 600 }}>
@@ -794,7 +794,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
 
           {devueltosOpen && (
             <div style={{
-              background: "#13131a",
+              background: "var(--crm-surface-2)",
               border: "1px solid rgba(255,255,255,0.07)", borderTop: "none",
               borderRadius: "0 0 14px 14px", padding: "16px 20px",
             }}>
@@ -859,10 +859,10 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                         <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: 700, color: "rgba(255,255,255,0.5)" }}>
                           {d.nro_cartel || "—"}
                         </td>
-                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "#f1f5f9", maxWidth: "220px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "var(--crm-text)", maxWidth: "220px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {d.direccion || "—"}
                         </td>
-                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "#f1f5f9", whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "var(--crm-text)", whiteSpace: "nowrap" }}>
                           {d.agente || "—"}
                         </td>
                         <td style={{ padding: "12px 16px", fontSize: "13px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
@@ -898,7 +898,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                   <MapPin size={20} className="text-teal-400" />
                 </div>
                 <div>
-                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>
+                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
                     {modalMode === "nuevo" ? "Nuevo cartel" : "Editar cartel"}
                   </h2>
                   <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
@@ -999,7 +999,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                 <div style={{
                   background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
+                  fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                 }}>
                   ⚠️ {error}
                 </div>
@@ -1033,7 +1033,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                         padding: "9px 24px", borderRadius: "8px", border: "none",
                         background: isPending
                           ? "#CBD5E1"
-                          : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                          : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
                         color: "white", fontSize: "13px", fontWeight: 700,
                         cursor: isPending ? "not-allowed" : "pointer",
                         fontFamily: "inherit",
@@ -1074,7 +1074,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                   <RotateCcw size={18} className="text-rose-400" />
                 </div>
                 <div>
-                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>
+                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
                     Confirmar devolución
                   </h2>
                   <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
@@ -1093,7 +1093,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
             </div>
 
             <div style={{ padding: "20px" }}>
-              <p style={{ fontSize: "13px", color: "#f1f5f9", marginBottom: "8px", lineHeight: 1.5 }}>
+              <p style={{ fontSize: "13px", color: "var(--crm-text)", marginBottom: "8px", lineHeight: 1.5 }}>
                 ¿Confirmar la devolución de este cartel? Se registrará en el historial y se eliminará de Airtable.
               </p>
               <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "20px" }}>
@@ -1104,7 +1104,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                 <div style={{
                   background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
+                  fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                 }}>
                   ⚠️ {devolverError}
                 </div>
@@ -1128,7 +1128,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                   disabled={devolverLoading}
                   style={{
                     padding: "9px 20px", borderRadius: "8px", border: "none",
-                    background: devolverLoading ? "#CBD5E1" : "#E11D48",
+                    background: devolverLoading ? "#CBD5E1" : "var(--crm-accent)",
                     color: "white", fontSize: "13px", fontWeight: 700,
                     cursor: devolverLoading ? "not-allowed" : "pointer",
                     fontFamily: "inherit",

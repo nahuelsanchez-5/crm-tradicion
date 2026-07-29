@@ -30,7 +30,7 @@ export default async function RootLayout({
 
   return (
     <html lang="es" className={`${jakarta.variable} h-full antialiased`}>
-      <body className="h-full overflow-hidden" style={{ background: "linear-gradient(135deg, #0a0a1a 0%, #0d0d2b 50%, #0a1a0f 100%)" }}>
+      <body className="h-full overflow-hidden">
         <SessionProvider>
           <div style={{ display: "flex", height: "100%" }}>
             <div className="no-print" style={{ display: "contents" }}>

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
@@ -155,7 +155,7 @@ const inp: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
   borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
   fontSize: "13px", fontFamily: "inherit",
-  color: "#f1f5f9", outline: "none", background: "#1e1e2e",
+  color: "var(--crm-text)", outline: "none", background: "var(--crm-input-bg)",
   boxSizing: "border-box",
 }
 
@@ -374,7 +374,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
 
   // ── Shared styles ──────────────────────────────────
   const cardStyle: React.CSSProperties = {
-    background: "#13131a", borderRadius: "14px",
+    background: "var(--crm-surface-2)", borderRadius: "14px",
     border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
   }
 
@@ -387,7 +387,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
       {/* ── Page Header ──────────────────────────── */}
       <div className="crm-page-header flex-shrink-0">
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
             Operaciones
           </h1>
           <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
@@ -397,7 +397,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
         <button
           onClick={openNuevo}
           style={{
-            background: "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+            background: "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
             color: "white", border: "none",
             padding: "8px 18px", borderRadius: "9px",
             fontSize: "13px", fontWeight: 700, cursor: "pointer",
@@ -446,7 +446,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
               style={{
                 padding: "6px 10px", borderRadius: "8px",
                 border: "1px solid rgba(255,255,255,0.1)", fontSize: "12.5px",
-                fontWeight: 500, color: "#f1f5f9", background: "#1e1e2e",
+                fontWeight: 500, color: "var(--crm-text)", background: "var(--crm-input-bg)",
                 cursor: "pointer", fontFamily: "inherit", outline: "none",
               }}
             >
@@ -467,7 +467,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
             padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)",
           }}>
             <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-            <span style={{ fontSize: "14px", fontWeight: 700, color: "#f1f5f9" }}>
+            <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--crm-text)" }}>
               Historial de operaciones
             </span>
           </div>
@@ -514,7 +514,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
                         <td style={{ padding: "12px 16px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
                           {fmtFecha(o.fecha)}
                         </td>
-                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "#f1f5f9", maxWidth: "200px" }}>
+                        <td style={{ padding: "12px 16px", fontSize: "13px", color: "var(--crm-text)", maxWidth: "200px" }}>
                           <span title={o.direccion} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {o.direccion}
                           </span>
@@ -527,7 +527,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
                         <td style={{ padding: "12px 16px" }}>
                           <TipoBadge tipo={o.tipo} />
                         </td>
-                        <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: 600, color: "#f1f5f9", whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: 600, color: "var(--crm-text)", whiteSpace: "nowrap" }}>
                           {fmtUSD(Number(o.comision_bruta))}
                         </td>
                         <td style={{ padding: "12px 16px" }}>
@@ -537,7 +537,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
                               style={{
                                 padding: "5px 14px", borderRadius: "7px",
                                 border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
-                                fontSize: "12px", fontWeight: 600, color: "#f1f5f9",
+                                fontSize: "12px", fontWeight: 600, color: "var(--crm-text)",
                                 cursor: "pointer", fontFamily: "inherit",
                                 whiteSpace: "nowrap",
                               }}
@@ -586,7 +586,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
               padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0,
             }}>
               <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
                   {modal === "nuevo" ? "Nueva Operación" : "Editar Operación"}
                 </h2>
                 <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
@@ -733,7 +733,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
                       padding: "7px 20px", borderRadius: "8px", border: "1.5px solid",
                       borderColor: form.moneda === m ? "#E31837" : "rgba(255,255,255,0.1)",
                       background: form.moneda === m ? "rgba(227,24,55,0.12)" : "rgba(255,255,255,0.06)",
-                      color: form.moneda === m ? "#E11D48" : "rgba(255,255,255,0.5)",
+                      color: form.moneda === m ? "var(--crm-accent)" : "rgba(255,255,255,0.5)",
                       fontWeight: 700, fontSize: "13px", cursor: "pointer", fontFamily: "inherit",
                     }}>{m}</button>
                   ))}
@@ -786,7 +786,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
                 <div style={{
                   background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                   borderRadius: "8px", padding: "10px 12px",
-                  fontSize: "12.5px", color: "#ff8a9a", marginBottom: "14px",
+                  fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                 }}>
                   ⚠️ {error}
                 </div>
@@ -806,7 +806,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
                 <button type="submit" disabled={isPending}
                   style={{
                     padding: "9px 24px", borderRadius: "8px", border: "none",
-                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                    background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
                     color: "white", fontSize: "13px", fontWeight: 700,
                     cursor: isPending ? "not-allowed" : "pointer",
                     fontFamily: "inherit",
@@ -837,7 +837,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
               padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0,
             }}>
               <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "#f1f5f9", margin: 0 }}>
+                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
                   Eliminar operación
                 </h2>
                 <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>

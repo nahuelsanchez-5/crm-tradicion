@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useState, useTransition } from "react"
 import { guardarConfig } from "./actions"
@@ -74,7 +74,7 @@ const inp: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
   borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
   fontSize: "13px", fontFamily: "inherit",
-  color: "#f1f5f9", outline: "none", background: "#1e1e2e",
+  color: "var(--crm-text)", outline: "none", background: "var(--crm-input-bg)",
   boxSizing: "border-box",
 }
 
@@ -137,7 +137,7 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
         background: "rgba(10,10,26,0.8)", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0,
       }}>
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "#f1f5f9", letterSpacing: "-0.3px", margin: 0 }}>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
             Configuración
           </h1>
           <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
@@ -163,7 +163,7 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
               const items = DEFAULT_CONFIG.filter(e => e.grupo === grupo)
               return (
                 <div key={grupo} style={{
-                  background: "#13131a", borderRadius: "14px",
+                  background: "var(--crm-surface-2)", borderRadius: "14px",
                   border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
                 }}>
                   {/* Card header */}
@@ -173,7 +173,7 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
                     background: "rgba(255,255,255,0.04)",
                   }}>
                     <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-                    <span style={{ fontSize: "13px", fontWeight: 700, color: "#f1f5f9" }}>
+                    <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--crm-text)" }}>
                       {GRUPO_LABELS[grupo] ?? grupo}
                     </span>
                   </div>
@@ -245,7 +245,7 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
 
             {/* ── Estacionalidad (calculada desde obj_anual_usd) ── */}
             <div style={{
-              background: "#13131a", borderRadius: "14px",
+              background: "var(--crm-surface-2)", borderRadius: "14px",
               border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
             }}>
               <div style={{
@@ -254,7 +254,7 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
                 background: "rgba(255,255,255,0.04)",
               }}>
                 <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-                <span style={{ fontSize: "13px", fontWeight: 700, color: "#f1f5f9" }}>
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--crm-text)" }}>
                   Estacionalidad — Objetivos mensuales calculados
                 </span>
               </div>
@@ -282,7 +282,7 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
                       const isLast = idx === 11
                       return (
                         <tr key={nombre} style={{ borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)" }}>
-                          <td style={{ padding: "10px 20px", fontSize: "13px", fontWeight: 600, color: "#f1f5f9" }}>
+                          <td style={{ padding: "10px 20px", fontSize: "13px", fontWeight: 600, color: "var(--crm-text)" }}>
                             {nombre}
                           </td>
                           <td style={{ padding: "10px 20px" }}>
@@ -294,7 +294,7 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
                               {pct}%
                             </span>
                           </td>
-                          <td style={{ padding: "10px 20px", fontSize: "13px", fontWeight: 600, color: "#f1f5f9" }}>
+                          <td style={{ padding: "10px 20px", fontSize: "13px", fontWeight: 600, color: "var(--crm-text)" }}>
                             USD {obj.toLocaleString("es-AR")}
                           </td>
                         </tr>
@@ -307,7 +307,7 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
 
             {/* ── Objetivos de Cartelería (mes a mes) ── */}
             <div style={{
-              background: "#13131a", borderRadius: "14px",
+              background: "var(--crm-surface-2)", borderRadius: "14px",
               border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden",
             }}>
               <div style={{
@@ -316,7 +316,7 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
                 background: "rgba(255,255,255,0.04)",
               }}>
                 <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
-                <span style={{ fontSize: "13px", fontWeight: 700, color: "#f1f5f9" }}>
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--crm-text)" }}>
                   Objetivos de Cartelería — Carteles a recuperar por mes
                 </span>
               </div>
@@ -343,7 +343,7 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
                       const isLast = idx === 11
                       return (
                         <tr key={nombre} style={{ borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)" }}>
-                          <td style={{ padding: "10px 20px", fontSize: "13px", fontWeight: 600, color: "#f1f5f9", width: "150px" }}>
+                          <td style={{ padding: "10px 20px", fontSize: "13px", fontWeight: 600, color: "var(--crm-text)", width: "150px" }}>
                             {nombre}
                           </td>
                           <td style={{ padding: "8px 20px", width: "180px" }}>
@@ -378,7 +378,7 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
               <div style={{
                 background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
                 borderRadius: "10px", padding: "12px 16px",
-                fontSize: "13px", color: "#ff8a9a",
+                fontSize: "13px", color: "var(--crm-accent-light)",
               }}>
                 ⚠️ {error}
               </div>
@@ -396,7 +396,7 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
                     ? "linear-gradient(135deg,#059669 0%,#047857 100%)"
                     : isPending
                       ? "rgba(255,255,255,0.12)"
-                      : "linear-gradient(135deg,#E31837 0%,#c0122d 100%)",
+                      : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
                   color: "white", fontSize: "14px", fontWeight: 700,
                   cursor: isPending ? "not-allowed" : "pointer",
                   fontFamily: "inherit",
