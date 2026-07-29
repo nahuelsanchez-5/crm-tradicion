@@ -100,9 +100,10 @@ function calcEstado(debe: number, pagado: number): string {
 }
 
 function calcEstadoGeneral(totalDebe: number, totalPagado: number): string {
-  if (totalDebe <= 0)           return "Pagado"
-  if (totalPagado <= 0)         return "Pendiente"
-  if (totalPagado >= totalDebe) return "Pagado"
+  const epsilon = 0.01
+  if (totalDebe <= epsilon)               return "Pagado"
+  if (totalPagado <= 0)                   return "Pendiente"
+  if (totalPagado >= totalDebe - epsilon) return "Pagado"
   return "Parcial"
 }
 
@@ -951,8 +952,8 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                         <div style={{ fontSize: "11px", color: "#94A3B8", marginTop: "2px" }}>{fmtFecha(ag.ultimoMov)}</div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <span style={{ fontSize: "13px", fontWeight: 700, color: ag.saldo > 0 ? "var(--crm-accent)" : "#059669" }}>
-                          {ag.saldo > 0 ? `- ${fmtUSD(ag.saldo)}` : ag.saldo < 0 ? `+ ${fmtUSD(-ag.saldo)}` : fmtUSD(0)}
+                        <span style={{ fontSize: "13px", fontWeight: 700, color: Math.round(ag.saldo * 100) / 100 > 0 ? "var(--crm-accent)" : "#4ade80" }}>
+                          {Math.round(ag.saldo * 100) / 100 > 0 ? `- ${fmtUSD(Math.round(Math.abs(ag.saldo) * 100) / 100)}` : ag.saldo < 0 ? `+ ${fmtUSD(Math.round(Math.abs(ag.saldo) * 100) / 100)}` : fmtUSD(0)}
                         </span>
                         <StatusBadge estado={ag.estadoGral} />
                       </div>
@@ -1140,9 +1141,9 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
                           </td>
                           <td style={{
                             padding: "12px 16px", fontWeight: 700, fontSize: "13px", whiteSpace: "nowrap",
-                            color: ag.saldo > 0 ? "var(--crm-accent)" : "#059669",
+                            color: Math.round(ag.saldo * 100) / 100 > 0 ? "var(--crm-accent)" : "#4ade80",
                           }}>
-                            {ag.saldo > 0 ? `- ${fmtUSD(ag.saldo)}` : ag.saldo < 0 ? `+ ${fmtUSD(-ag.saldo)}` : fmtUSD(0)}
+                            {Math.round(ag.saldo * 100) / 100 > 0 ? `- ${fmtUSD(Math.round(Math.abs(ag.saldo) * 100) / 100)}` : ag.saldo < 0 ? `+ ${fmtUSD(Math.round(Math.abs(ag.saldo) * 100) / 100)}` : fmtUSD(0)}
                           </td>
                           <td style={{ padding: "12px 16px" }}>
                             <StatusBadge estado={ag.estadoGral} />

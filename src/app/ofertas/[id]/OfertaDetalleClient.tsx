@@ -497,38 +497,51 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
           >
             <Pencil size={14} /> Editar oferta
           </button>
-          <button
-            onClick={() => {
-              setCierreFecha(new Date().toISOString().split("T")[0])
-              setCierrePrecio("")
-              setErrCierre("")
-              setModalCierre(true)
-            }}
-            style={{
-              background: "linear-gradient(135deg,#4ade80 0%,#22c55e 100%)",
-              color: "#0a1a0a", border: "none",
-              padding: "8px 18px", borderRadius: "9px",
-              fontSize: "13px", fontWeight: 700, cursor: "pointer",
-              boxShadow: "0 2px 10px rgba(74,222,128,0.3)",
-              fontFamily: "inherit",
-              display: "flex", alignItems: "center", gap: "6px",
-            }}
-          >
-            Registrar cierre
-          </button>
-          <button
-            onClick={() => { setNuevoEstado(oferta.estado); setDescEstado(""); setMontoEstado(""); setModalEstado(true) }}
-            style={{
-              background: "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
-              color: "white", border: "none",
-              padding: "8px 18px", borderRadius: "9px",
-              fontSize: "13px", fontWeight: 700, cursor: "pointer",
-              boxShadow: "0 2px 10px rgba(227,24,55,0.35)",
-              fontFamily: "inherit",
-            }}
-          >
-            Cambiar estado
-          </button>
+          {oferta.estado !== "Cerradas" && oferta.estado !== "Caídas" ? (
+            <>
+              <button
+                onClick={() => {
+                  setCierreFecha(new Date().toISOString().split("T")[0])
+                  setCierrePrecio("")
+                  setErrCierre("")
+                  setModalCierre(true)
+                }}
+                style={{
+                  background: "linear-gradient(135deg,#4ade80 0%,#22c55e 100%)",
+                  color: "#0a1a0a", border: "none",
+                  padding: "8px 18px", borderRadius: "9px",
+                  fontSize: "13px", fontWeight: 700, cursor: "pointer",
+                  boxShadow: "0 2px 10px rgba(74,222,128,0.3)",
+                  fontFamily: "inherit",
+                  display: "flex", alignItems: "center", gap: "6px",
+                }}
+              >
+                Registrar cierre
+              </button>
+              <button
+                onClick={() => { setNuevoEstado(oferta.estado); setDescEstado(""); setMontoEstado(""); setModalEstado(true) }}
+                style={{
+                  background: "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
+                  color: "white", border: "none",
+                  padding: "8px 18px", borderRadius: "9px",
+                  fontSize: "13px", fontWeight: 700, cursor: "pointer",
+                  boxShadow: "0 2px 10px rgba(227,24,55,0.35)",
+                  fontFamily: "inherit",
+                }}
+              >
+                Cambiar estado
+              </button>
+            </>
+          ) : (
+            <div style={{
+              padding: "6px 14px", borderRadius: "8px", fontSize: "12px", fontWeight: 700,
+              background: oferta.estado === "Cerradas" ? "rgba(74,222,128,0.12)" : "rgba(255,255,255,0.08)",
+              color: oferta.estado === "Cerradas" ? "#4ade80" : "rgba(255,255,255,0.5)",
+              textTransform: "uppercase" as const, letterSpacing: "0.5px",
+            }}>
+              {oferta.estado === "Cerradas" ? "✓ Oferta cerrada" : "✕ Oferta caída"}
+            </div>
+          )}
         </div>
       </div>
 

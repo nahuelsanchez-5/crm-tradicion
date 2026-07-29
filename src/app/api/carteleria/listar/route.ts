@@ -15,28 +15,40 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 })
   }
   try {
-    const params = new URLSearchParams()
-    FIELD_IDS.forEach(id => params.append("fields[]", id))
-    params.set("returnFieldsByFieldId", "true")
-    params.set("sort[0][field]",     "fldClqD1zmj0AYlBn")
-    params.set("sort[0][direction]", "asc")
-    params.set("pageSize",           "100")
+    let allRecords: Array<{ id: string; fields: Record<string, unknown> }> = []
+    let offset: string | undefined
 
-    const res = await fetch(
-      `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${process.env.AIRTABLE_CARTELERIA_TABLE_ID}?${params}`,
-      {
-        headers: { Authorization: `Bearer ${process.env.AIRTABLE_TOKEN}` },
-        cache:   "no-store",
-      },
-    )
+    do {
+      const params = new URLSearchParams()
+      FIELD_IDS.forEach(id => params.append("fields[]", id))
+      params.set("returnFieldsByFieldId", "true")
+      params.set("sort[0][field]",     "fldClqD1zmj0AYlBn")
+      params.set("sort[0][direction]", "asc")
+      params.set("pageSize",           "100")
+      if (offset) params.set("offset", offset)
 
-    if (!res.ok) {
-      return NextResponse.json({ error: `Airtable error ${res.status}` }, { status: 502 })
-    }
+      const res = await fetch(
+        `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${process.env.AIRTABLE_CARTELERIA_TABLE_ID}?${params}`,
+        {
+          headers: { Authorization: `Bearer ${process.env.AIRTABLE_TOKEN}` },
+          cache:   "no-store",
+        },
+      )
 
-    const json = await res.json() as { records?: Array<{ id: string; fields: Record<string, unknown> }> }
+      if (!res.ok) {
+        return NextResponse.json({ error: `Airtable error ${res.status}` }, { status: 502 })
+      }
 
-    const data = (json.records ?? []).map(r => ({
+      const json = await res.json() as {
+        records?: Array<{ id: string; fields: Record<string, unknown> }>
+        offset?: string
+      }
+
+      allRecords = allRecords.concat(json.records ?? [])
+      offset = json.offset
+    } while (offset)
+
+    const data = allRecords.map(r => ({
       id:        r.id,
       numero:    (r.fields["fldsAoewlr0711e3s"] as number)  ?? 0,
       direccion: ((r.fields["fldjm8EB1HVvQeCSQ"] as string) ?? "").trim(),
