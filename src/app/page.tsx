@@ -1,9 +1,8 @@
 import { createServerClient } from "@/lib/supabase"
 import KpiCard from "@/components/KpiCard"
 import DashboardActions from "./DashboardActions"
-import DashboardClock from "./DashboardClock"
+import Topbar from "@/components/Topbar"
 import StatusBadge from "@/components/StatusBadge"
-import Image from "next/image"
 import Link from "next/link"
 import { Users, Building2, DollarSign, Handshake, Clock } from "lucide-react"
 
@@ -176,33 +175,7 @@ export default async function DashboardPage() {
     <div className="flex flex-col h-full">
 
       {/* Header */}
-      <div
-        className="flex items-center flex-shrink-0"
-        style={{ minHeight: "62px", padding: "0 24px 0 64px", background: "rgba(10,10,26,0.8)", borderBottom: "1px solid var(--crm-divider)", backdropFilter: "blur(8px)" }}
-      >
-        {/* Clock — hidden on mobile */}
-        <div className="hidden md:block flex-1">
-          <DashboardClock />
-        </div>
-        <div className="flex-1 md:flex-none flex justify-center md:justify-start">
-          <Image
-            src="/logo-crema.png" alt="REMAX Tradición"
-            width={180} height={20}
-            priority
-            className="md:w-[240px] md:h-[27px]"
-          />
-        </div>
-        <div className="flex-1 flex justify-end">
-          <div
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-crm-xs md:text-crm-sm font-semibold"
-            style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--crm-text)" }}
-          >
-            <span style={{ color: "var(--crm-text-muted)" }}>📅</span>
-            <span className="hidden sm:inline">{MES_LABEL}</span>
-            <span className="sm:hidden">{MES_LABEL.slice(0, 3)}</span>
-          </div>
-        </div>
-      </div>
+      <Topbar moduleName="Dashboard" />
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-4 md:p-6">

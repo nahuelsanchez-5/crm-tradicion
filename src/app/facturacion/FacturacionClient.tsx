@@ -255,12 +255,9 @@ export default function FacturacionClient({ rows }: Props) {
         background: "var(--crm-card)", borderBottom: "1px solid rgba(255,255,255,0.07)", flexShrink: 0,
       }}>
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <img src="/logo-crema.png" alt="REMAX Tradición" style={{ width: "90px", height: "10px", objectFit: "contain" }} />
-            <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
-              Facturación
-            </h1>
-          </div>
+          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
+            Facturación
+          </h1>
           <p style={{ fontSize: "12px", color: "var(--crm-text-muted)", margin: 0, marginTop: "1px" }}>
             Objetivos mensuales y facturación real — {ANIO}
           </p>
