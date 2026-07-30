@@ -9,7 +9,7 @@ Tema: dark glassmorphism (#0a0a1a fondo, #13131a cards). NO reemplazar, solo ref
 ## Proyecto activo: Mejora visual y UX integral
 - Plan maestro: PLAN_MEJORAS.md (checkboxes = estado real del avance)
 - Auditoría: AUDITORIA.md
-- Rama de trabajo: mejoras-ui (NUNCA commitear directo a master)
+- Todo se commitea directo a master.
 
 ## Reglas no negociables
 1. No romper funcionalidad existente
