@@ -6,6 +6,7 @@ import { CalendarDays, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react
 import type { EventInput } from "@fullcalendar/core"
 import { marcarSeguimiento } from "./actions"
 import type { EventoItem, OfertaInactiva } from "./page"
+import Topbar from "@/components/Topbar"
 
 const CalendarioFC = dynamic(() => import("./CalendarioFC"), { ssr: false })
 
@@ -61,6 +62,8 @@ export default function CalendarioClient({ eventos, hoy, ofertasInactivas }: Pro
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#0a0a1a" }}>
+
+      <Topbar moduleName="Calendario" />
 
       {/* ── Header ─────────────────────────────────── */}
       <div className="crm-page-header">
