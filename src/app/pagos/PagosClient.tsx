@@ -196,9 +196,9 @@ function filterBtnStyle(key: string, selected: boolean): React.CSSProperties {
 
 // ── KPI box component ────────────────────────────────
 function KpiConcepto({
-  label, x, y, pct, color, gradient: _g,
+  label, x, y, pct, color, gradient: _g, onClick,
 }: {
-  label: string; x: number; y?: number; pct?: number; color: string; gradient: string
+  label: string; x: number; y?: number; pct?: number; color: string; gradient: string; onClick?: () => void
 }) {
   const colorMap: Record<string, { bg: string; text: string; bar: string }> = {
     "#E31837": { bg: "rgba(248,113,113,0.08)", text: "#f87171",  bar: "#f87171" },
@@ -208,7 +208,7 @@ function KpiConcepto({
   }
   const { bg, text, bar } = colorMap[color] ?? { bg: "rgba(255,255,255,0.06)", text: "rgba(255,255,255,0.6)", bar: "rgba(255,255,255,0.3)" }
   return (
-    <div style={{ background: bg, borderRadius: "16px", border: "1px solid rgba(255,255,255,0.08)", padding: "20px", display: "flex", flexDirection: "column", gap: "10px", minHeight: "110px" }}>
+    <div onClick={onClick} style={{ background: bg, borderRadius: "16px", border: "1px solid rgba(255,255,255,0.08)", padding: "20px", display: "flex", flexDirection: "column", gap: "10px", minHeight: "110px", cursor: onClick ? "pointer" : "default" }}>
       <p style={{ fontSize: "10.5px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: text, margin: 0 }}>{label}</p>
       <div>
         <p style={{ fontSize: "30px", fontWeight: 700, color: text, lineHeight: 1, letterSpacing: "-0.025em", margin: 0 }}>
@@ -288,6 +288,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
   })
+  const [detalleConcepto, setDetalleConcepto] = useState<"FEE" | "CRM" | "Mainstreet" | "Otros" | null>(null)
 
   // ── Expanded row ───────────────────────────────────
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null)
@@ -393,6 +394,59 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
       otrosCobrX, pctGeneral,
     }
   }, [pagos, agentes, selectedMonth])
+
+  // ── Detalle de agentes por concepto (para modal) ───
+  const detalleConceptoData = useMemo(() => {
+    if (!detalleConcepto) return []
+
+    const monthPagos = pagos.filter(p =>
+      selectedMonth === "todos" || p.fecha.startsWith(selectedMonth)
+    )
+
+    if (detalleConcepto === "Otros") {
+      const otrosPagos = monthPagos.filter(p => getConceptGroup(p.concepto) === "Otros")
+      return otrosPagos.map(p => {
+        const ag = agentes.find(a => a.id === p.agente_id)
+        return { nombre: ag?.nombre ?? "—", estado: p.estado, monto: p.monto_debe as number | null, concepto: p.concepto }
+      })
+    }
+
+    // Para FEE, CRM, Mainstreet: universo = todos los agentes elegibles, con o sin pago
+    let elegibles: typeof agentes = []
+    if (detalleConcepto === "FEE") {
+      elegibles = agentes.filter(a => a.paga_fee === true)
+    } else if (detalleConcepto === "CRM") {
+      elegibles = agentes.filter(a => a.activo && (a.tipo_plan === "PRO" || a.tipo_plan === "PRO+"))
+    } else if (detalleConcepto === "Mainstreet") {
+      const refDate = selectedMonth === "todos"
+        ? new Date()
+        : new Date(parseInt(selectedMonth.split("-")[0]), parseInt(selectedMonth.split("-")[1]) - 1, 1)
+      const refMonth = refDate.getMonth() + 1
+      const refYear  = refDate.getFullYear()
+      elegibles = agentesActivos.filter(a => {
+        if (!a.fecha_mainstreet) return false
+        const [y, m] = a.fecha_mainstreet.split("-").map(Number)
+        return m === refMonth && y === refYear
+      })
+    }
+
+    const pagosDelConcepto = monthPagos.filter(p => getConceptGroup(p.concepto) === detalleConcepto)
+
+    return elegibles.map(a => {
+      const pago = pagosDelConcepto.find(p => p.agente_id === a.id)
+      return {
+        nombre: a.nombre,
+        estado: pago?.estado ?? "Pendiente",
+        monto: (pago?.monto_debe ?? null) as number | null,
+        concepto: pago?.concepto ?? "—",
+      }
+    }).sort((a, b) => {
+      // Pendientes primero
+      if (a.estado === "Pagado" && b.estado !== "Pagado") return 1
+      if (a.estado !== "Pagado" && b.estado === "Pagado") return -1
+      return a.nombre.localeCompare(b.nombre)
+    })
+  }, [detalleConcepto, pagos, agentes, agentesActivos, selectedMonth])
 
   // ── En mora: agentes con deuda pendiente > 15 días ─
   const enMoraAgentes = useMemo(() => {
@@ -800,6 +854,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
             pct={kpiStats.feePct}
             color="#E31837"
             gradient="linear-gradient(135deg,#E31837 0%,#9B0F26 100%)"
+            onClick={() => setDetalleConcepto("FEE")}
           />
           <KpiConcepto
             label="Licencias CRM"
@@ -808,6 +863,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
             pct={kpiStats.crmPct}
             color="#7C3AED"
             gradient="linear-gradient(135deg,#7C3AED 0%,#5B21B6 100%)"
+            onClick={() => setDetalleConcepto("CRM")}
           />
           <KpiConcepto
             label="Mainstreet"
@@ -816,12 +872,14 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
             pct={kpiStats.mainPct}
             color="#0D9488"
             gradient="linear-gradient(135deg,#0D9488 0%,#0F766E 100%)"
+            onClick={() => setDetalleConcepto("Mainstreet")}
           />
           <KpiConcepto
             label="Otros"
             x={kpiStats.otrosCobrX}
             color="#D97706"
             gradient="linear-gradient(135deg,#D97706 0%,#B45309 100%)"
+            onClick={() => setDetalleConcepto("Otros")}
           />
         </div>
 
@@ -1843,6 +1901,49 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                   {deleteLoading ? "Eliminando..." : "Eliminar registro"}
                 </button>
               </div>
+            </div>
+          </div>
+        </Backdrop>
+      )}
+
+      {/* ════════════════════════════════════════════
+          MODAL — DETALLE POR CONCEPTO
+      ════════════════════════════════════════════ */}
+      {detalleConcepto && (
+        <Backdrop onClose={() => setDetalleConcepto(null)}>
+          <div className="crm-modal" style={{ maxWidth: "480px", width: "100%", maxHeight: "70vh", display: "flex", flexDirection: "column" }}>
+            <ModalHeader
+              title={detalleConcepto === "FEE" ? "FEE mensual" : detalleConcepto === "CRM" ? "Licencias CRM" : detalleConcepto === "Mainstreet" ? "Mainstreet" : "Otros"}
+              subtitle={`${detalleConceptoData.length} agente${detalleConceptoData.length !== 1 ? "s" : ""} — ${mesLabel(selectedMonth)}`}
+              onClose={() => setDetalleConcepto(null)}
+            />
+            <div style={{ overflow: "auto", padding: "0 20px 20px" }}>
+              {detalleConceptoData.length === 0 ? (
+                <p style={{ textAlign: "center", color: "rgba(255,255,255,0.4)", fontSize: "13px", padding: "20px 0" }}>
+                  No hay agentes en este concepto este mes.
+                </p>
+              ) : (
+                detalleConceptoData.map((d, i) => (
+                  <div key={i} style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "10px 0", borderBottom: i < detalleConceptoData.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                  }}>
+                    <div>
+                      <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--crm-text)", margin: 0 }}>{d.nombre}</p>
+                      {d.monto !== null && (
+                        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", margin: 0 }}>{fmtUSD(d.monto)}</p>
+                      )}
+                    </div>
+                    <span style={{
+                      fontSize: "11px", fontWeight: 700, padding: "3px 10px", borderRadius: "6px",
+                      background: d.estado === "Pagado" ? "rgba(74,222,128,0.12)" : "rgba(248,113,113,0.12)",
+                      color: d.estado === "Pagado" ? "#4ade80" : "#f87171",
+                    }}>
+                      {d.estado === "Pagado" ? "Pagado" : "Pendiente"}
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </Backdrop>
