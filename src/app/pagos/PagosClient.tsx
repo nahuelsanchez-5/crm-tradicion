@@ -737,9 +737,12 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
       {/* ── Page Header ──────────────────────────── */}
       <div className="crm-page-header flex-shrink-0">
         <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
-            Cuentas
-          </h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <img src="/logo-crema.png" alt="REMAX Tradición" style={{ width: "90px", height: "10px", objectFit: "contain" }} />
+            <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
+              Cuentas
+            </h1>
+          </div>
           <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
             Control de cobros por concepto — REMAX Tradición
           </p>

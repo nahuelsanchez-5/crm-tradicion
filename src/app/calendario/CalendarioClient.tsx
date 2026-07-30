@@ -65,6 +65,7 @@ export default function CalendarioClient({ eventos, hoy, ofertasInactivas }: Pro
       {/* ── Header ─────────────────────────────────── */}
       <div className="crm-page-header">
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <img src="/logo-crema.png" alt="REMAX Tradición" style={{ width: "90px", height: "10px", objectFit: "contain" }} />
           <CalendarDays size={17} color="#E31837" />
           <h1 style={{ fontSize: "17px", fontWeight: 800, color: "var(--crm-text)", margin: 0, letterSpacing: "-0.3px" }}>
             Calendario
