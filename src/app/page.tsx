@@ -186,8 +186,8 @@ export default async function DashboardPage() {
         </div>
         <div className="flex-1 md:flex-none flex justify-center md:justify-start">
           <Image
-            src="/logo.png" alt="REMAX Tradición"
-            width={200} height={22}
+            src="/logo-crema.png" alt="REMAX Tradición"
+            width={180} height={20}
             priority
             className="md:w-[240px] md:h-[27px]"
           />

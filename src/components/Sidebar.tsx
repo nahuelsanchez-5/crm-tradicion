@@ -75,10 +75,10 @@ export default function Sidebar({ agenteCount }: Props) {
       {/* Logo */}
       <div className="px-5 py-5 flex justify-center" style={{ borderBottom: "1px solid var(--crm-divider)" }}>
         <Image
-          src="/logo-crema.png"
+          src="/logo-sidebar-crema.png"
           alt="REMAX Tradición"
           width={150}
-          height={17}
+          height={63}
           priority
         />
       </div>
