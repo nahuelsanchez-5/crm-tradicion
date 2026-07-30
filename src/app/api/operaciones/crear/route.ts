@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 import { getSession } from "@/lib/auth-guard"
+import { hoyArgentina } from "@/lib/fecha"
 
 const VALID_TIPOS = ["Venta", "Alquiler", "Alquiler Temporal", "Referido", "Otro"]
 
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const fecha = oferta.fecha_cierre ?? new Date().toISOString().split("T")[0]
+    const fecha = oferta.fecha_cierre ?? hoyArgentina()
     const base  = precio_acordado_usd ?? oferta.precio_acordado_usd ?? oferta.valor_escritura_usd ?? 0
 
     // 2. Dedup: if a record with same direccion + fecha already exists, skip silently

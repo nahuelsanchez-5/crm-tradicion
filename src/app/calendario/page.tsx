@@ -1,5 +1,6 @@
 import { createServerClient } from "@/lib/supabase"
 import CalendarioClient from "./CalendarioClient"
+import { hoyArgentina } from "@/lib/fecha"
 
 export type EventoItem = {
   id: string
@@ -30,7 +31,7 @@ function nextMainstreetDate(fechaStr: string, today: Date): string {
 export default async function CalendarioPage() {
   const supabase = createServerClient()
   const today = new Date()
-  const todayStr = today.toISOString().split("T")[0]
+  const todayStr = hoyArgentina()
 
   const fiveDaysAgo = new Date(today)
   fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5)

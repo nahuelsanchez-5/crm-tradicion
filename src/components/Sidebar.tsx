@@ -15,6 +15,7 @@ import {
   Building2,
   Settings,
   Handshake,
+  Receipt,
   BarChart3,
   Menu,
   X,
@@ -40,6 +41,7 @@ const BASE_NAV: NavItem[] = [
   { href: "/encuestas",   label: "Encuestas",   icon: ClipboardList },
   { href: "/agentes",     label: "Agentes",     icon: Users },
   { href: "/operaciones", label: "Operaciones", icon: Building2 },
+  { href: "/facturacion", label: "Facturación", icon: Receipt },
   { href: "/resumen",    label: "Resumen",     icon: BarChart3 },
 ]
 

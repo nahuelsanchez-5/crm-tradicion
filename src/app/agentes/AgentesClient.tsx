@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect, useCallback, useMemo, Fragment } from "react"
 import { useRouter } from "next/navigation"
 import { crearAgente, actualizarAgente, actualizarPagaFee, type AgenteFormData } from "./actions"
+import { hoyArgentina } from "@/lib/fecha"
 import { Users, X, Loader2, MessageCircle, AlertCircle } from "lucide-react"
 
 // ── Types ────────────────────────────────────────────
@@ -52,7 +53,7 @@ const MONTH_NAMES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","A
 
 const EMPTY_FORM: AgenteFormData = {
   nombre: "", email: "", telefono: "",
-  fecha_alta: new Date().toISOString().split("T")[0],
+  fecha_alta: hoyArgentina(),
   fecha_mainstreet: "",
   plan: "PRO", activo: true,
 }
@@ -306,7 +307,7 @@ export default function AgentesClient({
   const closeModal = useCallback(() => { setModal("none"); setError("") }, [])
 
   function openNuevo() {
-    setForm({ ...EMPTY_FORM, fecha_alta: new Date().toISOString().split("T")[0] })
+    setForm({ ...EMPTY_FORM, fecha_alta: hoyArgentina() })
     setSelectedAgent(null)
     setError("")
     setModal("nuevo")

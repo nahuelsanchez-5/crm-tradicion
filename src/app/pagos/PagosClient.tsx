@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { crearPago, actualizarPago, crearGasto, crearGastoRecurrente, eliminarPago, registrarSaldoFavor, crearGastoConCredito } from "./actions"
 import { DollarSign, X, Loader2, MessageCircle, TrendingDown, TrendingUp, Repeat, CheckCircle2, Save, Trash2 } from "lucide-react"
 import StatusBadge from "@/components/StatusBadge"
+import { hoyArgentina } from "@/lib/fecha"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -295,7 +296,7 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
   const [selectedPago, setSelectedPago] = useState<PagoRow | null>(null)
   const [error,        setError]        = useState("")
 
-  const todayStr = new Date().toISOString().split("T")[0]
+  const todayStr = hoyArgentina()
 
   const [nuevoForm, setNuevoForm] = useState<NuevoForm>({
     agente_id:    agentesActivos[0]?.id ?? "",

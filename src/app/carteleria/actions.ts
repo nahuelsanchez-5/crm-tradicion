@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { requireSession } from "@/lib/auth-guard"
+import { hoyArgentina } from "@/lib/fecha"
 
 // ── Field IDs ─────────────────────────────────────────
 // fldClqD1zmj0AYlBn = Días restantes → fórmula, solo lectura, NO se envía en writes
@@ -65,7 +66,7 @@ export async function crearCartel(data: CartelFormData) {
 
 export async function devolverCartel(id: string) {
   await requireSession()
-  const today = new Date().toISOString().split("T")[0]
+  const today = hoyArgentina()
   const res = await fetch(apiUrl(), {
     method: "PATCH",
     headers: authHeaders(),

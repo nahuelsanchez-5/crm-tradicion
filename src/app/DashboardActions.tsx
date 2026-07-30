@@ -7,6 +7,7 @@ import { guardarEncuesta } from "@/app/encuestas/actions"
 import { crearOperacion } from "@/app/operaciones/actions"
 import { crearOferta } from "@/app/ofertas/actions"
 import { agregarMovimiento } from "@/app/ofertas/actions"
+import { hoyArgentina } from "@/lib/fecha"
 import type { OfertaActiva } from "@/app/page"
 import {
   X, Loader2, DollarSign, MapPin, ClipboardList,
@@ -98,7 +99,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
   const [modal,      setModal]       = useState<ModalT>("none")
   const [error,      setError]       = useState("")
 
-  const todayStr   = new Date().toISOString().split("T")[0]
+  const todayStr   = hoyArgentina()
   const mesActual  = new Date().getMonth() + 1
   const anioActual = new Date().getFullYear()
 

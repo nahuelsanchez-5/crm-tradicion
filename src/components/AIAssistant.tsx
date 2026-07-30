@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { usePathname } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { Sparkles, X, Send, Mic } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -28,13 +29,14 @@ interface ApiResponse {
 
 export default function AIAssistant() {
   const pathname = usePathname()
+  const { data: session } = useSession()
+  const userName = session?.user?.name?.split(" ")[0] ?? "usuario"
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
       role: "assistant",
-      content:
-        "¡Hola Nahuel! ¿En qué te ayudo? Puedo crear ofertas, registrar pagos, operaciones, encuestas y más.",
+      content: `¡Hola ${userName}! ¿En qué te ayudo? Puedo crear ofertas, registrar pagos, operaciones, encuestas y más.`,
     },
   ])
   const [input, setInput] = useState("")
@@ -56,6 +58,15 @@ export default function AIAssistant() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages, isLoading])
+
+  // Actualizar el saludo cuando llega el nombre de sesión (si el usuario aún no chateó)
+  useEffect(() => {
+    setMessages(prev =>
+      prev.length === 1 && prev[0].id === "welcome"
+        ? [{ ...prev[0], content: `¡Hola ${userName}! ¿En qué te ayudo? Puedo crear ofertas, registrar pagos, operaciones, encuestas y más.` }]
+        : prev,
+    )
+  }, [userName])
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 

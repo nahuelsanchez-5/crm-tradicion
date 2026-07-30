@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { cambiarEstado, agregarMovimiento, toggleChecklist, registrarCierre, editarOferta } from "../actions"
 import type { EditarOfertaData } from "../actions"
+import { hoyArgentina } from "@/lib/fecha"
 import {
   ArrowLeft, X, Loader2, ChevronRight,
   DollarSign, Calendar, User, FileText, CheckSquare, Clock, Pencil,
@@ -314,7 +315,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
   function handleSubmitEstado(e: React.FormEvent) {
     e.preventDefault()
     if (nuevoEstado === "Cerradas") {
-      setCierreFecha(new Date().toISOString().split("T")[0])
+      setCierreFecha(hoyArgentina())
       setCierrePrecio("")
       setErrCierre("")
       setModalEstado(false)
@@ -501,7 +502,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
             <>
               <button
                 onClick={() => {
-                  setCierreFecha(new Date().toISOString().split("T")[0])
+                  setCierreFecha(hoyArgentina())
                   setCierrePrecio("")
                   setErrCierre("")
                   setModalCierre(true)

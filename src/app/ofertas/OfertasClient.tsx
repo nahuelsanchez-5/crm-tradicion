@@ -4,6 +4,7 @@ import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import KpiCard from "@/components/KpiCard"
+import { hoyArgentina } from "@/lib/fecha"
 import { crearOferta } from "./actions"
 import type { OfertaFormData } from "./actions"
 import {
@@ -96,12 +97,37 @@ const MONTH_NAMES = [
   "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
 ]
 
-const todayStr = new Date().toISOString().split("T")[0]
+const todayStr = hoyArgentina()
 
 const currentMonth = (() => {
   const now = new Date()
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
 })()
+
+function emptyForm(numero: number): FormData {
+  return {
+    numero:                   String(numero),
+    direccion:                "",
+    agente_vendedor_id:       "",
+    agente_vendedor_externo:  "",
+    vendedor_externo:         false,
+    agente_comprador_id:      "",
+    agente_comprador_externo: "",
+    comprador_externo:        false,
+    tipologia:                "Depto",
+    tipo_operacion:           "Venta",
+    tiene_reserva:            false,
+    monto_reserva_usd:        "",
+    moneda:                   "USD",
+    tipo_cambio:              "",
+    monto_ofertado_usd:       "",
+    precio_publicacion_usd:   "",
+    fecha_oferta:             todayStr,
+    es_bis:                   false,
+    numero_padre:             "",
+    notas:                    "",
+  }
+}
 
 // ── Helpers ───────────────────────────────────────────
 function fmtUSD(n: number | null | undefined): string {
@@ -278,35 +304,20 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
   // ── Modal ──────────────────────────────────────────
   const [modal,       setModal]       = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
-  const [form,  setForm]  = useState<FormData>({
-    numero:                   String(nextNumero),
-    direccion:                "",
-    agente_vendedor_id:       "",
-    agente_vendedor_externo:  "",
-    vendedor_externo:         false,
-    agente_comprador_id:      "",
-    agente_comprador_externo: "",
-    comprador_externo:        false,
-    tipologia:                "Depto",
-    tipo_operacion:           "Venta",
-    tiene_reserva:            false,
-    monto_reserva_usd:        "",
-    moneda:                   "USD",
-    tipo_cambio:              "",
-    monto_ofertado_usd:       "",
-    precio_publicacion_usd:   "",
-    fecha_oferta:             todayStr,
-    es_bis:                   false,
-    numero_padre:             "",
-    notas:                    "",
-  })
+  const [form,  setForm]  = useState<FormData>(() => emptyForm(nextNumero))
   const [formError, setFormError] = useState("")
 
   function setF<K extends keyof FormData>(k: K, v: FormData[K]) {
     setForm(f => ({ ...f, [k]: v }))
   }
 
-  const closeModal = useCallback(() => { setModal(false); setFormError("") }, [])
+  const resetForm = useCallback(() => { setForm(emptyForm(nextNumero)) }, [nextNumero])
+
+  const closeModal = useCallback(() => {
+    setModal(false)
+    setFormError("")
+    resetForm()
+  }, [resetForm])
 
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") closeModal() }
@@ -315,7 +326,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
   }, [modal, closeModal])
 
   function openNueva() {
-    setForm(f => ({ ...f, numero: String(nextNumero), fecha_oferta: todayStr }))
+    resetForm()
     setFormError("")
     setModal(true)
   }

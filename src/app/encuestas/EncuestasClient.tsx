@@ -7,6 +7,7 @@ import type { RegistroEncuestaData, EditarEncuestaData } from "./actions"
 import type { RegistroRow } from "./page"
 import { ClipboardList, TrendingUp, Star, X, Loader2, ChevronDown, ChevronRight, CheckCircle2, Save, BarChart2, Pencil, Trash2, AlertTriangle } from "lucide-react"
 import KpiCardGlobal from "@/components/KpiCard"
+import { hoyArgentina } from "@/lib/fecha"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -119,7 +120,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
   const [showModal,   setShowModal]   = useState(false)
   const [error,       setError]      = useState("")
   const [saveSuccess, setSaveSuccess] = useState(false)
-  const todayStr = new Date().toISOString().split("T")[0]
+  const todayStr = hoyArgentina()
 
   // ── Edit state ─────────────────────────────────────
   const [editRow,     setEditRow]     = useState<RegistroRow | null>(null)

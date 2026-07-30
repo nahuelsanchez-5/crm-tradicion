@@ -3,6 +3,7 @@
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 import { requireSession } from "@/lib/auth-guard"
+import { hoyArgentina } from "@/lib/fecha"
 
 export interface AgenteFormData {
   nombre: string
@@ -76,7 +77,7 @@ export async function actualizarAgente(id: string, data: AgenteFormData) {
       activo:           data.activo ?? true,
       fecha_alta:       data.fecha_alta,
       fecha_mainstreet: data.fecha_mainstreet || null,
-      fecha_baja:       data.activo ? null : new Date().toISOString().split("T")[0],
+      fecha_baja:       data.activo ? null : hoyArgentina(),
       tipo_plan:        data.plan || null,
     })
     .eq("id", id)

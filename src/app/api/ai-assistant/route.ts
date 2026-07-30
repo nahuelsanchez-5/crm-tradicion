@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 import { getSession } from "@/lib/auth-guard"
+import { hoyArgentina } from "@/lib/fecha"
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
@@ -148,7 +149,7 @@ async function executeAction(
   agentes: Agente[]
 ): Promise<{ success: boolean; message: string; data?: unknown }> {
   const supabase = createServerClient()
-  const today = new Date().toISOString().split("T")[0]
+  const today = hoyArgentina()
 
   switch (intent) {
     case "crear_oferta": {

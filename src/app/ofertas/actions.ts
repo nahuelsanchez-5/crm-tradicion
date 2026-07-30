@@ -4,6 +4,7 @@ import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 import { CHECKLIST_ITEMS } from "./checklist-items"
 import { requireSession } from "@/lib/auth-guard"
+import { hoyArgentina } from "@/lib/fecha"
 
 // ── Types ─────────────────────────────────────────────
 export interface EditarOfertaData {
@@ -114,7 +115,7 @@ export async function cambiarEstado(
 
   const updates: Record<string, unknown> = { estado: nuevoEstado }
   if (nuevoEstado === "Cerradas") {
-    updates.fecha_cierre = new Date().toISOString().split("T")[0]
+    updates.fecha_cierre = hoyArgentina()
   }
 
   const { error } = await supabase.from("ofertas").update(updates).eq("id", id)

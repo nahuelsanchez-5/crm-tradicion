@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import KpiCard from "@/components/KpiCard"
 import { crearOperacion, actualizarOperacion, eliminarOperacion } from "./actions"
 import type { OperacionFormData } from "./actions"
+import { hoyArgentina } from "@/lib/fecha"
 import { Building2, DollarSign, X, Loader2, Trash2 } from "lucide-react"
 
 // ── Constants ────────────────────────────────────────
@@ -294,7 +295,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
 
   // ── Open modals ────────────────────────────────────
   function openNuevo() {
-    setForm({ ...EMPTY_FORM, fecha: new Date().toISOString().split("T")[0] })
+    setForm({ ...EMPTY_FORM, fecha: hoyArgentina() })
     setVendedor(""); setVendedorExt("")
     setComprador(""); setCompradorExt("")
     setDosPuntas(false)
