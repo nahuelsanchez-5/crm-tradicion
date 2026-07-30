@@ -396,7 +396,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
       <Topbar moduleName="Ofertas" />
 
       {/* ── Header ──────────────────────────────────── */}
-      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end" }}>
+      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end", position: "sticky", top: "62px", zIndex: 15 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           {/* Kanban / Lista toggle */}
           <div style={{ display: "flex", background: "rgba(255,255,255,0.08)", borderRadius: "8px", padding: "3px", gap: "2px" }}>
