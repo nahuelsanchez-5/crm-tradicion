@@ -383,7 +383,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
       <Topbar moduleName="Encuestas" />
 
       {/* ── Page Header ──────────────────────────── */}
-      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end" }}>
+      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end", position: "sticky", top: "62px", zIndex: 15 }}>
         <button
           onClick={openModal}
           style={{

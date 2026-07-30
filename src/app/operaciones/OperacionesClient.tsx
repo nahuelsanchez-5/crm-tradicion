@@ -389,7 +389,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
       <Topbar moduleName="Operaciones" />
 
       {/* ── Page Header ──────────────────────────── */}
-      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end" }}>
+      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end", position: "sticky", top: "62px", zIndex: 15 }}>
         <button
           onClick={openNuevo}
           style={{

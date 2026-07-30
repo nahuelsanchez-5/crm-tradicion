@@ -51,7 +51,7 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
       <Topbar moduleName="Resumen" />
 
       {/* Header */}
-      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end" }}>
+      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end", position: "sticky", top: "62px", zIndex: 15 }}>
 
         {/* Right group: controls (hidden in print) + badge */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>

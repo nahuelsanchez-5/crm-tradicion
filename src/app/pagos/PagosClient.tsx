@@ -800,7 +800,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
       <Topbar moduleName="Cuentas" />
 
       {/* ── Page Header ──────────────────────────── */}
-      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end" }}>
+      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end", position: "sticky", top: "62px", zIndex: 15 }}>
         <div style={{ display: "flex", gap: "10px" }}>
           <button
             onClick={() => openSaldoFavor()}

@@ -326,7 +326,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
       <Topbar moduleName="Cartelería" />
 
       {/* ── Page Header ──────────────────────────── */}
-      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end" }}>
+      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end", position: "sticky", top: "62px", zIndex: 15 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <button
             onClick={() => setDevolverPickerOpen(true)}

@@ -372,7 +372,7 @@ export default function AgentesClient({
       <Topbar moduleName="Agentes" />
 
       {/* ── Page Header ──────────────────────────── */}
-      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "space-between" }}>
+      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "space-between", position: "sticky", top: "62px", zIndex: 15 }}>
         <div style={{ position: "relative", flex: 1, maxWidth: "280px" }}>
           <Search size={14} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.35)" }} />
           <input

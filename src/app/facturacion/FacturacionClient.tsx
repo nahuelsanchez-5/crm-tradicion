@@ -256,6 +256,7 @@ export default function FacturacionClient({ rows }: Props) {
         display: "flex", alignItems: "center", justifyContent: "flex-end",
         minHeight: "62px", padding: "0 24px",
         background: "var(--crm-card)", borderBottom: "1px solid rgba(255,255,255,0.07)", flexShrink: 0,
+        position: "sticky", top: "62px", zIndex: 15,
       }}>
         <div style={{
           padding: "6px 14px", borderRadius: "8px",

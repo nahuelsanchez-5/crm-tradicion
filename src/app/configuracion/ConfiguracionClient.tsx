@@ -138,6 +138,7 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
         display: "flex", alignItems: "center", justifyContent: "flex-end",
         minHeight: "62px", padding: "0 24px",
         background: "rgba(10,10,26,0.8)", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0,
+        position: "sticky", top: "62px", zIndex: 15,
       }}>
         <div style={{
           display: "flex", alignItems: "center", gap: "8px",

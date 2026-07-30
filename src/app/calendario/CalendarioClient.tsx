@@ -66,7 +66,7 @@ export default function CalendarioClient({ eventos, hoy, ofertasInactivas }: Pro
       <Topbar moduleName="Calendario" />
 
       {/* ── Header ─────────────────────────────────── */}
-      <div className="crm-page-header">
+      <div className="crm-page-header" style={{ position: "sticky", top: "62px", zIndex: 15 }}>
         <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
           <LegendDot color="#22c55e" label="Cierres" />
           <LegendDot color="#3b82f6" label="Mainstreet" />
