@@ -10,7 +10,7 @@ export default function Topbar({ moduleName }: Props) {
   return (
     <div
       className="flex items-center flex-shrink-0"
-      style={{ minHeight: "62px", padding: "0 24px 0 64px", background: "rgba(10,10,26,0.8)", borderBottom: "1px solid var(--crm-divider)", backdropFilter: "blur(8px)" }}
+      style={{ minHeight: "62px", padding: "0 24px 0 64px", background: "rgba(10,10,26,0.8)", borderBottom: "1px solid var(--crm-divider)", backdropFilter: "blur(8px)", position: "sticky", top: 0, zIndex: 20 }}
     >
       <div className="hidden md:block flex-1">
         <DashboardClock />
