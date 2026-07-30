@@ -29,7 +29,7 @@ const DEFAULT_CONFIG: ConfigEntry[] = [
   // Comunicación
   {
     clave:    "mensaje_whatsapp",
-    valor:    "Hola [nombre]! Quedó pendiente un saldo de USD [monto] del [mes]. Cuando puedas, avisanos para coordinar. Gracias!",
+    valor:    "Hola [nombre]! Te paso el resumen de [mes]:\n\n[detalle]\n\n[cierre]",
     etiqueta: "Mensaje WhatsApp de cobro",
     grupo:    "comunicacion",
   },

@@ -22,7 +22,7 @@ export default async function PagosPage() {
     supabase
       .from("config")
       .select("clave, valor")
-      .in("clave", ["fee_mensual", "bono_pro", "bono_pro_plus"]),
+      .in("clave", ["fee_mensual", "bono_pro", "bono_pro_plus", "mensaje_whatsapp"]),
   ])
 
   const pagos   = ((pagosRaw  ?? []) as unknown) as PagoRow[]
@@ -34,11 +34,15 @@ export default async function PagosPage() {
     if (!isNaN(n)) bonos[row.clave] = n
   }
 
+  const mensajeWhatsappTemplate = (configBonos ?? []).find(c => c.clave === "mensaje_whatsapp")?.valor
+    ?? "Hola [nombre]! Te paso el resumen de [mes]:\n\n[detalle]\n\n[cierre]"
+
   return (
     <PagosClient
       pagos={pagos}
       agentes={agentes}
       configBonos={bonos}
+      mensajeWhatsappTemplate={mensajeWhatsappTemplate}
     />
   )
 }

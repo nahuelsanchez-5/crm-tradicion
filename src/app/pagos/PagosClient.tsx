@@ -274,9 +274,10 @@ interface Props {
   pagos: PagoRow[]
   agentes: AgenteInfo[]
   configBonos: Record<string, number>
+  mensajeWhatsappTemplate: string
 }
 
-export default function PagosClient({ pagos, agentes, configBonos }: Props) {
+export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsappTemplate }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const agentesActivos = agentes.filter(a => a.activo)
@@ -585,7 +586,14 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
         ? `Tenés ${fmtUSD(saldoFavor)} a favor para el próximo mes. Gracias!`
         : `Todo al día. Gracias!`
 
-    const msg = `Hola ${nombre}! Te paso el resumen de ${mes}:\n\n${detalle}\n\n${cierre}`
+    const totalDebe = agentePagos.reduce((s, p) => s + Number(p.monto_debe), 0)
+
+    const msg = mensajeWhatsappTemplate
+      .replace(/\[nombre\]/g, nombre)
+      .replace(/\[monto\]/g, fmtUSD(saldo > 0 ? saldo : totalDebe))
+      .replace(/\[mes\]/g, mes)
+      .replace(/\[detalle\]/g, detalle)
+      .replace(/\[cierre\]/g, cierre)
 
     const num = telefono.replace(/\D/g, "")
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, "_blank")
