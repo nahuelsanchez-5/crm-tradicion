@@ -6,6 +6,7 @@ import KpiCard from "@/components/KpiCard"
 import { guardarFacturacion } from "./actions"
 import type { FacturacionFormData } from "./actions"
 import { DollarSign, TrendingUp, Award, X, Loader2 } from "lucide-react"
+import Topbar from "@/components/Topbar"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -248,20 +249,14 @@ export default function FacturacionClient({ rows }: Props) {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
+      <Topbar moduleName="Facturación" />
+
       {/* ── Page Header ──────────────────────────── */}
       <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
+        display: "flex", alignItems: "center", justifyContent: "flex-end",
         minHeight: "62px", padding: "0 24px",
         background: "var(--crm-card)", borderBottom: "1px solid rgba(255,255,255,0.07)", flexShrink: 0,
       }}>
-        <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
-            Facturación
-          </h1>
-          <p style={{ fontSize: "12px", color: "var(--crm-text-muted)", margin: 0, marginTop: "1px" }}>
-            Objetivos mensuales y facturación real — {ANIO}
-          </p>
-        </div>
         <div style={{
           padding: "6px 14px", borderRadius: "8px",
           background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",

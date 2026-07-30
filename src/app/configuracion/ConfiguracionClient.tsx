@@ -4,6 +4,7 @@ import { useState, useTransition } from "react"
 import { guardarConfig } from "./actions"
 import type { ConfigEntry } from "./actions"
 import { Settings, Save, Loader2, Check } from "lucide-react"
+import Topbar from "@/components/Topbar"
 
 // ── Default config (seeds empty tables) ──────────────
 const DEFAULT_CONFIG: ConfigEntry[] = [
@@ -130,20 +131,14 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
+      <Topbar moduleName="Configuración" />
+
       {/* ── Page Header ──────────────────────────── */}
       <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
+        display: "flex", alignItems: "center", justifyContent: "flex-end",
         minHeight: "62px", padding: "0 24px",
         background: "rgba(10,10,26,0.8)", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0,
       }}>
-        <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
-            Configuración
-          </h1>
-          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
-            Valores globales del sistema
-          </p>
-        </div>
         <div style={{
           display: "flex", alignItems: "center", gap: "8px",
           padding: "6px 14px", borderRadius: "8px",

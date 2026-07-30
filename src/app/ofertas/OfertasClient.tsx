@@ -11,6 +11,7 @@ import {
   Handshake, TrendingUp, CheckCircle2, XCircle,
   X, Loader2, ChevronRight, Save,
 } from "lucide-react"
+import Topbar from "@/components/Topbar"
 
 // ── Types ─────────────────────────────────────────────
 export interface AgenteSimple {
@@ -392,13 +393,10 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
+      <Topbar moduleName="Ofertas" />
+
       {/* ── Header ──────────────────────────────────── */}
-      <div className="crm-page-header flex-shrink-0">
-        <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
-            Ofertas
-          </h1>
-        </div>
+      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           {/* Kanban / Lista toggle */}
           <div style={{ display: "flex", background: "rgba(255,255,255,0.08)", borderRadius: "8px", padding: "3px", gap: "2px" }}>

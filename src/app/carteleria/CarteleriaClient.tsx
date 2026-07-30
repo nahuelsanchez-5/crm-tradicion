@@ -6,6 +6,7 @@ import KpiCard from "@/components/KpiCard"
 import { crearCartel, editarCartel } from "./actions"
 import type { CartelFormData } from "./actions"
 import { MapPin, AlertTriangle, X, Loader2, Plus, Search, CheckCircle2, Save, RotateCcw, ChevronDown, MessageCircle } from "lucide-react"
+import Topbar from "@/components/Topbar"
 
 // ── Types ─────────────────────────────────────────────
 export interface AgenteConTel {
@@ -320,16 +321,10 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
+      <Topbar moduleName="Cartelería" />
+
       {/* ── Page Header ──────────────────────────── */}
-      <div className="crm-page-header flex-shrink-0">
-        <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
-            Cartelería
-          </h1>
-          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
-            {stats.total} carteles activos · datos en tiempo real desde Airtable
-          </p>
-        </div>
+      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end" }}>
         <button
           onClick={openNuevo}
           style={{

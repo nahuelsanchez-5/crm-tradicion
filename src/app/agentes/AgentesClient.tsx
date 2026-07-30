@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { crearAgente, actualizarAgente, actualizarPagaFee, type AgenteFormData } from "./actions"
 import { hoyArgentina } from "@/lib/fecha"
 import { Users, X, Loader2, MessageCircle, AlertCircle } from "lucide-react"
+import Topbar from "@/components/Topbar"
 
 // ── Types ────────────────────────────────────────────
 type Plan = "PRO" | "PRO+" | "B QR" | "B Ofi" | ""
@@ -361,16 +362,10 @@ export default function AgentesClient({
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
+      <Topbar moduleName="Agentes" />
+
       {/* ── Page Header ──────────────────────────── */}
-      <div className="crm-page-header flex-shrink-0">
-        <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
-            Agentes
-          </h1>
-          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
-            Gestión del equipo REMAX Tradición · {MONTH_NAMES[mes - 1]} {anio}
-          </p>
-        </div>
+      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <Users size={14} color="#94A3B8" />

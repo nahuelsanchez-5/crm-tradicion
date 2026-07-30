@@ -6,6 +6,7 @@ import { crearPago, actualizarPago, crearGasto, crearGastoRecurrente, eliminarPa
 import { DollarSign, X, Loader2, MessageCircle, TrendingDown, TrendingUp, Repeat, CheckCircle2, Save, Trash2 } from "lucide-react"
 import StatusBadge from "@/components/StatusBadge"
 import { hoyArgentina } from "@/lib/fecha"
+import Topbar from "@/components/Topbar"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -734,16 +735,10 @@ export default function PagosClient({ pagos, agentes, configBonos }: Props) {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
+      <Topbar moduleName="Cuentas" />
+
       {/* ── Page Header ──────────────────────────── */}
-      <div className="crm-page-header flex-shrink-0">
-        <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
-            Cuentas
-          </h1>
-          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
-            Control de cobros por concepto — REMAX Tradición
-          </p>
-        </div>
+      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end" }}>
         <div style={{ display: "flex", gap: "10px" }}>
           <button
             onClick={() => openSaldoFavor()}

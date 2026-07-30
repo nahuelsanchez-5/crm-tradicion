@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation"
 import { Printer } from "lucide-react"
+import Topbar from "@/components/Topbar"
 
 const MONTH_NAMES = [
   "Enero","Febrero","Marzo","Abril","Mayo","Junio",
@@ -47,17 +48,10 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
   return (
     <div id="resumen-root" style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
+      <Topbar moduleName="Resumen" />
+
       {/* Header */}
-      <div className="crm-page-header flex-shrink-0">
-        {/* Title */}
-        <div style={{ minWidth: 0 }}>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
-            Resumen mensual
-          </h1>
-          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
-            {mes} · Indicadores de gestión y bonos a cobrar
-          </p>
-        </div>
+      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end" }}>
 
         {/* Right group: controls (hidden in print) + badge */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>

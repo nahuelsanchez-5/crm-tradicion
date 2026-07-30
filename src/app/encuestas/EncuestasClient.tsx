@@ -8,6 +8,7 @@ import type { RegistroRow } from "./page"
 import { ClipboardList, TrendingUp, Star, X, Loader2, ChevronDown, ChevronRight, CheckCircle2, Save, BarChart2, Pencil, Trash2, AlertTriangle } from "lucide-react"
 import KpiCardGlobal from "@/components/KpiCard"
 import { hoyArgentina } from "@/lib/fecha"
+import Topbar from "@/components/Topbar"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -379,16 +380,10 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
 
+      <Topbar moduleName="Encuestas" />
+
       {/* ── Page Header ──────────────────────────── */}
-      <div className="crm-page-header flex-shrink-0">
-        <div>
-          <h1 style={{ fontSize: "18px", fontWeight: 800, color: "var(--crm-text)", letterSpacing: "-0.3px", margin: 0 }}>
-            Encuestas
-          </h1>
-          <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "1px" }}>
-            Satisfacción de clientes y agentes — {MONTH_NAMES[mesActual - 1]} {anio}
-          </p>
-        </div>
+      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end" }}>
         <button
           onClick={openModal}
           style={{

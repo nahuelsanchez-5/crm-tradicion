@@ -2,7 +2,7 @@
 
 import { useTransition, useState } from "react"
 import dynamic from "next/dynamic"
-import { CalendarDays, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react"
+import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react"
 import type { EventInput } from "@fullcalendar/core"
 import { marcarSeguimiento } from "./actions"
 import type { EventoItem, OfertaInactiva } from "./page"
@@ -67,12 +67,6 @@ export default function CalendarioClient({ eventos, hoy, ofertasInactivas }: Pro
 
       {/* ── Header ─────────────────────────────────── */}
       <div className="crm-page-header">
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <CalendarDays size={17} color="#E31837" />
-          <h1 style={{ fontSize: "17px", fontWeight: 800, color: "var(--crm-text)", margin: 0, letterSpacing: "-0.3px" }}>
-            Calendario
-          </h1>
-        </div>
         <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
           <LegendDot color="#22c55e" label="Cierres" />
           <LegendDot color="#3b82f6" label="Mainstreet" />
