@@ -364,17 +364,16 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
     const crmTotal  = agentesCrmCount > 0 ? agentesCrmCount : agentesActivosCount
     const crmPct    = crmTotal > 0 ? Math.round((crmCobrX / crmTotal) * 100) : 0
 
-    // Mainstreet — denominador: agentes activos con fecha_mainstreet en el mes/año del filtro
+    // Mainstreet — denominador: agentes activos cuyo aniversario (mes de fecha_mainstreet) cae en el mes del filtro
     const refDate  = selectedMonth === "todos"
       ? new Date()
       : new Date(parseInt(selectedMonth.split("-")[0]), parseInt(selectedMonth.split("-")[1]) - 1, 1)
     const refMonth = refDate.getMonth() + 1
-    const refYear  = refDate.getFullYear()
 
     const mainTotal = agentesActivos.filter(a => {
       if (!a.fecha_mainstreet) return false
-      const [y, m] = a.fecha_mainstreet.split("-").map(Number)
-      return m === refMonth && y === refYear
+      const m = parseInt(a.fecha_mainstreet.split("-")[1], 10)
+      return m === refMonth
     }).length
 
     const mainPagos = monthPagos.filter(p => getConceptGroup(p.concepto) === "Mainstreet")
@@ -422,11 +421,10 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
         ? new Date()
         : new Date(parseInt(selectedMonth.split("-")[0]), parseInt(selectedMonth.split("-")[1]) - 1, 1)
       const refMonth = refDate.getMonth() + 1
-      const refYear  = refDate.getFullYear()
       elegibles = agentesActivos.filter(a => {
         if (!a.fecha_mainstreet) return false
-        const [y, m] = a.fecha_mainstreet.split("-").map(Number)
-        return m === refMonth && y === refYear
+        const m = parseInt(a.fecha_mainstreet.split("-")[1], 10)
+        return m === refMonth
       })
     }
 
