@@ -855,7 +855,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
       <div className="flex-1 overflow-auto p-5 md:p-6">
 
         {/* ── KPI boxes (4 conceptos) ───────────────── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-5">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-5">
           <KpiConcepto
             label="FEE mensual"
             x={kpiStats.feeCobrX}
