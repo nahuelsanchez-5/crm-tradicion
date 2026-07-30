@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect, useCallback, useMemo, Fragment } fr
 import { useRouter } from "next/navigation"
 import { crearAgente, actualizarAgente, actualizarPagaFee, type AgenteFormData } from "./actions"
 import { hoyArgentina } from "@/lib/fecha"
-import { Users, X, Loader2, MessageCircle, AlertCircle } from "lucide-react"
+import { Users, X, Loader2, MessageCircle, AlertCircle, Search } from "lucide-react"
 import Topbar from "@/components/Topbar"
 
 // ── Types ────────────────────────────────────────────
@@ -215,6 +215,7 @@ export default function AgentesClient({
   const [error,         setError]         = useState("")
   const [feeLoading,    setFeeLoading]    = useState<string | null>(null)
   const [sortMode,      setSortMode]      = useState<SortMode>("az")
+  const [busqueda,      setBusqueda]      = useState("")
 
   // ── Próximo Mainstreet ────────────────────────────
   const proximosMainstreet = useMemo(() => {
@@ -251,6 +252,12 @@ export default function AgentesClient({
       ...applySort(agentes.filter(a => !a.activo)),
     ]
   }, [agentes, sortMode, facturacionPorNombre])
+
+  // ── Filtro por búsqueda de nombre ─────────────────
+  const agentesFiltrados = useMemo(
+    () => sorted.filter(a => a.nombre.toLowerCase().includes(busqueda.toLowerCase())),
+    [sorted, busqueda],
+  )
 
   // ── WhatsApp reporte por agente ───────────────────
   function openWhatsApp(ag: AgenteConPlan) {
@@ -365,7 +372,18 @@ export default function AgentesClient({
       <Topbar moduleName="Agentes" />
 
       {/* ── Page Header ──────────────────────────── */}
-      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end" }}>
+      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "space-between" }}>
+        <div style={{ position: "relative", flex: 1, maxWidth: "280px" }}>
+          <Search size={14} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.35)" }} />
+          <input
+            type="text"
+            placeholder="Buscar agente..."
+            value={busqueda}
+            onChange={e => setBusqueda(e.target.value)}
+            className="crm-input"
+            style={{ paddingLeft: "32px", fontSize: "13px" }}
+          />
+        </div>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <Users size={14} color="#94A3B8" />
@@ -480,14 +498,14 @@ export default function AgentesClient({
 
           {/* Mobile card list */}
           <div className="md:hidden divide-y divide-white/[0.06]">
-            {sorted.length === 0 ? (
+            {agentesFiltrados.length === 0 ? (
               <div style={{ padding: "32px 20px", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "13px" }}>
-                No hay agentes registrados.
+                {busqueda ? "No se encontraron agentes" : "No hay agentes registrados."}
               </div>
             ) : (
-              sorted.map((ag, i) => {
+              agentesFiltrados.map((ag, i) => {
                 const facturacion = facturacionPorNombre[ag.nombre.toLowerCase().trim()] ?? 0
-                const isSeparator = !ag.activo && (i === 0 || sorted[i - 1].activo)
+                const isSeparator = !ag.activo && (i === 0 || agentesFiltrados[i - 1].activo)
                 return (
                   <Fragment key={ag.id}>
                   {isSeparator && (
@@ -575,16 +593,16 @@ export default function AgentesClient({
                 </tr>
               </thead>
               <tbody>
-                {sorted.length === 0 ? (
+                {agentesFiltrados.length === 0 ? (
                   <tr>
                     <td colSpan={9} style={{ padding: "40px", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "13px" }}>
-                      No hay agentes registrados. Hacé clic en &quot;+ Nuevo Agente&quot; para empezar.
+                      {busqueda ? "No se encontraron agentes" : "No hay agentes registrados. Hacé clic en \"+ Nuevo Agente\" para empezar."}
                     </td>
                   </tr>
                 ) : (
-                  sorted.map((ag, i) => {
+                  agentesFiltrados.map((ag, i) => {
                     const facturacion = facturacionPorNombre[ag.nombre.toLowerCase().trim()] ?? 0
-                    const isSeparator = !ag.activo && (i === 0 || sorted[i - 1].activo)
+                    const isSeparator = !ag.activo && (i === 0 || agentesFiltrados[i - 1].activo)
                     return (
                       <Fragment key={ag.id}>
                       {isSeparator && (
