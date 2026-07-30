@@ -148,6 +148,8 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
   const [devolverTarget,  setDevolverTarget]  = useState<CartelRow | null>(null)
   const [devolverLoading, setDevolverLoading] = useState(false)
   const [devolverError,   setDevolverError]   = useState("")
+  const [devolverPickerOpen,     setDevolverPickerOpen]     = useState(false)
+  const [devolverPickerBusqueda, setDevolverPickerBusqueda] = useState("")
 
   // ── Panel toggle (vencidos / proximos / recuperados) ──
   const [panelOpen, setPanelOpen] = useState<"vencidos" | "proximos" | "recuperados" | null>(null)
@@ -325,20 +327,35 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
 
       {/* ── Page Header ──────────────────────────── */}
       <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end" }}>
-        <button
-          onClick={openNuevo}
-          style={{
-            display: "flex", alignItems: "center", gap: "7px",
-            padding: "8px 18px", borderRadius: "9px", border: "none",
-            background: "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
-            color: "white", fontSize: "13px", fontWeight: 700,
-            cursor: "pointer", fontFamily: "inherit",
-            boxShadow: "0 2px 8px rgba(227,24,55,0.3)",
-          }}
-        >
-          <Plus size={15} />
-          Nuevo cartel
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <button
+            onClick={() => setDevolverPickerOpen(true)}
+            style={{
+              display: "flex", alignItems: "center", gap: "7px",
+              padding: "8px 18px", borderRadius: "9px",
+              border: "1px solid rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.08)",
+              color: "#f87171", fontSize: "13px", fontWeight: 700,
+              cursor: "pointer", fontFamily: "inherit",
+            }}
+          >
+            <RotateCcw size={15} />
+            Devolver
+          </button>
+          <button
+            onClick={openNuevo}
+            style={{
+              display: "flex", alignItems: "center", gap: "7px",
+              padding: "8px 18px", borderRadius: "9px", border: "none",
+              background: "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
+              color: "white", fontSize: "13px", fontWeight: 700,
+              cursor: "pointer", fontFamily: "inherit",
+              boxShadow: "0 2px 8px rgba(227,24,55,0.3)",
+            }}
+          >
+            <Plus size={15} />
+            Nuevo cartel
+          </button>
+        </div>
       </div>
 
       {/* ── Scrollable content ────────────────────── */}
@@ -1121,6 +1138,111 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                   {devolverLoading && <Loader2 size={14} className="animate-spin" />}
                   {devolverLoading ? "Registrando..." : <><RotateCcw size={14} /> Confirmar devolución</>}
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: elegir cartel a devolver ──────────── */}
+      {devolverPickerOpen && (
+        <div onClick={() => { setDevolverPickerOpen(false); setDevolverPickerBusqueda("") }} className="crm-modal-backdrop">
+          <div
+            onClick={e => e.stopPropagation()}
+            className="crm-modal"
+            style={{ maxWidth: "460px" }}
+          >
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div className="bg-rose-500/[0.12] rounded-xl p-2.5 flex-shrink-0">
+                  <RotateCcw size={18} className="text-rose-400" />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
+                    Devolver cartel
+                  </h2>
+                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
+                    Elegí el cartel que querés devolver
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => { setDevolverPickerOpen(false); setDevolverPickerBusqueda("") }} style={{
+                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
+                width: "32px", height: "32px", display: "flex",
+                alignItems: "center", justifyContent: "center",
+                cursor: "pointer", color: "rgba(255,255,255,0.5)",
+              }}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <div style={{ padding: "16px 20px" }}>
+              {/* Buscador */}
+              <div style={{ position: "relative", marginBottom: "12px" }}>
+                <Search size={15} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.35)" }} />
+                <input
+                  type="text"
+                  autoFocus
+                  value={devolverPickerBusqueda}
+                  onChange={e => setDevolverPickerBusqueda(e.target.value)}
+                  placeholder="Buscar por dirección o número..."
+                  style={{
+                    width: "100%", padding: "9px 12px 9px 34px",
+                    borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
+                    fontSize: "13px", fontFamily: "inherit",
+                    color: "var(--crm-text)", outline: "none", background: "var(--crm-input-bg)",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              {/* Lista filtrada */}
+              <div style={{ maxHeight: "320px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "6px" }}>
+                {(() => {
+                  const q = devolverPickerBusqueda.trim().toLowerCase()
+                  const filtrados = carteles.filter(c =>
+                    !q || c.direccion.toLowerCase().includes(q) || String(c.numero).includes(q)
+                  )
+                  if (filtrados.length === 0) return (
+                    <div style={{
+                      padding: "24px 14px", textAlign: "center",
+                      fontSize: "13px", color: "rgba(255,255,255,0.35)",
+                    }}>
+                      No se encontraron carteles
+                    </div>
+                  )
+                  return filtrados.map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => {
+                        setDevolverPickerOpen(false)
+                        setDevolverPickerBusqueda("")
+                        setDevolverTarget(c)
+                        setDevolverError("")
+                      }}
+                      className="hover:bg-[rgba(255,255,255,0.07)]"
+                      style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px",
+                        padding: "10px 12px", borderRadius: "8px",
+                        border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)",
+                        cursor: "pointer", fontFamily: "inherit", textAlign: "left", width: "100%",
+                      }}
+                    >
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--crm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          #{c.numero} · {c.direccion}
+                        </div>
+                        <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginTop: "2px" }}>
+                          {c.agente || "Sin agente"} · {c.tipo || "—"}
+                        </div>
+                      </div>
+                      <RotateCcw size={14} style={{ color: "#f87171", flexShrink: 0 }} />
+                    </button>
+                  ))
+                })()}
               </div>
             </div>
           </div>
