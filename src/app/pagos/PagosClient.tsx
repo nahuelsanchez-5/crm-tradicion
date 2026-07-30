@@ -109,11 +109,12 @@ function calcEstadoGeneral(totalDebe: number, totalPagado: number): string {
   return "Parcial"
 }
 
-function getConceptGroup(concepto: string): "FEE" | "CRM" | "Mainstreet" | "Otros" {
+function getConceptGroup(concepto: string): "FEE" | "CRM" | "Mainstreet" | "BolsasVino" | "Otros" {
   const c = concepto.toLowerCase()
   if (c.includes("fee"))                                                          return "FEE"
   if (c.includes("pro") || c.includes("crm") || c.includes("plan") || c.includes("licencia")) return "CRM"
   if (c.includes("mainstreet"))                                                   return "Mainstreet"
+  if (c.includes("bolsa") && c.includes("vino"))                                  return "BolsasVino"
   return "Otros"
 }
 
@@ -205,6 +206,7 @@ function KpiConcepto({
     "#7C3AED": { bg: "rgba(167,139,250,0.08)", text: "#a78bfa",  bar: "#a78bfa" },
     "#0D9488": { bg: "rgba(45,212,191,0.08)",  text: "#2dd4bf",  bar: "#2dd4bf" },
     "#D97706": { bg: "rgba(251,191,36,0.08)",  text: "#fbbf24",  bar: "#fbbf24" },
+    "#BE185D": { bg: "rgba(244,114,182,0.08)", text: "#f472b6",  bar: "#f472b6" },
   }
   const { bg, text, bar } = colorMap[color] ?? { bg: "rgba(255,255,255,0.06)", text: "rgba(255,255,255,0.6)", bar: "rgba(255,255,255,0.3)" }
   return (
@@ -288,7 +290,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
     const now = new Date()
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
   })
-  const [detalleConcepto, setDetalleConcepto] = useState<"FEE" | "CRM" | "Mainstreet" | "Otros" | null>(null)
+  const [detalleConcepto, setDetalleConcepto] = useState<"FEE" | "CRM" | "Mainstreet" | "BolsasVino" | "Otros" | null>(null)
 
   // ── Expanded row ───────────────────────────────────
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null)
@@ -380,9 +382,16 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
     const mainCobrX = new Set(mainPagos.filter(p => p.estado === "Pagado").map(p => p.agente_id)).size
     const mainPct   = mainTotal > 0 ? Math.round((mainCobrX / mainTotal) * 100) : 0
 
-    // Otros
-    const otrosPagos = monthPagos.filter(p => getConceptGroup(p.concepto) === "Otros")
-    const otrosCobrX = otrosPagos.filter(p => p.estado === "Pagado").length
+    // Bolsas de vinos
+    const bolsasPagos  = monthPagos.filter(p => getConceptGroup(p.concepto) === "BolsasVino")
+    const bolsasTotal  = bolsasPagos.length
+    const bolsasCobrX  = bolsasPagos.filter(p => p.estado === "Pagado").length
+    const bolsasPct    = bolsasTotal > 0 ? Math.round((bolsasCobrX / bolsasTotal) * 100) : 0
+
+    // "Otros" ahora EXCLUYE BolsasVino (antes lo incluía sin querer, ya que getConceptGroup lo separaba mal)
+    const otrosPagos  = monthPagos.filter(p => getConceptGroup(p.concepto) === "Otros")
+    const otrosCobrX  = otrosPagos.filter(p => p.estado === "Pagado").length
+    const otrosTotal  = otrosPagos.length
 
     const pctGeneral = Math.round((feePct + crmPct + mainPct) / 3)
 
@@ -390,7 +399,8 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
       feeCobrX, feeTotal: agentesFeeCount, feePct,
       crmCobrX, crmTotal, crmPct,
       mainCobrX, mainTotal, mainPct,
-      otrosCobrX, pctGeneral,
+      bolsasCobrX, bolsasTotal, bolsasPct,
+      otrosCobrX, otrosTotal, pctGeneral,
     }
   }, [pagos, agentes, selectedMonth])
 
@@ -402,12 +412,13 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
       selectedMonth === "todos" || p.fecha.startsWith(selectedMonth)
     )
 
-    if (detalleConcepto === "Otros") {
-      const otrosPagos = monthPagos.filter(p => getConceptGroup(p.concepto) === "Otros")
-      return otrosPagos.map(p => {
+    if (detalleConcepto === "Otros" || detalleConcepto === "BolsasVino") {
+      const pagosDelGrupo = monthPagos.filter(p => getConceptGroup(p.concepto) === detalleConcepto)
+      return pagosDelGrupo.map(p => {
         const ag = agentes.find(a => a.id === p.agente_id)
-        return { nombre: ag?.nombre ?? "—", estado: p.estado, monto: p.monto_debe as number | null, concepto: p.concepto }
-      })
+        const montoReal = p.estado === "Pagado" ? Number(p.monto_pagado) : Number(p.monto_debe)
+        return { nombre: ag?.nombre ?? "—", estado: p.estado, monto: montoReal as number | null, concepto: p.concepto }
+      }).sort((a, b) => a.nombre.localeCompare(b.nombre))
     }
 
     // Para FEE, CRM, Mainstreet: universo = todos los agentes elegibles, con o sin pago
@@ -873,8 +884,18 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
             onClick={() => setDetalleConcepto("Mainstreet")}
           />
           <KpiConcepto
+            label="Bolsas de vinos"
+            x={kpiStats.bolsasCobrX}
+            y={kpiStats.bolsasTotal}
+            pct={kpiStats.bolsasPct}
+            color="#BE185D"
+            gradient="linear-gradient(135deg,#BE185D 0%,#831843 100%)"
+            onClick={() => setDetalleConcepto("BolsasVino")}
+          />
+          <KpiConcepto
             label="Otros"
             x={kpiStats.otrosCobrX}
+            y={kpiStats.otrosTotal}
             color="#D97706"
             gradient="linear-gradient(135deg,#D97706 0%,#B45309 100%)"
             onClick={() => setDetalleConcepto("Otros")}
@@ -1911,7 +1932,13 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
         <Backdrop onClose={() => setDetalleConcepto(null)}>
           <div className="crm-modal" style={{ maxWidth: "480px", width: "100%", maxHeight: "70vh", display: "flex", flexDirection: "column" }}>
             <ModalHeader
-              title={detalleConcepto === "FEE" ? "FEE mensual" : detalleConcepto === "CRM" ? "Licencias CRM" : detalleConcepto === "Mainstreet" ? "Mainstreet" : "Otros"}
+              title={
+                detalleConcepto === "FEE" ? "FEE mensual" :
+                detalleConcepto === "CRM" ? "Licencias CRM" :
+                detalleConcepto === "Mainstreet" ? "Mainstreet" :
+                detalleConcepto === "BolsasVino" ? "Bolsas de vinos" :
+                "Otros"
+              }
               subtitle={`${detalleConceptoData.length} agente${detalleConceptoData.length !== 1 ? "s" : ""} — ${mesLabel(selectedMonth)}`}
               onClose={() => setDetalleConcepto(null)}
             />
@@ -1928,8 +1955,9 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                   }}>
                     <div>
                       <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--crm-text)", margin: 0 }}>{d.nombre}</p>
+                      <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", margin: 0 }}>{d.concepto}</p>
                       {d.monto !== null && (
-                        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", margin: 0 }}>{fmtUSD(d.monto)}</p>
+                        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", margin: "2px 0 0" }}>{fmtUSD(d.monto)}</p>
                       )}
                     </div>
                     <span style={{
