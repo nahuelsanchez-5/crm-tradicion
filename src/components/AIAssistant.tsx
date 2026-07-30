@@ -237,7 +237,7 @@ export default function AIAssistant() {
             right: "1rem",
             width: "min(90vw, 24rem)",
             height: "500px",
-            backgroundColor: "var(--crm-card)",
+            backgroundColor: "#13131a",
           }}
         >
           {/* Header */}
@@ -292,7 +292,7 @@ export default function AIAssistant() {
                         : "rounded-2xl rounded-bl-sm"
                     }`}
                     style={{
-                      backgroundColor: msg.role === "user" ? "#2563eb" : "rgba(255,255,255,0.08)",
+                      backgroundColor: msg.role === "user" ? "#2563eb" : "rgba(255,255,255,0.10)",
                       color: msg.role === "user" ? undefined : "var(--crm-text)",
                     }}
                   >
@@ -341,7 +341,7 @@ export default function AIAssistant() {
                 </div>
                 <div
                   className="px-3 py-2 rounded-2xl rounded-bl-sm text-sm flex items-center gap-1"
-                  style={{ backgroundColor: "rgba(255,255,255,0.08)", color: "var(--crm-text-muted)" }}
+                  style={{ backgroundColor: "rgba(255,255,255,0.10)", color: "var(--crm-text-muted)" }}
                 >
                   Pensando
                   <span className="flex gap-0.5 ml-1">
@@ -369,7 +369,7 @@ export default function AIAssistant() {
           </div>
 
           {/* Input bar */}
-          <div className="flex items-center gap-2 px-3 py-3 border-t border-[rgba(255,255,255,0.1)] flex-shrink-0" style={{ backgroundColor: "var(--crm-card)" }}>
+          <div className="flex items-center gap-2 px-3 py-3 border-t border-[rgba(255,255,255,0.1)] flex-shrink-0" style={{ backgroundColor: "#13131a" }}>
             <input
               type="text"
               value={input}
