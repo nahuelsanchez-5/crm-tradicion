@@ -41,15 +41,15 @@ interface FormState {
 // ── Helpers ──────────────────────────────────────────
 function npsColor(nps: number | null): string {
   if (nps === null) return "rgba(255,255,255,0.35)"
-  if (nps >= 8) return "#4ade80"
-  if (nps >= 6) return "#fbbf24"
+  if (nps >= 9) return "#4ade80"
+  if (nps >= 7) return "#fbbf24"
   return "#f87171"
 }
 
 function npsLabel(nps: number | null): string {
   if (nps === null) return "—"
   if (nps >= 9) return "Promotor"
-  if (nps >= 7) return "Neutral"
+  if (nps >= 7) return "Pasivo"
   return "Detractor"
 }
 
@@ -70,7 +70,7 @@ function mesNombre(key: string): string {
 
 function NpsBadge({ nps }: { nps: number | null }) {
   const color = npsColor(nps)
-  const bg    = nps === null ? "rgba(255,255,255,0.08)" : nps >= 8 ? "rgba(74,222,128,0.12)" : nps >= 6 ? "rgba(251,191,36,0.12)" : "rgba(248,113,113,0.12)"
+  const bg    = nps === null ? "rgba(255,255,255,0.08)" : nps >= 9 ? "rgba(74,222,128,0.12)" : nps >= 7 ? "rgba(251,191,36,0.12)" : "rgba(248,113,113,0.12)"
   return (
     <span style={{
       background: bg, color, padding: "2px 9px",
@@ -766,14 +766,31 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                 )}
 
                 <Field label="NPS (0 a 10)">
-                  <input type="number" min="0" max="10" step="1"
-                    placeholder="Opcional — ej: 7"
-                    value={editForm.nps}
-                    onChange={e => setEditForm(f => f ? { ...f, nps: e.target.value } : f)}
-                    className="crm-input"
-                  />
+                  <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+                    {Array.from({ length: 11 }, (_, i) => i).map(n => {
+                      const selected = editForm.nps === String(n)
+                      const color = n >= 9 ? "#4ade80" : n >= 7 ? "#fbbf24" : "#f87171"
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setEditForm(f => f ? { ...f, nps: selected ? "" : String(n) } : f)}
+                          style={{
+                            width: "32px", height: "32px", borderRadius: "8px",
+                            border: selected ? `2px solid ${color}` : "1px solid rgba(255,255,255,0.12)",
+                            background: selected ? `${color}22` : "rgba(255,255,255,0.04)",
+                            color: selected ? color : "rgba(255,255,255,0.6)",
+                            fontSize: "13px", fontWeight: 700, cursor: "pointer",
+                            fontFamily: "inherit",
+                          }}
+                        >
+                          {n}
+                        </button>
+                      )
+                    })}
+                  </div>
                   {editForm.nps !== "" && (
-                    <div style={{ marginTop: "5px" }}>
+                    <div style={{ marginTop: "8px" }}>
                       <NpsBadge nps={parseInt(editForm.nps) || null} />
                       <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginLeft: "6px" }}>
                         {npsLabel(parseInt(editForm.nps) || null)}
@@ -1121,15 +1138,31 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
 
               {/* NPS */}
               <Field label="NPS (0 a 10)">
-                <input
-                  type="number" min="0" max="10" step="1"
-                  placeholder="Opcional — ej: 7"
-                  value={form.nps}
-                  onChange={e => setForm(f => ({ ...f, nps: e.target.value }))}
-                  className="crm-input"
-                />
+                <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+                  {Array.from({ length: 11 }, (_, i) => i).map(n => {
+                    const selected = form.nps === String(n)
+                    const color = n >= 9 ? "#4ade80" : n >= 7 ? "#fbbf24" : "#f87171"
+                    return (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, nps: selected ? "" : String(n) }))}
+                        style={{
+                          width: "32px", height: "32px", borderRadius: "8px",
+                          border: selected ? `2px solid ${color}` : "1px solid rgba(255,255,255,0.12)",
+                          background: selected ? `${color}22` : "rgba(255,255,255,0.04)",
+                          color: selected ? color : "rgba(255,255,255,0.6)",
+                          fontSize: "13px", fontWeight: 700, cursor: "pointer",
+                          fontFamily: "inherit",
+                        }}
+                      >
+                        {n}
+                      </button>
+                    )
+                  })}
+                </div>
                 {form.nps !== "" && (
-                  <div style={{ marginTop: "5px" }}>
+                  <div style={{ marginTop: "8px" }}>
                     <NpsBadge nps={parseInt(form.nps) || null} />
                     <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginLeft: "6px" }}>
                       {npsLabel(parseInt(form.nps) || null)}
