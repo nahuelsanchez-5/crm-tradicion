@@ -8,6 +8,7 @@ import type { OperacionFormData } from "./actions"
 import { hoyArgentina } from "@/lib/fecha"
 import { Building2, DollarSign, X, Loader2, Trash2 } from "lucide-react"
 import Topbar from "@/components/Topbar"
+import { fmtUSD } from "@/lib/format"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -95,14 +96,6 @@ function parseAgentesStr(raw: string, internos: Set<string>) {
     compradorExt:p2 && !internos.has(p2) ? p2 : "",
     dosPuntas:   false,
   }
-}
-
-function fmtUSD(n: number): string {
-  const rounded = Math.round(n * 100) / 100
-  if (rounded === Math.floor(rounded)) {
-    return `USD ${rounded.toLocaleString("es-AR")}`
-  }
-  return `USD ${rounded.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function fmtFecha(fechaStr: string) {

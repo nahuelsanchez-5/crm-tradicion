@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase"
 import ResumenClient from "./ResumenClient"
 import type { KpiRow } from "./ResumenClient"
+import { fmtUSD } from "@/lib/format"
 
 // Estacionalidad — mismos valores que ConfiguracionClient.tsx ESTACIONALIDAD_PCT
 // Jan    Feb    Mar    Apr    May    Jun    Jul    Aug    Sep    Oct    Nov    Dec
@@ -159,10 +160,6 @@ export default async function ResumenPage({
   const factACobrar    = factRatio >= 1 ? 100 : 0
 
   const totalACobrar = cobrosACobrar + cartelesACobrar + encACobrar + factACobrar
-
-  function fmtUSD(n: number) {
-    return `USD ${Math.round(n).toLocaleString("es-AR")}`
-  }
 
   const kpis: KpiRow[] = [
     {

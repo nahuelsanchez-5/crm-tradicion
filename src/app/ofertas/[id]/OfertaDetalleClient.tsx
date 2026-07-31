@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { cambiarEstado, agregarMovimiento, toggleChecklist, registrarCierre, editarOferta } from "../actions"
 import type { EditarOfertaData } from "../actions"
+import { fmtUSD } from "@/lib/format"
 import { hoyArgentina } from "@/lib/fecha"
 import {
   ArrowLeft, X, Loader2, ChevronRight,
@@ -130,11 +131,6 @@ const MONTH_NAMES = [
 ]
 
 // ── Helpers ───────────────────────────────────────────
-function fmtUSD(n: number | null | undefined): string {
-  if (n == null) return "—"
-  return `USD ${Math.round(n).toLocaleString("es-AR")}`
-}
-
 function fmtFecha(s: string | null): string {
   if (!s) return "—"
   const [a, m, d] = s.split("-")

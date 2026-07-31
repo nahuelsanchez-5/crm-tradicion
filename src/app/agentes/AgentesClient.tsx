@@ -6,6 +6,7 @@ import { crearAgente, actualizarAgente, actualizarPagaFee, type AgenteFormData }
 import { hoyArgentina } from "@/lib/fecha"
 import { Users, X, Loader2, MessageCircle, AlertCircle, Search } from "lucide-react"
 import Topbar from "@/components/Topbar"
+import { fmtUSD } from "@/lib/format"
 
 // ── Types ────────────────────────────────────────────
 type Plan = "PRO" | "PRO+" | "B QR" | "B Ofi" | ""
@@ -93,10 +94,6 @@ function fmtFecha(fechaStr: string) {
   if (!fechaStr) return "—"
   const [a, m, d] = fechaStr.split("-")
   return `${parseInt(d).toString().padStart(2,"0")}/${parseInt(m).toString().padStart(2,"0")}/${a}`
-}
-
-function fmtUSD(n: number): string {
-  return `USD ${Math.round(n).toLocaleString("es-AR")}`
 }
 
 function antiguedad(fechaStr: string): string {

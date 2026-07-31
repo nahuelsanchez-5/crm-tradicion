@@ -5,15 +5,10 @@ import Topbar from "@/components/Topbar"
 import StatusBadge from "@/components/StatusBadge"
 import Link from "next/link"
 import { Users, Building2, DollarSign, Handshake, Clock } from "lucide-react"
+import { fmtUSD } from "@/lib/format"
 
 const MES_NAMES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
                    "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
-
-function fmtUSD(n: number): string {
-  const rounded = Math.round(n * 100) / 100
-  if (rounded === Math.floor(rounded)) return `USD ${rounded.toLocaleString("es-AR")}`
-  return `USD ${rounded.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
 
 function fmtFecha(fechaStr: string) {
   const [, m, d] = fechaStr.split("-")

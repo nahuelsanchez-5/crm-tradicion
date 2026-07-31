@@ -7,6 +7,7 @@ import KpiCard from "@/components/KpiCard"
 import { hoyArgentina } from "@/lib/fecha"
 import { crearOferta } from "./actions"
 import type { OfertaFormData } from "./actions"
+import { fmtUSD } from "@/lib/format"
 import {
   Handshake, TrendingUp, CheckCircle2, XCircle,
   X, Loader2, ChevronRight, Save,
@@ -131,12 +132,6 @@ function emptyForm(numero: number): FormData {
 }
 
 // ── Helpers ───────────────────────────────────────────
-function fmtUSD(n: number | null | undefined): string {
-  if (n == null) return "—"
-  const rounded = Math.round(n)
-  return `USD ${rounded.toLocaleString("es-AR")}`
-}
-
 function fmtFecha(s: string | null): string {
   if (!s) return "—"
   const [a, m, d] = s.split("-")

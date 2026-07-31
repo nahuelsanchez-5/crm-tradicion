@@ -7,6 +7,7 @@ import { guardarFacturacion } from "./actions"
 import type { FacturacionFormData } from "./actions"
 import { DollarSign, TrendingUp, Award, X, Loader2 } from "lucide-react"
 import Topbar from "@/components/Topbar"
+import { fmtUSD } from "@/lib/format"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -48,14 +49,6 @@ interface FormData {
 }
 
 // ── Helpers ──────────────────────────────────────────
-function fmtUSD(n: number): string {
-  const rounded = Math.round(n * 100) / 100
-  if (rounded === Math.floor(rounded)) {
-    return `USD ${rounded.toLocaleString("es-AR")}`
-  }
-  return `USD ${rounded.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
-
 function pct(real: number, objetivo: number): number {
   if (objetivo <= 0) return 0
   return Math.round((real / objetivo) * 100)

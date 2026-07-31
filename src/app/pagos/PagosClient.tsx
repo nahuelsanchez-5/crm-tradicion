@@ -7,6 +7,7 @@ import { DollarSign, X, Loader2, MessageCircle, TrendingDown, TrendingUp, Repeat
 import StatusBadge from "@/components/StatusBadge"
 import { hoyArgentina } from "@/lib/fecha"
 import Topbar from "@/components/Topbar"
+import { fmtUSD } from "@/lib/format"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -116,14 +117,6 @@ function getConceptGroup(concepto: string): "FEE" | "CRM" | "Mainstreet" | "Bols
   if (c.includes("mainstreet"))                                                   return "Mainstreet"
   if (c.includes("bolsa") && c.includes("vino"))                                  return "BolsasVino"
   return "Otros"
-}
-
-function fmtUSD(n: number): string {
-  const rounded = Math.round(n * 100) / 100
-  if (rounded === Math.floor(rounded)) {
-    return `USD ${rounded.toLocaleString("es-AR")}`
-  }
-  return `USD ${rounded.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function fmtFecha(fechaStr: string) {
