@@ -506,7 +506,7 @@ export default function FacturacionClient({ rows }: Props) {
                 <input
                   type="number"
                   min="0"
-                  step="100"
+                  step="0.01"
                   value={form.real_usd}
                   onChange={e => setForm(f => ({ ...f, real_usd: e.target.value }))}
                   placeholder="0"
