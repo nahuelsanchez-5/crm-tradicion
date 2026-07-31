@@ -189,17 +189,20 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
     if (fromMonth <= 0) { fromYear--; fromMonth += 12 }
     const fromDate = `${fromYear}-${String(fromMonth).padStart(2, "0")}-01`
     fetch(
-      `${url}/rest/v1/operaciones?select=fecha&fecha=gte.${fromDate}`,
+      `${url}/rest/v1/operaciones?select=fecha,tipo&fecha=gte.${fromDate}`,
       { headers: { apikey: apiKey, Authorization: `Bearer ${apiKey}` } }
     )
       .then(res => {
         if (!res.ok) throw new Error(`operaciones: ${res.status}`)
-        return res.json() as Promise<{ fecha: string }[]>
+        return res.json() as Promise<{ fecha: string; tipo: string }[]>
       })
       .then(rows => {
         if (cancelled) return
         const counts = new Map<string, number>()
         for (const row of rows) {
+          // Venta y Alquiler generan encuestas esperadas.
+          // Alquiler Temporal, Referido y Otro = 0 esperadas.
+          if (row.tipo !== "Venta" && row.tipo !== "Alquiler") continue
           const k = mesKey(row.fecha)
           counts.set(k, (counts.get(k) ?? 0) + 1)
         }
