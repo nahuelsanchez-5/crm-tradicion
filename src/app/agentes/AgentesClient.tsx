@@ -525,7 +525,7 @@ export default function AgentesClient({
                       <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.07)" }} />
                     </div>
                   )}
-                  <div className="flex items-center gap-3 px-4 py-3.5" style={{ opacity: ag.activo ? 1 : 0.5 }}>
+                  <div className="flex items-center gap-3 px-4 py-3.5" onClick={() => setDetalleAgente(ag)} style={{ opacity: ag.activo ? 1 : 0.5, cursor: "pointer" }}>
                     <div style={{
                       width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0,
                       background: AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length],
@@ -547,7 +547,7 @@ export default function AgentesClient({
                     <div className="flex items-center gap-2 flex-shrink-0">
                       {ag.telefono && (
                         <button
-                          onClick={() => openWhatsApp(ag)}
+                          onClick={e => { e.stopPropagation(); openWhatsApp(ag) }}
                           style={{
                             background: "#25D366", border: "none", borderRadius: "8px",
                             width: "34px", height: "34px", display: "flex",
@@ -559,7 +559,7 @@ export default function AgentesClient({
                         </button>
                       )}
                       <button
-                        onClick={() => openEditar(ag)}
+                        onClick={e => { e.stopPropagation(); openEditar(ag) }}
                         style={{
                           padding: "6px 14px", borderRadius: "7px",
                           border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
