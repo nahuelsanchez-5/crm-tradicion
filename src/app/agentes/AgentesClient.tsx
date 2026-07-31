@@ -4,9 +4,10 @@ import { useState, useTransition, useEffect, useCallback, useMemo, Fragment } fr
 import { useRouter } from "next/navigation"
 import { crearAgente, actualizarAgente, actualizarPagaFee, type AgenteFormData } from "./actions"
 import { hoyArgentina } from "@/lib/fecha"
-import { Users, X, Loader2, MessageCircle, AlertCircle, Search } from "lucide-react"
+import { Users, Loader2, MessageCircle, AlertCircle, Search } from "lucide-react"
 import Topbar from "@/components/Topbar"
 import { fmtUSD } from "@/lib/format"
+import { Backdrop, ModalHeader } from "@/components/Modal"
 
 // ── Types ────────────────────────────────────────────
 type Plan = "PRO" | "PRO+" | "B QR" | "B Ofi" | ""
@@ -332,12 +333,6 @@ export default function AgentesClient({
     setError("")
     setModal("editar")
   }
-
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") closeModal() }
-    if (modal !== "none") document.addEventListener("keydown", h)
-    return () => document.removeEventListener("keydown", h)
-  }, [modal, closeModal])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -722,35 +717,14 @@ export default function AgentesClient({
 
       {/* ── MODAL ────────────────────────────────── */}
       {modal !== "none" && (
-        <div onClick={closeModal} className="crm-modal-backdrop">
-          <div
-            onClick={e => e.stopPropagation()}
-            className="crm-modal"
-            style={{ maxWidth: "480px" }}
-          >
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
-            }}>
-              <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
-                  {modal === "nuevo" ? "Nuevo Agente" : "Editar Agente"}
-                </h2>
-                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
-                  {modal === "nuevo"
-                    ? "Completá los datos para dar de alta al agente"
-                    : `Editando: ${selectedAgent?.nombre}`}
-                </p>
-              </div>
-              <button onClick={closeModal} style={{
-                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
-                width: "32px", height: "32px", display: "flex",
-                alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "rgba(255,255,255,0.5)",
-              }}>
-                <X size={16} />
-              </button>
-            </div>
+        <Backdrop onClose={closeModal} style={{ maxWidth: "480px" }}>
+            <ModalHeader
+              title={modal === "nuevo" ? "Nuevo Agente" : "Editar Agente"}
+              subtitle={modal === "nuevo"
+                ? "Completá los datos para dar de alta al agente"
+                : `Editando: ${selectedAgent?.nombre}`}
+              onClose={closeModal}
+            />
 
             <form onSubmit={handleSubmit} style={{ padding: "20px" }}>
               <Field label="Nombre completo *">
@@ -862,8 +836,7 @@ export default function AgentesClient({
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </Backdrop>
       )}
     </div>
   )
