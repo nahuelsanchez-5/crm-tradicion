@@ -171,6 +171,15 @@ function EstadoBadge({ activo }: { activo: boolean }) {
   )
 }
 
+function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>{label}</span>
+      <span style={{ fontSize: "13px", fontWeight: 600, color: "var(--crm-text)" }}>{value}</span>
+    </div>
+  )
+}
+
 const inputStyle: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
   borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
@@ -204,6 +213,7 @@ export default function AgentesClient({
 
   const [modal,         setModal]         = useState<ModalState>("none")
   const [selectedAgent, setSelectedAgent] = useState<AgenteConPlan | null>(null)
+  const [detalleAgente, setDetalleAgente] = useState<AgenteConPlan | null>(null)
   const [form,          setForm]          = useState<AgenteFormData>(EMPTY_FORM)
   const [error,         setError]         = useState("")
   const [feeLoading,    setFeeLoading]    = useState<string | null>(null)
@@ -303,6 +313,12 @@ export default function AgentesClient({
       router.refresh()
     })
   }
+
+  // Agente del modal de detalle re-derivado de los props frescos, para que el
+  // select de Paga FEE refleje el cambio tras router.refresh() sin reabrir.
+  const detalleActual = detalleAgente
+    ? agentes.find(a => a.id === detalleAgente.id) ?? detalleAgente
+    : null
 
   // ── Modal handlers ─────────────────────────────────
   const closeModal = useCallback(() => { setModal("none"); setError("") }, [])
@@ -566,7 +582,7 @@ export default function AgentesClient({
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                  {["Nombre", "Antigüedad", "Próx. Mainstreet", "Licencia CRM", "Paga FEE", "Facturación año", "Estado", "WA", ""].map(h => (
+                  {["Nombre", "Antigüedad", "Próx. Mainstreet", "Licencia CRM", "Facturación año", "Estado", "WA", ""].map(h => (
                     <th key={h} style={{
                       padding: "10px 16px", textAlign: "left",
                       fontSize: "10.5px", fontWeight: 700,
@@ -582,7 +598,7 @@ export default function AgentesClient({
               <tbody>
                 {agentesFiltrados.length === 0 ? (
                   <tr>
-                    <td colSpan={9} style={{ padding: "40px", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "13px" }}>
+                    <td colSpan={8} style={{ padding: "40px", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "13px" }}>
                       {busqueda ? "No se encontraron agentes" : "No hay agentes registrados. Hacé clic en \"+ Nuevo Agente\" para empezar."}
                     </td>
                   </tr>
@@ -594,7 +610,7 @@ export default function AgentesClient({
                       <Fragment key={ag.id}>
                       {isSeparator && (
                         <tr>
-                          <td colSpan={9} style={{ padding: 0 }}>
+                          <td colSpan={8} style={{ padding: 0 }}>
                             <div style={{
                               display: "flex", alignItems: "center", gap: "10px",
                               padding: "10px 16px",
@@ -611,7 +627,8 @@ export default function AgentesClient({
                         </tr>
                       )}
                       <tr
-                        style={{ borderBottom: i === sorted.length - 1 ? "none" : "1px solid rgba(255,255,255,0.06)", opacity: ag.activo ? 1 : 0.5 }}
+                        onClick={() => setDetalleAgente(ag)}
+                        style={{ borderBottom: i === sorted.length - 1 ? "none" : "1px solid rgba(255,255,255,0.06)", opacity: ag.activo ? 1 : 0.5, cursor: "pointer" }}
                         className="hover:bg-[rgba(255,255,255,0.03)]"
                       >
                         {/* Nombre con avatar */}
@@ -641,25 +658,6 @@ export default function AgentesClient({
                         <td style={{ padding: "12px 16px" }}>
                           <PlanBadge plan={ag.tipo_plan ?? null} />
                         </td>
-                        <td style={{ padding: "12px 16px" }}>
-                          <select
-                            value={getEfectivoPagaFee(ag.fecha_alta, ag.paga_fee) ? "si" : "no"}
-                            disabled={feeLoading === ag.id}
-                            onChange={e => handlePagaFee(ag.id, e.target.value === "si")}
-                            onClick={e => e.stopPropagation()}
-                            style={{
-                              padding: "4px 8px", borderRadius: "7px",
-                              border: "1px solid rgba(255,255,255,0.1)", background: "var(--crm-input-bg)",
-                              fontSize: "12px", fontWeight: 600,
-                              color: getEfectivoPagaFee(ag.fecha_alta, ag.paga_fee) ? "#4ade80" : "rgba(255,255,255,0.45)",
-                              cursor: "pointer", fontFamily: "inherit",
-                              opacity: feeLoading === ag.id ? 0.5 : 1,
-                            }}
-                          >
-                            <option value="si">Sí</option>
-                            <option value="no">No</option>
-                          </select>
-                        </td>
                         <td style={{ padding: "12px 16px", fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap",
                           color: facturacion > 0 ? "#4ade80" : "rgba(255,255,255,0.2)" }}>
                           {facturacion > 0 ? fmtUSD(facturacion) : "—"}
@@ -670,7 +668,7 @@ export default function AgentesClient({
                         <td style={{ padding: "12px 16px" }}>
                           {ag.telefono ? (
                             <button
-                              onClick={() => openWhatsApp(ag)}
+                              onClick={e => { e.stopPropagation(); openWhatsApp(ag) }}
                               title="Enviar reporte WhatsApp"
                               style={{
                                 background: "#25D366", border: "none", borderRadius: "8px",
@@ -687,7 +685,7 @@ export default function AgentesClient({
                         </td>
                         <td style={{ padding: "12px 16px" }}>
                           <button
-                            onClick={() => openEditar(ag)}
+                            onClick={e => { e.stopPropagation(); openEditar(ag) }}
                             style={{
                               padding: "5px 14px", borderRadius: "7px",
                               border: "1px solid rgba(255,255,255,0.1)",
@@ -831,6 +829,53 @@ export default function AgentesClient({
                 </button>
               </div>
             </form>
+        </Backdrop>
+      )}
+
+      {/* ── MODAL DETALLE ─────────────────────────── */}
+      {detalleActual && (
+        <Backdrop onClose={() => setDetalleAgente(null)} style={{ maxWidth: "440px" }}>
+          <ModalHeader
+            title={detalleActual.nombre}
+            subtitle={detalleActual.activo ? "Activo" : "Inactivo"}
+            onClose={() => setDetalleAgente(null)}
+          />
+          <div style={{ padding: "20px", display: "flex", flexDirection: "column", gap: "14px" }}>
+
+            <DetailRow label="Antigüedad" value={antiguedad(detalleActual.fecha_alta)} />
+            <DetailRow label="Fecha de alta" value={fmtFecha(detalleActual.fecha_alta)} />
+            <DetailRow label="Teléfono" value={detalleActual.telefono ?? "—"} />
+            <DetailRow label="Email" value={detalleActual.email ?? "—"} />
+            <DetailRow
+              label="Próximo Mainstreet"
+              value={detalleActual.fecha_mainstreet
+                ? fmtFecha(nextMainstreetDate(detalleActual.fecha_mainstreet).toISOString().split("T")[0])
+                : "—"}
+            />
+            <DetailRow label="Licencia CRM" value={<PlanBadge plan={detalleActual.tipo_plan ?? null} />} />
+
+            {/* Paga FEE: acá vive el control, ya no en la tabla */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>Paga FEE</span>
+              <select
+                value={getEfectivoPagaFee(detalleActual.fecha_alta, detalleActual.paga_fee) ? "si" : "no"}
+                disabled={feeLoading === detalleActual.id}
+                onChange={e => handlePagaFee(detalleActual.id, e.target.value === "si")}
+                style={{
+                  padding: "4px 10px", borderRadius: "7px",
+                  border: "1px solid rgba(255,255,255,0.1)", background: "var(--crm-input-bg)",
+                  fontSize: "12px", fontWeight: 600,
+                  color: getEfectivoPagaFee(detalleActual.fecha_alta, detalleActual.paga_fee) ? "#4ade80" : "rgba(255,255,255,0.45)",
+                  cursor: "pointer", fontFamily: "inherit",
+                  opacity: feeLoading === detalleActual.id ? 0.5 : 1,
+                }}
+              >
+                <option value="si">Sí</option>
+                <option value="no">No</option>
+              </select>
+            </div>
+
+          </div>
         </Backdrop>
       )}
     </div>
