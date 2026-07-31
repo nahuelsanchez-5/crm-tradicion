@@ -8,6 +8,7 @@ import { Users, Loader2, MessageCircle, AlertCircle, Search } from "lucide-react
 import Topbar from "@/components/Topbar"
 import { fmtUSD } from "@/lib/format"
 import { Backdrop, ModalHeader } from "@/components/Modal"
+import { getEfectivoPagaFee } from "@/lib/fee"
 
 // ── Types ────────────────────────────────────────────
 type Plan = "PRO" | "PRO+" | "B QR" | "B Ofi" | ""
@@ -140,12 +141,6 @@ function nextMainstreetDate(fechaStr: string): Date {
   candidate.setFullYear(today.getFullYear())
   if (candidate < today) candidate.setFullYear(today.getFullYear() + 1)
   return candidate
-}
-
-function getEfectivoPagaFee(ag: AgenteConPlan): boolean {
-  if (ag.paga_fee !== null) return ag.paga_fee
-  const diffDays = Math.floor((Date.now() - new Date(ag.fecha_alta).getTime()) / 86_400_000)
-  return diffDays >= 180
 }
 
 // ── Sub-components ───────────────────────────────────
@@ -648,7 +643,7 @@ export default function AgentesClient({
                         </td>
                         <td style={{ padding: "12px 16px" }}>
                           <select
-                            value={getEfectivoPagaFee(ag) ? "si" : "no"}
+                            value={getEfectivoPagaFee(ag.fecha_alta, ag.paga_fee) ? "si" : "no"}
                             disabled={feeLoading === ag.id}
                             onChange={e => handlePagaFee(ag.id, e.target.value === "si")}
                             onClick={e => e.stopPropagation()}
@@ -656,7 +651,7 @@ export default function AgentesClient({
                               padding: "4px 8px", borderRadius: "7px",
                               border: "1px solid rgba(255,255,255,0.1)", background: "var(--crm-input-bg)",
                               fontSize: "12px", fontWeight: 600,
-                              color: getEfectivoPagaFee(ag) ? "#4ade80" : "rgba(255,255,255,0.45)",
+                              color: getEfectivoPagaFee(ag.fecha_alta, ag.paga_fee) ? "#4ade80" : "rgba(255,255,255,0.45)",
                               cursor: "pointer", fontFamily: "inherit",
                               opacity: feeLoading === ag.id ? 0.5 : 1,
                             }}

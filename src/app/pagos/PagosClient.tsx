@@ -9,6 +9,7 @@ import { hoyArgentina } from "@/lib/fecha"
 import Topbar from "@/components/Topbar"
 import { fmtUSD } from "@/lib/format"
 import { Backdrop, ModalHeader } from "@/components/Modal"
+import { getEfectivoPagaFee } from "@/lib/fee"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -60,6 +61,7 @@ export interface AgenteInfo {
   telefono: string | null
   activo: boolean
   paga_fee: boolean | null
+  fecha_alta: string
   fecha_mainstreet: string | null
   tipo_plan: string | null
 }
@@ -306,7 +308,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
     )
 
     const agentesActivosCount = agentesActivos.length
-    const agentesFeeCount     = agentes.filter(a => a.paga_fee === true).length
+    const agentesFeeCount     = agentes.filter(a => getEfectivoPagaFee(a.fecha_alta, a.paga_fee)).length
     const agentesCrmCount     = agentes.filter(a =>
       a.activo && (a.tipo_plan === "PRO" || a.tipo_plan === "PRO+")
     ).length
@@ -380,7 +382,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
     // Para FEE, CRM, Mainstreet: universo = todos los agentes elegibles, con o sin pago
     let elegibles: typeof agentes = []
     if (detalleConcepto === "FEE") {
-      elegibles = agentes.filter(a => a.paga_fee === true)
+      elegibles = agentes.filter(a => getEfectivoPagaFee(a.fecha_alta, a.paga_fee))
     } else if (detalleConcepto === "CRM") {
       elegibles = agentes.filter(a => a.activo && (a.tipo_plan === "PRO" || a.tipo_plan === "PRO+"))
     } else if (detalleConcepto === "Mainstreet") {

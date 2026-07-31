@@ -2,6 +2,7 @@ import { createServerClient } from "@/lib/supabase"
 import ResumenClient from "./ResumenClient"
 import type { KpiRow } from "./ResumenClient"
 import { fmtUSD } from "@/lib/format"
+import { getEfectivoPagaFee } from "@/lib/fee"
 
 // Estacionalidad — mismos valores que ConfiguracionClient.tsx ESTACIONALIDAD_PCT
 // Jan    Feb    Mar    Apr    May    Jun    Jul    Aug    Sep    Oct    Nov    Dec
@@ -58,7 +59,7 @@ export default async function ResumenPage({
       .select("agente_id, monto_debe, monto_pagado, estado, concepto")
       .gte("fecha", startDate).lt("fecha", endDate),
     supabase.from("agentes")
-      .select("id, nombre, paga_fee, tipo_plan, activo, fecha_mainstreet")
+      .select("id, nombre, paga_fee, tipo_plan, activo, fecha_mainstreet, fecha_alta")
       .eq("activo", true),
     supabase.from("encuestas_registros")
       .select("nps")
@@ -89,8 +90,11 @@ export default async function ResumenPage({
   const agentesData  = agentes ?? []
   const activos      = agentesData.filter(a => a.activo)
 
-  // FEE: agentes con paga_fee = true
-  const agentesFee   = Math.max(activos.filter(a => a.paga_fee === true).length, 1)
+  // FEE: agentes que efectivamente pagan fee (override manual o cálculo 180 días + quincena)
+  const agentesFee   = Math.max(
+    activos.filter(a => getEfectivoPagaFee(a.fecha_alta, a.paga_fee)).length,
+    1
+  )
 
   // CRM: solo PRO y PRO+ — Bonificado (B QR, B Ofi) y sin plan NO cuentan
   const agenteCrmIds = new Set(
