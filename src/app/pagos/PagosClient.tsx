@@ -3,11 +3,12 @@
 import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
 import { crearPago, actualizarPago, crearGasto, crearGastoRecurrente, eliminarPago, registrarSaldoFavor, crearGastoConCredito } from "./actions"
-import { DollarSign, X, Loader2, MessageCircle, TrendingDown, TrendingUp, Repeat, CheckCircle2, Save, Trash2 } from "lucide-react"
+import { DollarSign, Loader2, MessageCircle, TrendingDown, TrendingUp, Repeat, CheckCircle2, Save, Trash2 } from "lucide-react"
 import StatusBadge from "@/components/StatusBadge"
 import { hoyArgentina } from "@/lib/fecha"
 import Topbar from "@/components/Topbar"
 import { fmtUSD } from "@/lib/format"
+import { Backdrop, ModalHeader } from "@/components/Modal"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -223,44 +224,6 @@ function KpiConcepto({
   )
 }
 
-// ── Modal backdrop ───────────────────────────────────
-function Backdrop({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
-  return (
-    <div onClick={onClose} className="crm-modal-backdrop">
-      <div onClick={e => e.stopPropagation()}>{children}</div>
-    </div>
-  )
-}
-
-// ── Modal header ─────────────────────────────────────
-function ModalHeader({ title, subtitle, onClose, icon, iconBg }: { title: string; subtitle?: string; onClose: () => void; icon?: React.ReactNode; iconBg?: string }) {
-  return (
-    <div style={{
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-        {icon && (
-          <div className={`${iconBg ?? "bg-slate-50"} rounded-xl p-2.5 flex-shrink-0`}>
-            {icon}
-          </div>
-        )}
-        <div>
-          <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>{title}</h2>
-          {subtitle && <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>{subtitle}</p>}
-        </div>
-      </div>
-      <button onClick={onClose} style={{
-        background: "rgba(255,255,255,0.04)", border: "none", borderRadius: "8px",
-        width: "32px", height: "32px", display: "flex",
-        alignItems: "center", justifyContent: "center",
-        cursor: "pointer", color: "rgba(255,255,255,0.45)",
-      }}>
-        <X size={16} />
-      </button>
-    </div>
-  )
-}
 
 // ═══════════════════════════════════════════════════════
 //  MAIN COMPONENT
@@ -1394,7 +1357,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
           MODAL — NUEVO PAGO
       ════════════════════════════════════════════ */}
       {modal === "nuevo" && (
-        <Backdrop onClose={closeModal}>
+        <Backdrop onClose={closeModal} className="">
           <div className="crm-modal" style={{ maxWidth: "500px" }}>
             <ModalHeader
               title="Registrar Pago"
@@ -1473,7 +1436,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
           MODAL — REGISTRAR GASTO
       ════════════════════════════════════════════ */}
       {modal === "gasto" && (
-        <Backdrop onClose={closeModal}>
+        <Backdrop onClose={closeModal} className="">
           <div className="crm-modal" style={{ maxWidth: "520px" }}>
             <ModalHeader
               title="Registrar Gasto"
@@ -1635,7 +1598,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
           MODAL — GASTO RECURRENTE
       ════════════════════════════════════════════ */}
       {modal === "gasto_rec" && (
-        <Backdrop onClose={closeModal}>
+        <Backdrop onClose={closeModal} className="">
           <div className="crm-modal" style={{ maxWidth: "560px" }}>
             <ModalHeader
               title="Gasto Recurrente"
@@ -1752,7 +1715,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
           MODAL — EDITAR PAGO
       ════════════════════════════════════════════ */}
       {modal === "editar" && selectedPago && (
-        <Backdrop onClose={closeModal}>
+        <Backdrop onClose={closeModal} className="">
           <div className="crm-modal" style={{ maxWidth: "440px" }}>
             <ModalHeader
               title="Registrar Pago Parcial"
@@ -1807,7 +1770,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
           MODAL — SALDO A FAVOR
       ════════════════════════════════════════════ */}
       {modal === "saldo_favor" && (
-        <Backdrop onClose={closeModal}>
+        <Backdrop onClose={closeModal} className="">
           <div className="crm-modal" style={{ maxWidth: "440px" }}>
             <ModalHeader
               title="Registrar Saldo a Favor"
@@ -1862,7 +1825,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
           MODAL — CONFIRMAR ELIMINACIÓN
       ════════════════════════════════════════════ */}
       {deleteTarget && (
-        <Backdrop onClose={() => !deleteLoading && setDeleteTarget(null)}>
+        <Backdrop onClose={() => !deleteLoading && setDeleteTarget(null)} className="">
           <div className="crm-modal" style={{ maxWidth: "440px" }}>
             <ModalHeader
               title="Eliminar registro"
@@ -1922,7 +1885,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
           MODAL — DETALLE POR CONCEPTO
       ════════════════════════════════════════════ */}
       {detalleConcepto && (
-        <Backdrop onClose={() => setDetalleConcepto(null)}>
+        <Backdrop onClose={() => setDetalleConcepto(null)} className="">
           <div className="crm-modal" style={{ maxWidth: "480px", width: "100%", maxHeight: "70vh", display: "flex", flexDirection: "column" }}>
             <ModalHeader
               title={
