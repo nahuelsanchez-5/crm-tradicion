@@ -6,9 +6,10 @@ import KpiCard from "@/components/KpiCard"
 import { crearOperacion, actualizarOperacion, eliminarOperacion } from "./actions"
 import type { OperacionFormData } from "./actions"
 import { hoyArgentina } from "@/lib/fecha"
-import { Building2, DollarSign, X, Loader2, Trash2 } from "lucide-react"
+import { Building2, DollarSign, Loader2, Trash2 } from "lucide-react"
 import Topbar from "@/components/Topbar"
 import { fmtUSD } from "@/lib/format"
+import { Backdrop, ModalHeader } from "@/components/Modal"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -563,34 +564,12 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
           MODAL — NUEVA / EDITAR OPERACIÓN
       ════════════════════════════════════════════ */}
       {modal !== "none" && (
-        <div onClick={closeModal} className="crm-modal-backdrop">
-          <div
-            onClick={e => e.stopPropagation()}
-            className="crm-modal"
-            style={{ maxWidth: "540px" }}
-          >
-            {/* Header */}
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0,
-            }}>
-              <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
-                  {modal === "nuevo" ? "Nueva Operación" : "Editar Operación"}
-                </h2>
-                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
-                  {modal === "nuevo" ? "Registrá una nueva venta o alquiler" : "Modificá los datos de la operación"}
-                </p>
-              </div>
-              <button onClick={closeModal} style={{
-                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
-                width: "32px", height: "32px", display: "flex",
-                alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "rgba(255,255,255,0.5)",
-              }}>
-                <X size={16} />
-              </button>
-            </div>
+        <Backdrop onClose={closeModal} className="crm-modal" style={{ maxWidth: "540px" }}>
+          <ModalHeader
+            title={modal === "nuevo" ? "Nueva Operación" : "Editar Operación"}
+            subtitle={modal === "nuevo" ? "Registrá una nueva venta o alquiler" : "Modificá los datos de la operación"}
+            onClose={closeModal}
+          />
 
             {/* Form */}
             <form onSubmit={handleSubmit} style={{ padding: "20px", overflowY: "auto" }}>
@@ -807,41 +786,19 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+        </Backdrop>
       )}
 
       {/* ════════════════════════════════════════════
           MODAL — CONFIRMAR ELIMINACIÓN
       ════════════════════════════════════════════ */}
       {deleteId !== null && (
-        <div onClick={() => { if (!isPending) setDeleteId(null) }} className="crm-modal-backdrop">
-          <div
-            onClick={e => e.stopPropagation()}
-            className="crm-modal"
-            style={{ maxWidth: "420px" }}
-          >
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0,
-            }}>
-              <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
-                  Eliminar operación
-                </h2>
-                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
-                  Esta acción no se puede deshacer.
-                </p>
-              </div>
-              <button onClick={() => setDeleteId(null)} disabled={isPending} style={{
-                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
-                width: "32px", height: "32px", display: "flex",
-                alignItems: "center", justifyContent: "center",
-                cursor: isPending ? "not-allowed" : "pointer", color: "rgba(255,255,255,0.5)",
-              }}>
-                <X size={16} />
-              </button>
-            </div>
+        <Backdrop onClose={() => { if (!isPending) setDeleteId(null) }} className="crm-modal" style={{ maxWidth: "420px" }}>
+          <ModalHeader
+            title="Eliminar operación"
+            subtitle="Esta acción no se puede deshacer."
+            onClose={() => { if (!isPending) setDeleteId(null) }}
+          />
             <div style={{ padding: "20px" }}>
               <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.65)", margin: "0 0 20px" }}>
                 ¿Eliminar esta operación? Esta acción no se puede deshacer.
@@ -869,8 +826,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
                 </button>
               </div>
             </div>
-          </div>
-        </div>
+        </Backdrop>
       )}
     </div>
   )

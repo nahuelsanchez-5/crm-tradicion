@@ -10,9 +10,10 @@ import type { OfertaFormData } from "./actions"
 import { fmtUSD } from "@/lib/format"
 import {
   Handshake, TrendingUp, CheckCircle2, XCircle,
-  X, Loader2, ChevronRight, Save,
+  Loader2, ChevronRight, Save,
 } from "lucide-react"
 import Topbar from "@/components/Topbar"
+import { Backdrop, ModalHeader } from "@/components/Modal"
 
 // ── Types ─────────────────────────────────────────────
 export interface AgenteSimple {
@@ -723,37 +724,14 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
           MODAL — NUEVA OFERTA
       ══════════════════════════════════════════════ */}
       {modal && (
-        <div onClick={closeModal} className="crm-modal-backdrop">
-          <div
-            onClick={e => e.stopPropagation()}
-            className="crm-modal"
-            style={{ maxWidth: "600px" }}
-          >
-            {/* Header */}
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", flexShrink: 0,
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div className="bg-blue-500/[0.12] rounded-xl p-2.5 flex-shrink-0">
-                  <Handshake size={20} className="text-blue-600" />
-                </div>
-                <div>
-                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>Nueva Oferta</h2>
-                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
-                    Registrá los datos de la operación
-                  </p>
-                </div>
-              </div>
-              <button onClick={closeModal} style={{
-                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
-                width: "32px", height: "32px", display: "flex",
-                alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "rgba(255,255,255,0.5)",
-              }}>
-                <X size={16} />
-              </button>
-            </div>
+        <Backdrop onClose={closeModal} className="crm-modal" style={{ maxWidth: "600px" }}>
+          <ModalHeader
+            title="Nueva Oferta"
+            subtitle="Registrá los datos de la operación"
+            onClose={closeModal}
+            icon={<Handshake size={20} className="text-blue-600" />}
+            iconBg="bg-blue-500/[0.12]"
+          />
 
             {/* Form */}
             <form onSubmit={handleSubmit} style={{ padding: "20px", overflowY: "auto" }}>
@@ -971,8 +949,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                 )}
               </div>
             </form>
-          </div>
-        </div>
+        </Backdrop>
       )}
     </div>
   )
