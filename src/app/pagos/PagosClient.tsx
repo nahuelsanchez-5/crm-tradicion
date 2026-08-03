@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
-import { crearPago, actualizarPago, crearGasto, crearGastoRecurrente, eliminarPago, registrarSaldoFavor, crearGastoConCredito } from "./actions"
+import { crearPago, actualizarPago, crearGasto, crearGastoRecurrente, eliminarPago, registrarSaldoFavor, crearGastoConCredito, aplicarCreditoAPendientes } from "./actions"
 import { DollarSign, Loader2, MessageCircle, TrendingDown, TrendingUp, Repeat, CheckCircle2, Save, Trash2 } from "lucide-react"
 import StatusBadge from "@/components/StatusBadge"
 import { hoyArgentina } from "@/lib/fecha"
@@ -300,6 +300,13 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
 
   const [saveSuccessNuevo, setSaveSuccessNuevo] = useState(false)
   const [saveSuccessGasto, setSaveSuccessGasto] = useState(false)
+
+  // ── Aplicar saldo a favor a pendientes ─────────────
+  const [aplicarCreditoAgente, setAplicarCreditoAgente] = useState<string | null>(null)
+  const [aplicarModo, setAplicarModo] = useState<"todo" | "parcial">("todo")
+  const [aplicarSeleccion, setAplicarSeleccion] = useState<Record<string, number>>({}) // pago_id -> monto
+  const [aplicarLoading, setAplicarLoading] = useState(false)
+  const [aplicarError, setAplicarError] = useState("")
 
   // ── Computed: KPI stats ────────────────────────────
   const kpiStats = useMemo(() => {
@@ -1247,6 +1254,28 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                                     <span style={{ color: "rgba(255,255,255,0.45)" }}>Estado: </span>
                                     <StatusBadge estado={ag.estadoGral} />
                                   </span>
+                                  {saldoPorAgente.get(ag.agente_id) && saldoPorAgente.get(ag.agente_id)! > 0 && (
+                                    <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                      <span style={{ color: "rgba(255,255,255,0.45)" }}>Saldo a favor: </span>
+                                      <strong style={{ color: "#4ade80" }}>{fmtUSD(saldoPorAgente.get(ag.agente_id)!)}</strong>
+                                      <button
+                                        onClick={e => {
+                                          e.stopPropagation()
+                                          setAplicarCreditoAgente(ag.agente_id)
+                                          setAplicarModo("todo")
+                                          setAplicarSeleccion({})
+                                          setAplicarError("")
+                                        }}
+                                        style={{
+                                          padding: "3px 12px", borderRadius: "7px",
+                                          border: "1px solid rgba(74,222,128,0.3)", background: "rgba(74,222,128,0.1)",
+                                          color: "#4ade80", fontSize: "11px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                                        }}
+                                      >
+                                        Aplicar
+                                      </button>
+                                    </span>
+                                  )}
                                 </div>
 
                                 {/* Movement detail */}
@@ -1932,6 +1961,200 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
           </div>
         </Backdrop>
       )}
+
+      {/* ════════════════════════════════════════════
+          MODAL — APLICAR SALDO A FAVOR A PENDIENTES
+      ════════════════════════════════════════════ */}
+      {aplicarCreditoAgente && (() => {
+        const agenteInfo    = agentes.find(a => a.id === aplicarCreditoAgente)
+        const saldoFavor    = saldoPorAgente.get(aplicarCreditoAgente) ?? 0
+        const pendientes    = pagos.filter(p =>
+          p.agente_id === aplicarCreditoAgente &&
+          p.concepto !== "Saldo a favor" &&
+          p.estado !== "Pagado"
+        )
+
+        const totalSeleccionado = Object.values(aplicarSeleccion).reduce((s, v) => s + v, 0)
+        const restante = saldoFavor - totalSeleccionado
+
+        function toggleConcepto(p: PagoRow) {
+          setAplicarSeleccion(prev => {
+            const next = { ...prev }
+            if (p.id in next) {
+              delete next[p.id]
+            } else {
+              const faltante = Number(p.monto_debe) - Number(p.monto_pagado)
+              const disponible = saldoFavor - Object.values(prev).reduce((s, v) => s + v, 0)
+              next[p.id] = Math.max(0, Math.min(faltante, disponible))
+            }
+            return next
+          })
+        }
+
+        function aplicarModoTodo() {
+          // Auto-distribuye todo el saldo entre pendientes, más viejo primero, hasta agotar
+          let disponible = saldoFavor
+          const nueva: Record<string, number> = {}
+          const ordenados = [...pendientes].sort((a, b) => a.fecha.localeCompare(b.fecha))
+          for (const p of ordenados) {
+            if (disponible <= 0) break
+            const faltante = Number(p.monto_debe) - Number(p.monto_pagado)
+            const usar = Math.min(faltante, disponible)
+            if (usar > 0) { nueva[p.id] = usar; disponible -= usar }
+          }
+          setAplicarSeleccion(nueva)
+        }
+
+        async function confirmarAplicacion() {
+          setAplicarError("")
+          const aplicaciones = Object.entries(aplicarSeleccion)
+            .filter(([, monto]) => monto > 0)
+            .map(([pago_id, monto]) => ({ pago_id, monto }))
+
+          if (aplicaciones.length === 0) { setAplicarError("Seleccioná al menos un concepto"); return }
+
+          setAplicarLoading(true)
+          const result = await aplicarCreditoAPendientes({ agente_id: aplicarCreditoAgente!, aplicaciones })
+          setAplicarLoading(false)
+
+          if (result.error) { setAplicarError(result.error); return }
+
+          setAplicarCreditoAgente(null)
+          router.refresh()
+        }
+
+        return (
+          <Backdrop onClose={() => setAplicarCreditoAgente(null)} className="crm-modal" style={{ maxWidth: "520px" }}>
+            <ModalHeader
+              title="Aplicar saldo a favor"
+              subtitle={`${agenteInfo?.nombre ?? ""} — Disponible: ${fmtUSD(saldoFavor)}`}
+              onClose={() => setAplicarCreditoAgente(null)}
+            />
+
+            <div style={{ padding: "20px" }}>
+
+              {/* Toggle Todo / Parcial */}
+              <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+                <button
+                  onClick={() => { setAplicarModo("todo"); aplicarModoTodo() }}
+                  style={{
+                    flex: 1, padding: "8px", borderRadius: "8px", cursor: "pointer", fontFamily: "inherit",
+                    fontSize: "12.5px", fontWeight: 700,
+                    border: aplicarModo === "todo" ? "1px solid #4ade80" : "1px solid rgba(255,255,255,0.1)",
+                    background: aplicarModo === "todo" ? "rgba(74,222,128,0.15)" : "rgba(255,255,255,0.04)",
+                    color: aplicarModo === "todo" ? "#4ade80" : "rgba(255,255,255,0.6)",
+                  }}
+                >
+                  Aplicar todo el saldo
+                </button>
+                <button
+                  onClick={() => { setAplicarModo("parcial"); setAplicarSeleccion({}) }}
+                  style={{
+                    flex: 1, padding: "8px", borderRadius: "8px", cursor: "pointer", fontFamily: "inherit",
+                    fontSize: "12.5px", fontWeight: 700,
+                    border: aplicarModo === "parcial" ? "1px solid #4ade80" : "1px solid rgba(255,255,255,0.1)",
+                    background: aplicarModo === "parcial" ? "rgba(74,222,128,0.15)" : "rgba(255,255,255,0.04)",
+                    color: aplicarModo === "parcial" ? "#4ade80" : "rgba(255,255,255,0.6)",
+                  }}
+                >
+                  Elegir manualmente
+                </button>
+              </div>
+
+              {/* Lista de conceptos pendientes */}
+              {pendientes.length === 0 ? (
+                <p style={{ textAlign: "center", color: "rgba(255,255,255,0.4)", fontSize: "13px", padding: "16px 0" }}>
+                  No hay conceptos pendientes para este agente.
+                </p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "260px", overflowY: "auto" }}>
+                  {pendientes.map(p => {
+                    const faltante = Number(p.monto_debe) - Number(p.monto_pagado)
+                    const seleccionado = p.id in aplicarSeleccion
+                    return (
+                      <div key={p.id} style={{
+                        display: "flex", alignItems: "center", gap: "10px",
+                        padding: "10px", borderRadius: "8px",
+                        border: seleccionado ? "1px solid rgba(74,222,128,0.3)" : "1px solid rgba(255,255,255,0.08)",
+                        background: seleccionado ? "rgba(74,222,128,0.06)" : "rgba(255,255,255,0.02)",
+                      }}>
+                        <input
+                          type="checkbox"
+                          checked={seleccionado}
+                          disabled={aplicarModo === "todo"}
+                          onChange={() => toggleConcepto(p)}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--crm-text)", margin: 0 }}>{p.concepto}</p>
+                          <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", margin: 0 }}>Falta: {fmtUSD(faltante)}</p>
+                        </div>
+                        {seleccionado && (
+                          <input
+                            type="number"
+                            step="0.01"
+                            disabled={aplicarModo === "todo"}
+                            value={aplicarSeleccion[p.id]}
+                            onChange={e => {
+                              const val = Math.max(0, Math.min(faltante, parseFloat(e.target.value) || 0))
+                              setAplicarSeleccion(prev => ({ ...prev, [p.id]: val }))
+                            }}
+                            style={{
+                              width: "90px", padding: "6px 8px", borderRadius: "6px",
+                              border: "1px solid rgba(255,255,255,0.12)", background: "var(--crm-input-bg)",
+                              color: "var(--crm-text)", fontSize: "12px", textAlign: "right",
+                            }}
+                          />
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Totales */}
+              <div style={{
+                display: "flex", justifyContent: "space-between", marginTop: "16px",
+                padding: "12px", borderRadius: "8px", background: "rgba(255,255,255,0.03)",
+                fontSize: "13px",
+              }}>
+                <span>
+                  <span style={{ color: "rgba(255,255,255,0.45)" }}>A aplicar: </span>
+                  <strong style={{ color: "var(--crm-text)" }}>{fmtUSD(totalSeleccionado)}</strong>
+                </span>
+                <span>
+                  <span style={{ color: "rgba(255,255,255,0.45)" }}>Restante: </span>
+                  <strong style={{ color: restante >= 0 ? "#4ade80" : "#f87171" }}>{fmtUSD(restante)}</strong>
+                </span>
+              </div>
+
+              {aplicarError && (
+                <p style={{ color: "#f87171", fontSize: "12px", marginTop: "10px" }}>{aplicarError}</p>
+              )}
+
+              <div style={{ display: "flex", gap: "10px", marginTop: "18px" }}>
+                <button
+                  onClick={() => setAplicarCreditoAgente(null)}
+                  style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "var(--crm-text)", cursor: "pointer", fontFamily: "inherit", fontSize: "13px", fontWeight: 600 }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmarAplicacion}
+                  disabled={aplicarLoading || totalSeleccionado <= 0 || restante < -0.01}
+                  style={{
+                    flex: 1, padding: "10px", borderRadius: "8px", border: "none",
+                    background: "linear-gradient(135deg,#4ade80 0%,#16a34a 100%)",
+                    color: "white", cursor: "pointer", fontFamily: "inherit", fontSize: "13px", fontWeight: 700,
+                    opacity: (aplicarLoading || totalSeleccionado <= 0 || restante < -0.01) ? 0.5 : 1,
+                  }}
+                >
+                  {aplicarLoading ? "Aplicando..." : "Confirmar"}
+                </button>
+              </div>
+            </div>
+          </Backdrop>
+        )
+      })()}
     </div>
   )
 }

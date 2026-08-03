@@ -219,3 +219,70 @@ export async function actualizarPago(
   revalidatePath("/pagos")
   return { success: true }
 }
+
+// ─────────────────────────────────────────────────────
+//  APLICAR SALDO A FAVOR A PENDIENTES EXISTENTES
+// ─────────────────────────────────────────────────────
+export async function aplicarCreditoAPendientes(data: {
+  agente_id: string
+  aplicaciones: Array<{ pago_id: string; monto: number }>
+}) {
+  await requireSession()
+  const supabase = createServerClient()
+
+  const totalAplicar = data.aplicaciones.reduce((s, a) => s + a.monto, 0)
+  if (totalAplicar <= 0) return { error: "Nada para aplicar" }
+
+  // Consumir "Saldo a favor" FIFO (misma lógica que crearGastoConCredito)
+  const { data: saldos, error: saldosError } = await supabase
+    .from("pagos")
+    .select("id, monto_pagado")
+    .eq("agente_id", data.agente_id)
+    .eq("concepto", "Saldo a favor")
+    .gt("monto_pagado", 0)
+    .order("fecha", { ascending: true })
+    .order("created_at", { ascending: true })
+
+  if (saldosError) return { error: saldosError.message }
+
+  const saldoDisponible = (saldos ?? []).reduce((s, x) => s + Number(x.monto_pagado), 0)
+  if (totalAplicar > saldoDisponible + 0.01) {
+    return { error: "El total a aplicar supera el saldo a favor disponible" }
+  }
+
+  let remaining = totalAplicar
+  for (const saldo of (saldos ?? [])) {
+    if (remaining <= 0) break
+    const use = Math.min(remaining, Number(saldo.monto_pagado))
+    const newMonto = Number(saldo.monto_pagado) - use
+    const { error } = newMonto === 0
+      ? await supabase.from("pagos").delete().eq("id", saldo.id)
+      : await supabase.from("pagos").update({ monto_pagado: newMonto }).eq("id", saldo.id)
+    if (error) return { error: error.message }
+    remaining -= use
+  }
+
+  // Aplicar a cada pago pendiente seleccionado
+  for (const ap of data.aplicaciones) {
+    const { data: pago, error: fetchError } = await supabase
+      .from("pagos")
+      .select("monto_debe, monto_pagado")
+      .eq("id", ap.pago_id)
+      .single()
+
+    if (fetchError || !pago) return { error: fetchError?.message ?? "Pago no encontrado" }
+
+    const nuevoPagado = Number(pago.monto_pagado) + ap.monto
+    const estado = nuevoPagado >= Number(pago.monto_debe) - 0.01 ? "Pagado" : "Parcial"
+
+    const { error } = await supabase
+      .from("pagos")
+      .update({ monto_pagado: nuevoPagado, estado })
+      .eq("id", ap.pago_id)
+
+    if (error) return { error: error.message }
+  }
+
+  revalidatePath("/pagos")
+  return { success: true }
+}
