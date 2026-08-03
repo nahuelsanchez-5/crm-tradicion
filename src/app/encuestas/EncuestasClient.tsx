@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation"
 import { registrarEncuesta, editarEncuesta, eliminarEncuesta } from "./actions"
 import type { RegistroEncuestaData, EditarEncuestaData } from "./actions"
 import type { RegistroRow } from "./page"
-import { ClipboardList, TrendingUp, Star, X, Loader2, ChevronDown, ChevronRight, CheckCircle2, Save, BarChart2, Pencil, Trash2, AlertTriangle } from "lucide-react"
+import { ClipboardList, TrendingUp, Star, Loader2, ChevronDown, ChevronRight, CheckCircle2, Save, BarChart2, Pencil, Trash2, AlertTriangle } from "lucide-react"
 import KpiCardGlobal from "@/components/KpiCard"
 import { hoyArgentina } from "@/lib/fecha"
 import Topbar from "@/components/Topbar"
+import { Backdrop, ModalHeader } from "@/components/Modal"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -253,12 +254,6 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
   // ── Modal ──────────────────────────────────────────
   const closeModal = useCallback(() => { setShowModal(false); setError("") }, [])
 
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") closeModal() }
-    if (showModal) document.addEventListener("keydown", h)
-    return () => document.removeEventListener("keydown", h)
-  }, [showModal, closeModal])
-
   function openModal() {
     setForm({
       tipo:       "ESPONTANEA",
@@ -302,12 +297,6 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
     setEditRow(null); setEditForm(null)
     setEditStep("form"); setEditError(""); setEditSuccess(false)
   }, [])
-
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") closeEdit() }
-    if (editRow) document.addEventListener("keydown", h)
-    return () => document.removeEventListener("keydown", h)
-  }, [editRow, closeEdit])
 
   function openEdit(row: RegistroRow) {
     setEditForm({
@@ -359,12 +348,6 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
   const closeDelete = useCallback(() => {
     setDeleteRow(null); setDeleteError("")
   }, [])
-
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") closeDelete() }
-    if (deleteRow) document.addEventListener("keydown", h)
-    return () => document.removeEventListener("keydown", h)
-  }, [deleteRow, closeDelete])
 
   function openDelete(row: RegistroRow) {
     setDeleteRow(row); setDeleteError("")
@@ -642,36 +625,14 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
           MODAL — EDITAR ENCUESTA
       ════════════════════════════════════════════ */}
       {editRow && editForm && (
-        <div onClick={closeEdit} className="crm-modal-backdrop">
-          <div onClick={e => e.stopPropagation()} className="crm-modal" style={{ maxWidth: "500px" }}>
-
-            {/* Header */}
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div className="bg-blue-500/[0.12] rounded-xl p-2.5 flex-shrink-0">
-                  <Pencil size={18} className="text-blue-400" />
-                </div>
-                <div>
-                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
-                    {editStep === "confirm" ? "Confirmá los cambios" : "Editar Encuesta"}
-                  </h2>
-                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
-                    {editStep === "confirm" ? "Revisá y confirmá antes de guardar" : fmtFecha(editRow.fecha) + " · " + editRow.referencia}
-                  </p>
-                </div>
-              </div>
-              <button onClick={closeEdit} disabled={isEditPending} style={{
-                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
-                width: "32px", height: "32px", display: "flex",
-                alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "rgba(255,255,255,0.5)",
-              }}>
-                <X size={16} />
-              </button>
-            </div>
+        <Backdrop onClose={closeEdit} className="crm-modal" style={{ maxWidth: "500px" }}>
+          <ModalHeader
+            title={editStep === "confirm" ? "Confirmá los cambios" : "Editar Encuesta"}
+            subtitle={editStep === "confirm" ? "Revisá y confirmá antes de guardar" : fmtFecha(editRow.fecha) + " · " + editRow.referencia}
+            onClose={closeEdit}
+            icon={<Pencil size={18} className="text-blue-400" />}
+            iconBg="bg-blue-500/[0.12]"
+          />
 
             {editStep === "form" ? (
               <form onSubmit={handleEditSubmit} style={{ padding: "20px" }}>
@@ -911,16 +872,14 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                 )}
               </div>
             )}
-          </div>
-        </div>
+        </Backdrop>
       )}
 
       {/* ════════════════════════════════════════════
           MODAL — CONFIRMAR ELIMINACIÓN
       ════════════════════════════════════════════ */}
       {deleteRow && (
-        <div onClick={closeDelete} className="crm-modal-backdrop">
-          <div onClick={e => e.stopPropagation()} className="crm-modal" style={{ maxWidth: "420px" }}>
+        <Backdrop onClose={closeDelete} className="crm-modal" style={{ maxWidth: "420px" }}>
 
             <div style={{ padding: "24px" }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", marginBottom: "20px" }}>
@@ -989,47 +948,21 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                 </button>
               </div>
             </div>
-          </div>
-        </div>
+        </Backdrop>
       )}
 
       {/* ════════════════════════════════════════════
           MODAL — REGISTRAR ENCUESTA
       ════════════════════════════════════════════ */}
       {showModal && (
-        <div onClick={closeModal} className="crm-modal-backdrop">
-          <div
-            onClick={e => e.stopPropagation()}
-            className="crm-modal"
-            style={{ maxWidth: "500px" }}
-          >
-            {/* Header */}
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div className="bg-violet-500/[0.12] rounded-xl p-2.5 flex-shrink-0">
-                  <ClipboardList size={20} className="text-violet-400" />
-                </div>
-                <div>
-                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
-                    Registrar Encuesta
-                  </h2>
-                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
-                    Nueva respuesta de satisfacción
-                  </p>
-                </div>
-              </div>
-              <button onClick={closeModal} style={{
-                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
-                width: "32px", height: "32px", display: "flex",
-                alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "rgba(255,255,255,0.5)",
-              }}>
-                <X size={16} />
-              </button>
-            </div>
+        <Backdrop onClose={closeModal} className="crm-modal" style={{ maxWidth: "500px" }}>
+          <ModalHeader
+            title="Registrar Encuesta"
+            subtitle="Nueva respuesta de satisfacción"
+            onClose={closeModal}
+            icon={<ClipboardList size={20} className="text-violet-400" />}
+            iconBg="bg-violet-500/[0.12]"
+          />
 
             <form onSubmit={handleSubmit} style={{ padding: "20px" }}>
 
@@ -1226,8 +1159,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                 )}
               </div>
             </form>
-          </div>
-        </div>
+        </Backdrop>
       )}
     </div>
   )

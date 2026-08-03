@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation"
 import KpiCard from "@/components/KpiCard"
 import { crearCartel, editarCartel } from "./actions"
 import type { CartelFormData } from "./actions"
-import { MapPin, AlertTriangle, X, Loader2, Plus, Search, CheckCircle2, Save, RotateCcw, ChevronDown, MessageCircle } from "lucide-react"
+import { MapPin, AlertTriangle, Loader2, Plus, Search, CheckCircle2, Save, RotateCcw, ChevronDown, MessageCircle } from "lucide-react"
 import Topbar from "@/components/Topbar"
+import { Backdrop, ModalHeader } from "@/components/Modal"
 
 // ── Types ─────────────────────────────────────────────
 export interface AgenteConTel {
@@ -193,12 +194,6 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
   const closeModal = useCallback(() => {
     setModalMode("none"); setEditTarget(null); setError("")
   }, [])
-
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") closeModal() }
-    if (modalMode !== "none") document.addEventListener("keydown", h)
-    return () => document.removeEventListener("keydown", h)
-  }, [modalMode, closeModal])
 
   const fetchDevueltos = useCallback(async (mes: number, anio: number) => {
     setDevueltosLoading(true)
@@ -882,42 +877,17 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
           MODAL — NUEVO / EDITAR CARTEL
       ════════════════════════════════════════════ */}
       {modalMode !== "none" && (
-        <div onClick={closeModal} className="crm-modal-backdrop">
-          <div
-            onClick={e => e.stopPropagation()}
-            className="crm-modal"
-            style={{ maxWidth: "500px" }}
-          >
-            {/* Header */}
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div className="bg-teal-500/[0.12] rounded-xl p-2.5 flex-shrink-0">
-                  <MapPin size={20} className="text-teal-400" />
-                </div>
-                <div>
-                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
-                    {modalMode === "nuevo" ? "Nuevo cartel" : "Editar cartel"}
-                  </h2>
-                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
-                    {modalMode === "nuevo"
-                      ? "Se creará un registro en Airtable"
-                      : `Cartel #${editTarget?.numero} · ${editTarget?.direccion}`
-                    }
-                  </p>
-                </div>
-              </div>
-              <button onClick={closeModal} style={{
-                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
-                width: "32px", height: "32px", display: "flex",
-                alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "rgba(255,255,255,0.5)",
-              }}>
-                <X size={16} />
-              </button>
-            </div>
+        <Backdrop onClose={closeModal} className="crm-modal" style={{ maxWidth: "500px" }}>
+          <ModalHeader
+            title={modalMode === "nuevo" ? "Nuevo cartel" : "Editar cartel"}
+            subtitle={modalMode === "nuevo"
+              ? "Se creará un registro en Airtable"
+              : `Cartel #${editTarget?.numero} · ${editTarget?.direccion}`
+            }
+            onClose={closeModal}
+            icon={<MapPin size={20} className="text-teal-400" />}
+            iconBg="bg-teal-500/[0.12]"
+          />
 
             <form onSubmit={handleSubmit} style={{ padding: "20px" }}>
 
@@ -1051,46 +1021,21 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                 )}
               </div>
             </form>
-          </div>
-        </div>
+        </Backdrop>
       )}
 
       {/* ════════════════════════════════════════════
           MODAL — CONFIRMAR DEVOLUCIÓN
       ════════════════════════════════════════════ */}
       {devolverTarget && (
-        <div onClick={() => { setDevolverTarget(null); setDevolverError("") }} className="crm-modal-backdrop">
-          <div
-            onClick={e => e.stopPropagation()}
-            className="crm-modal"
-            style={{ maxWidth: "420px" }}
-          >
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div className="bg-rose-500/[0.12] rounded-xl p-2.5 flex-shrink-0">
-                  <RotateCcw size={18} className="text-rose-400" />
-                </div>
-                <div>
-                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
-                    Confirmar devolución
-                  </h2>
-                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
-                    Cartel #{devolverTarget.numero} · {devolverTarget.direccion}
-                  </p>
-                </div>
-              </div>
-              <button onClick={() => { setDevolverTarget(null); setDevolverError("") }} style={{
-                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
-                width: "32px", height: "32px", display: "flex",
-                alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "rgba(255,255,255,0.5)",
-              }}>
-                <X size={16} />
-              </button>
-            </div>
+        <Backdrop onClose={() => { setDevolverTarget(null); setDevolverError("") }} className="crm-modal" style={{ maxWidth: "420px" }}>
+          <ModalHeader
+            title="Confirmar devolución"
+            subtitle={`Cartel #${devolverTarget.numero} · ${devolverTarget.direccion}`}
+            onClose={() => { setDevolverTarget(null); setDevolverError("") }}
+            icon={<RotateCcw size={18} className="text-rose-400" />}
+            iconBg="bg-rose-500/[0.12]"
+          />
 
             <div style={{ padding: "20px" }}>
               <p style={{ fontSize: "13px", color: "var(--crm-text)", marginBottom: "8px", lineHeight: 1.5 }}>
@@ -1140,44 +1085,19 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                 </button>
               </div>
             </div>
-          </div>
-        </div>
+        </Backdrop>
       )}
 
       {/* ── Modal: elegir cartel a devolver ──────────── */}
       {devolverPickerOpen && (
-        <div onClick={() => { setDevolverPickerOpen(false); setDevolverPickerBusqueda("") }} className="crm-modal-backdrop">
-          <div
-            onClick={e => e.stopPropagation()}
-            className="crm-modal"
-            style={{ maxWidth: "460px" }}
-          >
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                <div className="bg-rose-500/[0.12] rounded-xl p-2.5 flex-shrink-0">
-                  <RotateCcw size={18} className="text-rose-400" />
-                </div>
-                <div>
-                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
-                    Devolver cartel
-                  </h2>
-                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", margin: 0, marginTop: "2px" }}>
-                    Elegí el cartel que querés devolver
-                  </p>
-                </div>
-              </div>
-              <button onClick={() => { setDevolverPickerOpen(false); setDevolverPickerBusqueda("") }} style={{
-                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
-                width: "32px", height: "32px", display: "flex",
-                alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "rgba(255,255,255,0.5)",
-              }}>
-                <X size={16} />
-              </button>
-            </div>
+        <Backdrop onClose={() => { setDevolverPickerOpen(false); setDevolverPickerBusqueda("") }} className="crm-modal" style={{ maxWidth: "460px" }}>
+          <ModalHeader
+            title="Devolver cartel"
+            subtitle="Elegí el cartel que querés devolver"
+            onClose={() => { setDevolverPickerOpen(false); setDevolverPickerBusqueda("") }}
+            icon={<RotateCcw size={18} className="text-rose-400" />}
+            iconBg="bg-rose-500/[0.12]"
+          />
 
             <div style={{ padding: "16px 20px" }}>
               {/* Buscador */}
@@ -1245,8 +1165,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                 })()}
               </div>
             </div>
-          </div>
-        </div>
+        </Backdrop>
       )}
     </div>
   )
