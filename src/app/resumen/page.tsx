@@ -129,7 +129,7 @@ export default async function ResumenPage({
 
   const cartelesACobrar = objCartelesMes > 0 && cartelesCount >= objCartelesMes ? 100 : 0
 
-  // ── Encuestas — denominador = puntas internas en operaciones de Venta ───────
+  // ── Encuestas — denominador = puntas internas en operaciones de Venta/Alquiler ───────
   const encuestasData  = encuestas ?? []
   const totalEncuestas = encuestasData.length
   const npsValues      = encuestasData.filter(e => e.nps !== null).map(e => e.nps as number)
@@ -140,9 +140,9 @@ export default async function ResumenPage({
     agentesData.map(a => a.nombre as string).filter(Boolean)
   )
 
-  // Sumar puntas internas en operaciones de tipo Venta del mes
+  // Sumar puntas internas en operaciones de tipo Venta o Alquiler del mes
   const totalEncuestasEsperadas = (operaciones ?? [])
-    .filter(o => o.tipo === "Venta")
+    .filter(o => o.tipo === "Venta" || o.tipo === "Alquiler")
     .reduce((sum, o) => {
       const agStr = (o.agentes as string) ?? ""
       if (agStr.endsWith("(2 puntas)")) {
@@ -185,7 +185,7 @@ export default async function ResumenPage({
     {
       label:    "Encuestas",
       objetivo: totalEncuestasEsperadas === 0
-        ? "Sin operaciones de venta este mes"
+        ? "Sin operaciones de venta o alquiler este mes"
         : `Tasa de respuesta ≥ ${objEncPct}%`,
       cumplido: totalEncuestasEsperadas === 0
         ? `${totalEncuestas} encuesta${totalEncuestas !== 1 ? "s" : ""} registrada${totalEncuestas !== 1 ? "s" : ""} · no genera bono`
