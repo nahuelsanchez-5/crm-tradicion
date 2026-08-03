@@ -113,12 +113,13 @@ function calcEstadoGeneral(totalDebe: number, totalPagado: number): string {
   return "Parcial"
 }
 
-function getConceptGroup(concepto: string): "FEE" | "CRM" | "Mainstreet" | "BolsasVino" | "Otros" {
+function getConceptGroup(concepto: string): "FEE" | "CRM" | "Mainstreet" | "BolsasVino" | "SaldoFavor" | "Otros" {
   const c = concepto.toLowerCase()
   if (c.includes("fee"))                                                          return "FEE"
   if (c.includes("pro") || c.includes("crm") || c.includes("plan") || c.includes("licencia")) return "CRM"
   if (c.includes("mainstreet"))                                                   return "Mainstreet"
   if (c.includes("bolsa") && c.includes("vino"))                                  return "BolsasVino"
+  if (concepto === "Saldo a favor")                                               return "SaldoFavor"
   return "Otros"
 }
 
