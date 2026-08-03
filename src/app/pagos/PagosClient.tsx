@@ -994,6 +994,14 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                               fontSize: "10px", fontWeight: 700,
                             }}>EN MORA</span>
                           )}
+                          {(saldoPorAgente.get(ag.agente_id) ?? 0) > 0 && (
+                            <span style={{
+                              background: "rgba(74,222,128,0.12)", color: "#4ade80",
+                              border: "1px solid rgba(74,222,128,0.3)",
+                              padding: "1px 7px", borderRadius: "12px",
+                              fontSize: "10px", fontWeight: 700,
+                            }}>A FAVOR</span>
+                          )}
                         </div>
                         <div style={{ fontSize: "11px", color: "#94A3B8", marginTop: "2px" }}>{fmtFecha(ag.ultimoMov)}</div>
                       </div>
@@ -1178,6 +1186,16 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                                   fontSize: "10px", fontWeight: 700, marginLeft: "4px",
                                 }}>
                                   EN MORA
+                                </span>
+                              )}
+                              {(saldoPorAgente.get(ag.agente_id) ?? 0) > 0 && (
+                                <span style={{
+                                  background: "rgba(74,222,128,0.12)", color: "#4ade80",
+                                  border: "1px solid rgba(74,222,128,0.3)",
+                                  padding: "1px 7px", borderRadius: "12px",
+                                  fontSize: "10px", fontWeight: 700, marginLeft: "4px",
+                                }}>
+                                  A FAVOR
                                 </span>
                               )}
                             </div>
