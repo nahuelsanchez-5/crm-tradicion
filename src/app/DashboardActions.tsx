@@ -10,9 +10,10 @@ import { agregarMovimiento } from "@/app/ofertas/actions"
 import { hoyArgentina } from "@/lib/fecha"
 import type { OfertaActiva } from "@/app/page"
 import {
-  X, Loader2, DollarSign, MapPin, ClipboardList,
+  Loader2, DollarSign, MapPin, ClipboardList,
   Building2, Handshake, RefreshCw, LucideIcon,
 } from "lucide-react"
+import { Backdrop, ModalHeader } from "@/components/Modal"
 
 interface AgenteSimple  { id: string; nombre: string }
 interface CartelBuscarResult {
@@ -48,24 +49,10 @@ function ModalShell({ title, subtitle, onClose, children }: {
   title: string; subtitle: string; onClose: () => void; children: React.ReactNode
 }) {
   return (
-    <div className="crm-modal-backdrop" onClick={onClose}>
-      <div className="crm-modal" onClick={e => e.stopPropagation()}>
-        <div className="crm-modal-header">
-          <div>
-            <h2 className="text-[17px] font-bold m-0" style={{ color: "var(--crm-text)" }}>{title}</h2>
-            <p className="text-crm-sm m-0 mt-0.5" style={{ color: "var(--crm-text-muted)" }}>{subtitle}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="border-none rounded-lg w-8 h-8 flex items-center justify-center cursor-pointer transition-colors duration-150 hover:bg-white/10"
-            style={{ background: "rgba(255,255,255,0.08)", color: "var(--crm-text-muted)" }}
-          >
-            <X size={15} />
-          </button>
-        </div>
-        <div className="overflow-y-auto flex-1">{children}</div>
-      </div>
-    </div>
+    <Backdrop onClose={onClose} className="crm-modal">
+      <ModalHeader title={title} subtitle={subtitle} onClose={onClose} />
+      <div className="overflow-y-auto flex-1">{children}</div>
+    </Backdrop>
   )
 }
 
