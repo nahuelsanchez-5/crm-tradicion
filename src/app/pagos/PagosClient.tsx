@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
-import { crearPago, actualizarPago, crearGasto, crearGastoRecurrente, eliminarPago, registrarSaldoFavor, crearGastoConCredito, aplicarCreditoAPendientes } from "./actions"
+import { crearPago, actualizarPago, crearGasto, crearGastoRecurrente, eliminarPago, registrarSaldoFavor, aplicarCreditoAPendientes } from "./actions"
 import { DollarSign, Loader2, MessageCircle, TrendingDown, TrendingUp, Repeat, CheckCircle2, Save, Trash2 } from "lucide-react"
 import StatusBadge from "@/components/StatusBadge"
 import { hoyArgentina } from "@/lib/fecha"
@@ -95,8 +95,6 @@ interface SaldoFavorForm {
   monto: string
   fecha: string
 }
-
-type CreditoOpcion = "todo" | "parcial" | "no"
 
 // ── Helpers ──────────────────────────────────────────
 function calcEstado(debe: number, pagado: number): string {
@@ -296,8 +294,6 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
     fecha: todayStr,
   })
 
-  const [creditoOpcion,       setCreditoOpcion]       = useState<CreditoOpcion>("no")
-  const [creditoParcialMonto, setCreditoParcialMonto] = useState("")
 
   const [saveSuccessNuevo, setSaveSuccessNuevo] = useState(false)
   const [saveSuccessGasto, setSaveSuccessGasto] = useState(false)
@@ -503,11 +499,6 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
     return map
   }, [pagos])
 
-  const saldoGastoAgente = useMemo(() =>
-    Math.max(0, saldoPorAgente.get(gastoForm.agente_id) ?? 0),
-    [saldoPorAgente, gastoForm.agente_id]
-  )
-
   // ── Real-time form estado ──────────────────────────
   const nuevoEstado = useMemo(() => {
     const pagado = parseFloat(nuevoForm.monto_pagado) || 0
@@ -554,8 +545,6 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
       fecha:     todayStr,
       tipo:      "Ordinario",
     })
-    setCreditoOpcion("no")
-    setCreditoParcialMonto("")
     setError("")
     setModal("gasto")
   }
@@ -657,32 +646,13 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
 
     const conceptoFinal = `${gastoForm.tipo === "Extraordinario" ? "[Ext] " : ""}${gastoForm.concepto}`
 
-    let creditoAplicar = 0
-    if (creditoOpcion === "todo" && saldoGastoAgente > 0) {
-      creditoAplicar = Math.min(saldoGastoAgente, debe)
-    } else if (creditoOpcion === "parcial" && saldoGastoAgente > 0) {
-      creditoAplicar = Math.min(parseFloat(creditoParcialMonto) || 0, saldoGastoAgente, debe)
-    }
-    if (creditoAplicar < 0) creditoAplicar = 0
-
     startTransition(async () => {
-      let result
-      if (creditoAplicar > 0) {
-        result = await crearGastoConCredito({
-          agente_id:        gastoForm.agente_id,
-          fecha:            gastoForm.fecha,
-          concepto:         conceptoFinal,
-          monto_debe:       debe,
-          credito_aplicado: creditoAplicar,
-        })
-      } else {
-        result = await crearGasto({
-          agente_id:  gastoForm.agente_id,
-          fecha:      gastoForm.fecha,
-          concepto:   conceptoFinal,
-          monto_debe: debe,
-        })
-      }
+      const result = await crearGasto({
+        agente_id:  gastoForm.agente_id,
+        fecha:      gastoForm.fecha,
+        concepto:   conceptoFinal,
+        monto_debe: debe,
+      })
       if (result.error) setError(result.error)
       else { setSaveSuccessGasto(true); setTimeout(() => { setSaveSuccessGasto(false); closeModal(); router.refresh() }, 1000) }
     })
@@ -1499,11 +1469,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
               <Field label="Agente *">
                 <select
                   value={gastoForm.agente_id}
-                  onChange={e => {
-                    setGastoForm(f => ({ ...f, agente_id: e.target.value }))
-                    setCreditoOpcion("no")
-                    setCreditoParcialMonto("")
-                  }}
+                  onChange={e => setGastoForm(f => ({ ...f, agente_id: e.target.value }))}
                   className="crm-input" required
                 >
                   {agentesActivos.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
@@ -1552,46 +1518,6 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                     className="crm-input" required />
                 </Field>
               </div>
-
-              {/* Crédito disponible */}
-              {saldoGastoAgente > 0 && (
-                <div style={{
-                  padding: "12px 14px", borderRadius: "10px",
-                  background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.25)",
-                  marginBottom: "14px",
-                }}>
-                  <div style={{ fontSize: "12.5px", fontWeight: 700, color: "#4ade80", marginBottom: "8px" }}>
-                    Este agente tiene {fmtUSD(saldoGastoAgente)} a favor. ¿Cómo lo aplicás?
-                  </div>
-                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                    {(["todo", "parcial", "no"] as CreditoOpcion[]).map(op => (
-                      <button
-                        key={op} type="button"
-                        onClick={() => { setCreditoOpcion(op); if (op !== "parcial") setCreditoParcialMonto("") }}
-                        style={{
-                          padding: "5px 12px", borderRadius: "7px", fontSize: "12px",
-                          fontWeight: creditoOpcion === op ? 700 : 500,
-                          cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
-                          border: creditoOpcion === op ? "1px solid #4ade80" : "1px solid rgba(74,222,128,0.25)",
-                          background: creditoOpcion === op ? "rgba(74,222,128,0.2)" : "rgba(74,222,128,0.05)",
-                          color: "#4ade80",
-                        }}
-                      >
-                        {op === "todo" ? "Aplicar todo" : op === "parcial" ? "Aplicar parcialmente" : "No aplicar"}
-                      </button>
-                    ))}
-                  </div>
-                  {creditoOpcion === "parcial" && (
-                    <input
-                      type="number" min="0.01" step="0.01"
-                      placeholder={`Máx. ${fmtUSD(saldoGastoAgente)}`}
-                      value={creditoParcialMonto}
-                      onChange={e => setCreditoParcialMonto(e.target.value)}
-                      className="crm-input mt-2"
-                    />
-                  )}
-                </div>
-              )}
 
               {/* Gasto recurrente CTA */}
               <div style={{
