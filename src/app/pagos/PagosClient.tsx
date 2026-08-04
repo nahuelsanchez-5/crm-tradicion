@@ -300,7 +300,6 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
 
   // ── Aplicar saldo a favor a pendientes ─────────────
   const [aplicarCreditoAgente, setAplicarCreditoAgente] = useState<string | null>(null)
-  const [aplicarModo, setAplicarModo] = useState<"todo" | "parcial">("todo")
   const [aplicarSeleccion, setAplicarSeleccion] = useState<Record<string, number>>({}) // pago_id -> monto
   const [aplicarLoading, setAplicarLoading] = useState(false)
   const [aplicarError, setAplicarError] = useState("")
@@ -1256,7 +1255,6 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                                         onClick={e => {
                                           e.stopPropagation()
                                           setAplicarCreditoAgente(ag.agente_id)
-                                          setAplicarModo("todo")
                                           setAplicarSeleccion({})
                                           setAplicarError("")
                                         }}
@@ -1941,20 +1939,6 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
           })
         }
 
-        function aplicarModoTodo() {
-          // Auto-distribuye todo el saldo entre pendientes, más viejo primero, hasta agotar
-          let disponible = saldoFavor
-          const nueva: Record<string, number> = {}
-          const ordenados = [...pendientes].sort((a, b) => a.fecha.localeCompare(b.fecha))
-          for (const p of ordenados) {
-            if (disponible <= 0) break
-            const faltante = Number(p.monto_debe) - Number(p.monto_pagado)
-            const usar = Math.min(faltante, disponible)
-            if (usar > 0) { nueva[p.id] = usar; disponible -= usar }
-          }
-          setAplicarSeleccion(nueva)
-        }
-
         async function confirmarAplicacion() {
           setAplicarError("")
           const aplicaciones = Object.entries(aplicarSeleccion)
@@ -1983,34 +1967,6 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
 
             <div style={{ padding: "20px" }}>
 
-              {/* Toggle Todo / Parcial */}
-              <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
-                <button
-                  onClick={() => { setAplicarModo("todo"); aplicarModoTodo() }}
-                  style={{
-                    flex: 1, padding: "8px", borderRadius: "8px", cursor: "pointer", fontFamily: "inherit",
-                    fontSize: "12.5px", fontWeight: 700,
-                    border: aplicarModo === "todo" ? "1px solid #4ade80" : "1px solid rgba(255,255,255,0.1)",
-                    background: aplicarModo === "todo" ? "rgba(74,222,128,0.15)" : "rgba(255,255,255,0.04)",
-                    color: aplicarModo === "todo" ? "#4ade80" : "rgba(255,255,255,0.6)",
-                  }}
-                >
-                  Aplicar todo el saldo
-                </button>
-                <button
-                  onClick={() => { setAplicarModo("parcial"); setAplicarSeleccion({}) }}
-                  style={{
-                    flex: 1, padding: "8px", borderRadius: "8px", cursor: "pointer", fontFamily: "inherit",
-                    fontSize: "12.5px", fontWeight: 700,
-                    border: aplicarModo === "parcial" ? "1px solid #4ade80" : "1px solid rgba(255,255,255,0.1)",
-                    background: aplicarModo === "parcial" ? "rgba(74,222,128,0.15)" : "rgba(255,255,255,0.04)",
-                    color: aplicarModo === "parcial" ? "#4ade80" : "rgba(255,255,255,0.6)",
-                  }}
-                >
-                  Elegir manualmente
-                </button>
-              </div>
-
               {/* Lista de conceptos pendientes */}
               {pendientes.length === 0 ? (
                 <p style={{ textAlign: "center", color: "rgba(255,255,255,0.4)", fontSize: "13px", padding: "16px 0" }}>
@@ -2031,7 +1987,6 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                         <input
                           type="checkbox"
                           checked={seleccionado}
-                          disabled={aplicarModo === "todo"}
                           onChange={() => toggleConcepto(p)}
                         />
                         <div style={{ flex: 1 }}>
@@ -2042,7 +1997,6 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                           <input
                             type="number"
                             step="0.01"
-                            disabled={aplicarModo === "todo"}
                             value={aplicarSeleccion[p.id]}
                             onChange={e => {
                               const val = Math.max(0, Math.min(faltante, parseFloat(e.target.value) || 0))
