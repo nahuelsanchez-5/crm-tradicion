@@ -73,6 +73,38 @@ function buildAgentesStr(
   return [vName, cName].filter(Boolean).join(" / ")
 }
 
+function distanciaLevenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0))
+  for (let i = 0; i <= m; i++) dp[i][0] = i
+  for (let j = 0; j <= n; j++) dp[0][j] = j
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (a[i - 1] === b[j - 1]) dp[i][j] = dp[i - 1][j - 1]
+      else dp[i][j] = 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
+    }
+  }
+  return dp[m][n]
+}
+
+function normalizar(s: string): string {
+  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim()
+}
+
+function nombreParecidoAInterno(texto: string, internos: string[]): string | null {
+  const t = normalizar(texto)
+  if (t.length < 3) return null
+  for (const nombre of internos) {
+    const n = normalizar(nombre)
+    const dist = distanciaLevenshtein(t, n)
+    // Umbral: tolera diferencias chicas (tildes, 1-2 letras) relativas al largo del nombre
+    if (dist > 0 && dist <= Math.max(2, Math.floor(n.length * 0.25))) {
+      return nombre
+    }
+  }
+  return null
+}
+
 function parseAgentesStr(raw: string, internos: Set<string>) {
   if (!raw || raw === "Sin agente") {
     return { vendedor: "", vendedorExt: "", comprador: "", compradorExt: "", dosPuntas: false }
@@ -257,6 +289,8 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
   const [comprador,    setComprador]    = useState("")
   const [compradorExt, setCompradorExt] = useState("")
   const [dosPuntas,    setDosPuntas]    = useState(false)
+  const [avisoVendedorExt,  setAvisoVendedorExt]  = useState<string | null>(null)
+  const [avisoCompradorExt, setAvisoCompradorExt] = useState<string | null>(null)
 
   // ── Computed ───────────────────────────────────────
   const filteredOps = useMemo(() => {
@@ -294,6 +328,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
     setVendedor(""); setVendedorExt("")
     setComprador(""); setCompradorExt("")
     setDosPuntas(false)
+    setAvisoVendedorExt(null); setAvisoCompradorExt(null)
     setError("")
     setModal("nuevo")
   }
@@ -304,6 +339,8 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
     setVendedor(p.vendedor);     setVendedorExt(p.vendedorExt)
     setComprador(p.comprador);   setCompradorExt(p.compradorExt)
     setDosPuntas(p.dosPuntas)
+    setAvisoVendedorExt(nombreParecidoAInterno(p.vendedorExt, agentesInternos))
+    setAvisoCompradorExt(nombreParecidoAInterno(p.compradorExt, agentesInternos))
     setForm({
       fecha:              o.fecha,
       direccion:          o.direccion,
@@ -636,13 +673,28 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
                       <option value="Otra inmobiliaria">Otra inmobiliaria</option>
                     </select>
                     {vendedor === "Otra inmobiliaria" && (
-                      <input
-                        type="text"
-                        placeholder="Nombre de la inmobiliaria"
-                        value={vendedorExt}
-                        onChange={e => setVendedorExt(e.target.value)}
-                        style={{ ...inp, marginTop: "6px" }}
-                      />
+                      <>
+                        <input
+                          type="text"
+                          placeholder="Nombre de la inmobiliaria"
+                          value={vendedorExt}
+                          onChange={e => {
+                            const val = e.target.value
+                            setVendedorExt(val)
+                            setAvisoVendedorExt(nombreParecidoAInterno(val, agentesInternos))
+                          }}
+                          style={{ ...inp, marginTop: "6px" }}
+                        />
+                        {avisoVendedorExt && (
+                          <div style={{
+                            marginTop: "6px", padding: "8px 10px", borderRadius: "7px",
+                            background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)",
+                            fontSize: "11.5px", color: "#fbbf24",
+                          }}>
+                            ⚠️ ¿Quisiste decir <strong>{avisoVendedorExt}</strong>? Verificá que no sea un agente interno mal escrito.
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
 
@@ -662,13 +714,28 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
                       <option value="Otra inmobiliaria">Otra inmobiliaria</option>
                     </select>
                     {!dosPuntas && comprador === "Otra inmobiliaria" && (
-                      <input
-                        type="text"
-                        placeholder="Nombre de la inmobiliaria"
-                        value={compradorExt}
-                        onChange={e => setCompradorExt(e.target.value)}
-                        style={{ ...inp, marginTop: "6px" }}
-                      />
+                      <>
+                        <input
+                          type="text"
+                          placeholder="Nombre de la inmobiliaria"
+                          value={compradorExt}
+                          onChange={e => {
+                            const val = e.target.value
+                            setCompradorExt(val)
+                            setAvisoCompradorExt(nombreParecidoAInterno(val, agentesInternos))
+                          }}
+                          style={{ ...inp, marginTop: "6px" }}
+                        />
+                        {avisoCompradorExt && (
+                          <div style={{
+                            marginTop: "6px", padding: "8px 10px", borderRadius: "7px",
+                            background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.3)",
+                            fontSize: "11.5px", color: "#fbbf24",
+                          }}>
+                            ⚠️ ¿Quisiste decir <strong>{avisoCompradorExt}</strong>? Verificá que no sea un agente interno mal escrito.
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -685,7 +752,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
                     onChange={e => {
                       const checked = e.target.checked
                       setDosPuntas(checked)
-                      if (checked) { setComprador(""); setCompradorExt("") }
+                      if (checked) { setComprador(""); setCompradorExt(""); setAvisoCompradorExt(null) }
                     }}
                     style={{ accentColor: "#E31837", width: "15px", height: "15px", cursor: "pointer" }}
                   />
