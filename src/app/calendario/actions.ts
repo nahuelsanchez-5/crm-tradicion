@@ -3,9 +3,13 @@
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 import { requireSession } from "@/lib/auth-guard"
+import { esUUIDValido } from "@/lib/validate"
 
 export async function marcarSeguimiento(ofertaId: string): Promise<{ error?: string }> {
   await requireSession()
+
+  if (!esUUIDValido(ofertaId)) return { error: "ID de oferta inválido" }
+
   const supabase = createServerClient()
 
   const { error } = await supabase.from("ofertas_historial").insert({

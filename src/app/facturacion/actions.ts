@@ -3,6 +3,7 @@
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 import { requireSession } from "@/lib/auth-guard"
+import { esNumeroNoNegativo, esEnteroEnRango } from "@/lib/validate"
 
 export interface FacturacionFormData {
   mes:          number
@@ -16,6 +17,12 @@ export interface FacturacionFormData {
 // ─────────────────────────────────────────────────────
 export async function guardarFacturacion(data: FacturacionFormData) {
   await requireSession()
+
+  if (!esEnteroEnRango(data.mes, 1, 12))        return { error: "Mes inválido" }
+  if (!esEnteroEnRango(data.anio, 2000, 2100))  return { error: "Año inválido" }
+  if (!esNumeroNoNegativo(data.objetivo_usd))   return { error: "El objetivo debe ser un número mayor o igual a 0" }
+  if (!esNumeroNoNegativo(data.real_usd))       return { error: "La facturación real debe ser un número mayor o igual a 0" }
+
   const supabase = createServerClient()
 
   // Verificar si ya existe registro para ese mes/año

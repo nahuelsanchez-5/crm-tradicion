@@ -3,6 +3,7 @@
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 import { requireSession } from "@/lib/auth-guard"
+import { esStringNoVacio, esFechaValida, esUUIDValido, esNumeroNoNegativo, esEnteroEnRango, esUnoDe } from "@/lib/validate"
 
 // ── Migration note ──────────────────────────────────
 // This module uses a new table. Run in Supabase SQL Editor:
@@ -38,6 +39,12 @@ export interface EditarEncuestaData {
 
 export async function registrarEncuesta(data: RegistroEncuestaData) {
   await requireSession()
+
+  if (!esFechaValida(data.fecha))                     return { error: "Fecha inválida" }
+  if (!esUnoDe(data.tipo, ["ESPONTANEA", "MAILING"])) return { error: "Tipo de encuesta inválido" }
+  if (!esStringNoVacio(data.referencia))              return { error: "La referencia no puede estar vacía" }
+  if (data.nps != null && !esEnteroEnRango(data.nps, -100, 100)) return { error: "El NPS debe estar entre -100 y 100" }
+
   const supabase = createServerClient()
 
   const { error } = await supabase.from("encuestas_registros").insert({
@@ -57,6 +64,13 @@ export async function registrarEncuesta(data: RegistroEncuestaData) {
 
 export async function editarEncuesta(id: string, data: EditarEncuestaData) {
   await requireSession()
+
+  if (!esUUIDValido(id))                              return { error: "ID de encuesta inválido" }
+  if (!esFechaValida(data.fecha))                     return { error: "Fecha inválida" }
+  if (!esUnoDe(data.tipo, ["ESPONTANEA", "MAILING"])) return { error: "Tipo de encuesta inválido" }
+  if (!esStringNoVacio(data.referencia))              return { error: "La referencia no puede estar vacía" }
+  if (data.nps != null && !esEnteroEnRango(data.nps, -100, 100)) return { error: "El NPS debe estar entre -100 y 100" }
+
   const supabase = createServerClient()
   const { error } = await supabase
     .from("encuestas_registros")
@@ -78,6 +92,9 @@ export async function editarEncuesta(id: string, data: EditarEncuestaData) {
 
 export async function eliminarEncuesta(id: string) {
   await requireSession()
+
+  if (!esUUIDValido(id)) return { error: "ID de encuesta inválido" }
+
   const supabase = createServerClient()
   const { error } = await supabase
     .from("encuestas_registros")
@@ -99,6 +116,16 @@ export interface EncuestaFormData {
 
 export async function guardarEncuesta(data: EncuestaFormData) {
   await requireSession()
+
+  if (!esEnteroEnRango(data.mes, 1, 12))         return { error: "Mes inválido" }
+  if (!esEnteroEnRango(data.anio, 2000, 2100))   return { error: "Año inválido" }
+  if (!esNumeroNoNegativo(data.enviadas))        return { error: "El total de enviadas debe ser un número mayor o igual a 0" }
+  if (!esNumeroNoNegativo(data.respondidas))     return { error: "El total de respondidas debe ser un número mayor o igual a 0" }
+  // nps_promedio es un promedio nullable que puede ser negativo (no aplica esNumeroNoNegativo)
+  if (data.nps_promedio != null && (typeof data.nps_promedio !== "number" || !isFinite(data.nps_promedio))) {
+    return { error: "NPS promedio inválido" }
+  }
+
   const supabase = createServerClient()
 
   const { data: existing } = await supabase

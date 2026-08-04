@@ -3,6 +3,7 @@
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 import { requireSession } from "@/lib/auth-guard"
+import { esStringNoVacio, esArrayNoVacio } from "@/lib/validate"
 
 export interface ConfigEntry {
   clave:   string
@@ -13,6 +14,15 @@ export interface ConfigEntry {
 
 export async function guardarConfig(entries: ConfigEntry[]) {
   await requireSession()
+
+  if (!esArrayNoVacio<ConfigEntry>(entries)) return { error: "No hay configuraciones para guardar" }
+  // `valor` puede ir vacío (config en blanco); clave/etiqueta/grupo son requeridos.
+  for (const e of entries) {
+    if (!esStringNoVacio(e.clave) || !esStringNoVacio(e.etiqueta) || !esStringNoVacio(e.grupo)) {
+      return { error: "Hay una configuración con datos inválidos" }
+    }
+  }
+
   const supabase = createServerClient()
 
   const upserts = entries.map(e => ({

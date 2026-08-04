@@ -3,6 +3,18 @@
 import { revalidatePath } from "next/cache"
 import { requireSession } from "@/lib/auth-guard"
 import { hoyArgentina } from "@/lib/fecha"
+import { esStringNoVacio, esFechaValida, esEnteroPositivo } from "@/lib/validate"
+
+// Validación compartida por crear/editar cartel.
+function validarCartel(data: CartelFormData): string | null {
+  if (!esEnteroPositivo(data.numero))    return "Número de cartel inválido"
+  if (!esStringNoVacio(data.direccion))  return "La dirección no puede estar vacía"
+  if (!esStringNoVacio(data.mlsId))      return "El MLS ID no puede estar vacío"
+  if (!esFechaValida(data.vencimiento))  return "Fecha de vencimiento inválida"
+  if (!esStringNoVacio(data.tipo))       return "El tipo no puede estar vacío"
+  if (!esStringNoVacio(data.agente))     return "El agente no puede estar vacío"
+  return null
+}
 
 // ── Field IDs ─────────────────────────────────────────
 // fldClqD1zmj0AYlBn = Días restantes → fórmula, solo lectura, NO se envía en writes
@@ -48,6 +60,10 @@ export interface CartelFormData {
 
 export async function crearCartel(data: CartelFormData) {
   await requireSession()
+
+  const err = validarCartel(data)
+  if (err) return { error: err }
+
   const res = await fetch(apiUrl(), {
     method: "POST",
     headers: authHeaders(),
@@ -66,6 +82,9 @@ export async function crearCartel(data: CartelFormData) {
 
 export async function devolverCartel(id: string) {
   await requireSession()
+
+  if (!esStringNoVacio(id)) return { error: "ID de cartel inválido" }
+
   const today = hoyArgentina()
   const res = await fetch(apiUrl(), {
     method: "PATCH",
@@ -85,6 +104,11 @@ export async function devolverCartel(id: string) {
 
 export async function editarCartel(id: string, data: CartelFormData) {
   await requireSession()
+
+  if (!esStringNoVacio(id)) return { error: "ID de cartel inválido" }
+  const err = validarCartel(data)
+  if (err) return { error: err }
+
   const res = await fetch(apiUrl(), {
     method: "PATCH",
     headers: authHeaders(),

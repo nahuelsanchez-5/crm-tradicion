@@ -4,6 +4,16 @@ import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 import { requireSession } from "@/lib/auth-guard"
 import { hoyArgentina } from "@/lib/fecha"
+import { esStringNoVacio, esFechaValida, esUUIDValido, esEmailValido } from "@/lib/validate"
+
+// Validación compartida por crear/actualizar agente. email/telefono/plan/fecha_mainstreet son opcionales.
+function validarAgente(data: AgenteFormData): string | null {
+  if (!esStringNoVacio(data.nombre))     return "El nombre no puede estar vacío"
+  if (!esFechaValida(data.fecha_alta))   return "Fecha de alta inválida"
+  if (data.email && data.email.trim() && !esEmailValido(data.email)) return "Email inválido"
+  if (data.fecha_mainstreet && !esFechaValida(data.fecha_mainstreet)) return "Fecha de Mainstreet inválida"
+  return null
+}
 
 export interface AgenteFormData {
   nombre: string
@@ -20,6 +30,10 @@ export interface AgenteFormData {
 // ─────────────────────────────────────────────────────
 export async function crearAgente(data: AgenteFormData) {
   await requireSession()
+
+  const err = validarAgente(data)
+  if (err) return { error: err }
+
   const supabase = createServerClient()
 
   const { error } = await supabase
@@ -47,6 +61,9 @@ export async function crearAgente(data: AgenteFormData) {
 // ─────────────────────────────────────────────────────
 export async function actualizarPagaFee(id: string, pagaFee: boolean) {
   await requireSession()
+
+  if (!esUUIDValido(id)) return { error: "ID de agente inválido" }
+
   const supabase = createServerClient()
 
   const { error } = await supabase
@@ -66,6 +83,11 @@ export async function actualizarPagaFee(id: string, pagaFee: boolean) {
 // ─────────────────────────────────────────────────────
 export async function actualizarAgente(id: string, data: AgenteFormData) {
   await requireSession()
+
+  if (!esUUIDValido(id)) return { error: "ID de agente inválido" }
+  const err = validarAgente(data)
+  if (err) return { error: err }
+
   const supabase = createServerClient()
 
   const { error } = await supabase

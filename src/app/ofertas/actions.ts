@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import { CHECKLIST_ITEMS } from "./checklist-items"
 import { requireSession } from "@/lib/auth-guard"
 import { hoyArgentina } from "@/lib/fecha"
+import { esStringNoVacio, esFechaValida, esUUIDValido, esMontoValido, esNumeroNoNegativo, esEnteroPositivo } from "@/lib/validate"
 
 // ── Types ─────────────────────────────────────────────
 export interface EditarOfertaData {
@@ -52,6 +53,19 @@ export async function crearOferta(
   data: OfertaFormData,
 ): Promise<{ error?: string; id?: string }> {
   await requireSession()
+
+  if (!esEnteroPositivo(data.numero))          return { error: "Número de oferta inválido" }
+  if (!esStringNoVacio(data.direccion))        return { error: "La dirección no puede estar vacía" }
+  if (!esStringNoVacio(data.tipologia))        return { error: "La tipología no puede estar vacía" }
+  if (!esStringNoVacio(data.tipo_operacion))   return { error: "El tipo de operación no puede estar vacío" }
+  if (!esFechaValida(data.fecha_oferta))       return { error: "Fecha de oferta inválida" }
+  if (data.agente_vendedor_id  && !esUUIDValido(data.agente_vendedor_id))  return { error: "Agente vendedor inválido" }
+  if (data.agente_comprador_id && !esUUIDValido(data.agente_comprador_id)) return { error: "Agente comprador inválido" }
+  if (data.monto_reserva_usd      != null && !esNumeroNoNegativo(data.monto_reserva_usd))      return { error: "Monto de reserva inválido" }
+  if (data.monto_ofertado_usd     != null && !esNumeroNoNegativo(data.monto_ofertado_usd))     return { error: "Monto ofertado inválido" }
+  if (data.precio_publicacion_usd != null && !esNumeroNoNegativo(data.precio_publicacion_usd)) return { error: "Precio de publicación inválido" }
+  if (data.numero_padre           != null && !esEnteroPositivo(data.numero_padre))             return { error: "Número padre inválido" }
+
   const supabase = createServerClient()
 
   const { data: oferta, error } = await supabase
@@ -111,6 +125,11 @@ export async function cambiarEstado(
   monto?: number | null,
 ): Promise<{ error?: string }> {
   await requireSession()
+
+  if (!esUUIDValido(id))              return { error: "ID de oferta inválido" }
+  if (!esStringNoVacio(nuevoEstado)) return { error: "Estado inválido" }
+  if (monto != null && !esNumeroNoNegativo(monto)) return { error: "Monto inválido" }
+
   const supabase = createServerClient()
 
   const updates: Record<string, unknown> = { estado: nuevoEstado }
@@ -140,6 +159,12 @@ export async function agregarMovimiento(
   monto?: number | null,
 ): Promise<{ error?: string }> {
   await requireSession()
+
+  if (!esUUIDValido(ofertaId))       return { error: "ID de oferta inválido" }
+  if (!esStringNoVacio(tipo))        return { error: "El tipo de movimiento no puede estar vacío" }
+  if (!esStringNoVacio(descripcion)) return { error: "La descripción no puede estar vacía" }
+  if (monto != null && !esNumeroNoNegativo(monto)) return { error: "Monto inválido" }
+
   const supabase = createServerClient()
 
   const { error } = await supabase.from("ofertas_historial").insert({
@@ -161,6 +186,10 @@ export async function toggleChecklist(
   completado: boolean,
 ): Promise<{ error?: string }> {
   await requireSession()
+
+  if (!esUUIDValido(checklistId)) return { error: "ID de checklist inválido" }
+  if (!esUUIDValido(ofertaId))    return { error: "ID de oferta inválido" }
+
   const supabase = createServerClient()
 
   const { error } = await supabase
@@ -180,6 +209,11 @@ export async function registrarCierre(
   precioCierre: number,
 ): Promise<{ error?: string }> {
   await requireSession()
+
+  if (!esUUIDValido(ofertaId))       return { error: "ID de oferta inválido" }
+  if (!esFechaValida(fecha))         return { error: "Fecha de cierre inválida" }
+  if (!esMontoValido(precioCierre))  return { error: "El precio de cierre debe ser un número mayor a 0" }
+
   const supabase = createServerClient()
 
   const { error: ofertaError } = await supabase
@@ -207,6 +241,21 @@ export async function registrarCierre(
 // ─────────────────────────────────────────────────────
 export async function editarOferta(id: string, data: EditarOfertaData): Promise<{ error?: string }> {
   await requireSession()
+
+  if (!esUUIDValido(id))                     return { error: "ID de oferta inválido" }
+  if (!esStringNoVacio(data.direccion))      return { error: "La dirección no puede estar vacía" }
+  if (!esStringNoVacio(data.tipologia))      return { error: "La tipología no puede estar vacía" }
+  if (!esStringNoVacio(data.tipo_operacion)) return { error: "El tipo de operación no puede estar vacío" }
+  if (data.agente_vendedor_id  && !esUUIDValido(data.agente_vendedor_id))  return { error: "Agente vendedor inválido" }
+  if (data.agente_comprador_id && !esUUIDValido(data.agente_comprador_id)) return { error: "Agente comprador inválido" }
+  if (data.monto_ofertado_usd     != null && !esNumeroNoNegativo(data.monto_ofertado_usd))     return { error: "Monto ofertado inválido" }
+  if (data.precio_publicacion_usd != null && !esNumeroNoNegativo(data.precio_publicacion_usd)) return { error: "Precio de publicación inválido" }
+  if (data.precio_acordado_usd    != null && !esNumeroNoNegativo(data.precio_acordado_usd))    return { error: "Precio acordado inválido" }
+  if (data.valor_escritura_usd    != null && !esNumeroNoNegativo(data.valor_escritura_usd))    return { error: "Valor de escritura inválido" }
+  if (data.monto_reserva_usd      != null && !esNumeroNoNegativo(data.monto_reserva_usd))      return { error: "Monto de reserva inválido" }
+  if (data.monto_refuerzo_usd     != null && !esNumeroNoNegativo(data.monto_refuerzo_usd))     return { error: "Monto de refuerzo inválido" }
+  if (data.numero_padre           != null && !esEnteroPositivo(data.numero_padre))             return { error: "Número padre inválido" }
+
   const supabase = createServerClient()
 
   const { error } = await supabase
