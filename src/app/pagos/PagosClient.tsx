@@ -489,12 +489,17 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
       })
   }, [pagos, agentes, selectedMonth, selectedEstado])
 
-  // ── Saldo a favor por agente (todos los pagos) ────
-  const saldoPorAgente = useMemo(() => {
+  // ── Crédito disponible por agente ─────────────────
+  // Suma SOLO los depósitos de "Saldo a favor" que quedan sin consumir. La acción
+  // aplicarCreditoAPendientes ya reduce/borra estas filas al aplicarlas, así que lo
+  // que queda acá es crédito real disponible — independiente de la deuda que el agente
+  // pueda tener en otros conceptos (no se calcula por saldo neto histórico).
+  const creditoDisponiblePorAgente = useMemo(() => {
     const map = new Map<string, number>()
     for (const p of pagos) {
+      if (p.concepto !== "Saldo a favor") continue
       const cur = map.get(p.agente_id) ?? 0
-      map.set(p.agente_id, cur + Number(p.monto_pagado) - Number(p.monto_debe))
+      map.set(p.agente_id, cur + Number(p.monto_pagado))
     }
     return map
   }, [pagos])
@@ -596,7 +601,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
       .join("\n")
 
     const agenteId   = agentePagos[0]?.agente_id ?? ""
-    const saldoFavor = saldoPorAgente.get(agenteId) ?? 0
+    const saldoFavor = creditoDisponiblePorAgente.get(agenteId) ?? 0
 
     const cierre = saldo > 0
       ? `Cuando puedas, avisanos para coordinar. Gracias!`
@@ -965,7 +970,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                               fontSize: "10px", fontWeight: 700,
                             }}>EN MORA</span>
                           )}
-                          {(saldoPorAgente.get(ag.agente_id) ?? 0) > 0 && (
+                          {(creditoDisponiblePorAgente.get(ag.agente_id) ?? 0) > 0 && (
                             <span style={{
                               background: "rgba(74,222,128,0.12)", color: "#4ade80",
                               border: "1px solid rgba(74,222,128,0.3)",
@@ -1159,7 +1164,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                                   EN MORA
                                 </span>
                               )}
-                              {(saldoPorAgente.get(ag.agente_id) ?? 0) > 0 && (
+                              {(creditoDisponiblePorAgente.get(ag.agente_id) ?? 0) > 0 && (
                                 <span style={{
                                   background: "rgba(74,222,128,0.12)", color: "#4ade80",
                                   border: "1px solid rgba(74,222,128,0.3)",
@@ -1243,10 +1248,10 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                                     <span style={{ color: "rgba(255,255,255,0.45)" }}>Estado: </span>
                                     <StatusBadge estado={ag.estadoGral} />
                                   </span>
-                                  {saldoPorAgente.get(ag.agente_id) && saldoPorAgente.get(ag.agente_id)! > 0 && (
+                                  {creditoDisponiblePorAgente.get(ag.agente_id) && creditoDisponiblePorAgente.get(ag.agente_id)! > 0 && (
                                     <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                       <span style={{ color: "rgba(255,255,255,0.45)" }}>Saldo a favor: </span>
-                                      <strong style={{ color: "#4ade80" }}>{fmtUSD(saldoPorAgente.get(ag.agente_id)!)}</strong>
+                                      <strong style={{ color: "#4ade80" }}>{fmtUSD(creditoDisponiblePorAgente.get(ag.agente_id)!)}</strong>
                                       <button
                                         onClick={e => {
                                           e.stopPropagation()
@@ -1912,7 +1917,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
       ════════════════════════════════════════════ */}
       {aplicarCreditoAgente && (() => {
         const agenteInfo    = agentes.find(a => a.id === aplicarCreditoAgente)
-        const saldoFavor    = saldoPorAgente.get(aplicarCreditoAgente) ?? 0
+        const saldoFavor    = creditoDisponiblePorAgente.get(aplicarCreditoAgente) ?? 0
         const pendientes    = pagos.filter(p =>
           p.agente_id === aplicarCreditoAgente &&
           p.concepto !== "Saldo a favor" &&
