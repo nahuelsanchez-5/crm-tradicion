@@ -154,9 +154,10 @@ function EstadoBadge({ p, isFuture, real }: { p: number; isFuture: boolean; real
 // ═══════════════════════════════════════════════════════
 interface Props {
   rows: FacturacionRow[]
+  comisionesPorMes: Record<string, number>
 }
 
-export default function FacturacionClient({ rows }: Props) {
+export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -207,8 +208,11 @@ export default function FacturacionClient({ rows }: Props) {
   }, [modalMes, closeModal])
 
   function openModal(m: MesData) {
+    const sugerido = comisionesPorMes[`${m.mes}-${ANIO}`] ?? 0
     setForm({
-      real_usd: m.real_usd > 0 ? String(m.real_usd) : "",
+      // Si el mes ya tiene un real guardado (>0), respetarlo (no pisar ajustes manuales).
+      // Si está en 0, pre-llenar con la suma de comisiones de Operaciones (si hay).
+      real_usd: m.real_usd > 0 ? String(m.real_usd) : (sugerido > 0 ? String(sugerido.toFixed(2)) : ""),
     })
     setError("")
     setModalMes(m)
@@ -506,6 +510,14 @@ export default function FacturacionClient({ rows }: Props) {
                   style={inp}
                   autoFocus
                 />
+                {(() => {
+                  const sugerido = comisionesPorMes[`${modalMes.mes}-${ANIO}`] ?? 0
+                  return modalMes.real_usd === 0 && sugerido > 0 ? (
+                    <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>
+                      Sugerido automáticamente desde Operaciones — verificá que estén todas las operaciones del mes cargadas antes de guardar.
+                    </p>
+                  ) : null
+                })()}
               </Field>
 
               {/* Preview cumplimiento */}
