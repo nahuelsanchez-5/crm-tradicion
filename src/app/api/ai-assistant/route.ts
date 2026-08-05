@@ -98,8 +98,11 @@ async function callGemini(
         system_instruction: { parts: [{ text: systemPrompt }] },
         contents,
         generationConfig: {
-          maxOutputTokens: 1024,
+          maxOutputTokens: 2048,
           responseMimeType: "application/json",
+          thinkingConfig: {
+            thinkingLevel: "minimal",
+          },
         },
       }),
     })
@@ -108,8 +111,8 @@ async function callGemini(
       const errBody = await res.text()
       console.error(`[ai-assistant] Gemini HTTP ${res.status} (intento ${intento}):`, errBody)
       lastError = `Gemini ${res.status}: ${errBody}`
-      if (res.status === 429 && intento < 2) {
-        await new Promise((r) => setTimeout(r, 1000)) // esperar 1s antes de reintentar
+      if ((res.status === 429 || res.status === 503) && intento < 2) {
+        await new Promise((r) => setTimeout(r, 1500)) // alta demanda (503) o rate-limit (429): esperar antes de reintentar
         continue
       }
       throw new Error(lastError)
