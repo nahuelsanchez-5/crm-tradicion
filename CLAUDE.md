@@ -2,7 +2,7 @@
 
 CRM interno de RE/MAX Tradición (Resistencia, Chaco). Usuario: Nahuel Sánchez (admin).
 Stack: Next.js 16 App Router + TypeScript estricto + Tailwind CSS v4 + shadcn/ui.
-DB: Supabase. Integraciones: Airtable (cartelería), Gemini 2.5 Flash (asistente IA),
+DB: Supabase. Integraciones: Airtable (cartelería), Gemini 3.5 Flash (asistente IA),
 dolarapi.com (widget dólar). Hosting: Vercel, deploy automático desde master.
 Tema: dark glassmorphism (#0a0a1a fondo, #13131a cards). NO reemplazar, solo refinar.
 
