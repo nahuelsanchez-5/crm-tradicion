@@ -98,7 +98,6 @@ async function callGemini(
         system_instruction: { parts: [{ text: systemPrompt }] },
         contents,
         generationConfig: {
-          temperature: 0.3,
           maxOutputTokens: 1024,
           responseMimeType: "application/json",
         },
