@@ -88,41 +88,55 @@ async function callGemini(
   const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) throw new Error("GEMINI_API_KEY no definida dentro de callGemini")
 
-  const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      system_instruction: { parts: [{ text: systemPrompt }] },
-      contents,
-      generationConfig: {
-        temperature: 0.3,
-        maxOutputTokens: 1024,
-        responseMimeType: "application/json",
-      },
-    }),
-  })
+  let lastError: string = ""
 
-  if (!res.ok) {
-    const errBody = await res.text()
-    console.error(`[ai-assistant] Gemini HTTP ${res.status}:`, errBody)
-    throw new Error(`Gemini ${res.status}: ${errBody}`)
+  for (let intento = 1; intento <= 2; intento++) {
+    const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents,
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 1024,
+          responseMimeType: "application/json",
+        },
+      }),
+    })
+
+    if (!res.ok) {
+      const errBody = await res.text()
+      console.error(`[ai-assistant] Gemini HTTP ${res.status} (intento ${intento}):`, errBody)
+      lastError = `Gemini ${res.status}: ${errBody}`
+      if (res.status === 429 && intento < 2) {
+        await new Promise((r) => setTimeout(r, 1000)) // esperar 1s antes de reintentar
+        continue
+      }
+      throw new Error(lastError)
+    }
+
+    const data = await res.json()
+    const raw: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? ""
+
+    if (!raw) {
+      console.error(`[ai-assistant] Gemini respuesta vacía (intento ${intento}):`, JSON.stringify(data))
+      if (intento < 2) continue
+      return { intent: "no_entendido", params: {}, response: "No pude procesar tu mensaje. Intentá de nuevo.", requiresConfirmation: false }
+    }
+
+    const cleaned = raw.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim()
+    try {
+      return JSON.parse(cleaned) as GeminiIntent
+    } catch (parseErr) {
+      console.error(`[ai-assistant] JSON parse error (intento ${intento}). Raw:`, cleaned, "Error:", parseErr)
+      if (intento < 2) continue
+      return { intent: "no_entendido", params: {}, response: "No entendí la respuesta del modelo. Intentá de nuevo.", requiresConfirmation: false }
+    }
   }
 
-  const data = await res.json()
-  const raw: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? ""
-
-  if (!raw) {
-    console.error("[ai-assistant] Gemini respuesta vacía:", JSON.stringify(data))
-    return { intent: "no_entendido", params: {}, response: "No pude procesar tu mensaje. Intentá de nuevo.", requiresConfirmation: false }
-  }
-
-  const cleaned = raw.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim()
-  try {
-    return JSON.parse(cleaned) as GeminiIntent
-  } catch (parseErr) {
-    console.error("[ai-assistant] JSON parse error. Raw:", cleaned, "Error:", parseErr)
-    return { intent: "no_entendido", params: {}, response: "No entendí la respuesta del modelo. Intentá de nuevo.", requiresConfirmation: false }
-  }
+  // No debería llegar acá, pero por las dudas
+  return { intent: "no_entendido", params: {}, response: "No pude procesar tu mensaje. Intentá de nuevo.", requiresConfirmation: false }
 }
 
 // ── Agent resolution ──────────────────────────────────────────────────────────
