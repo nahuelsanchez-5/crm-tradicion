@@ -59,6 +59,7 @@ export default function Sidebar({ agenteCount }: Props) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
+  const [hovering, setHovering] = useState(false)
   const { data: session } = useSession()
 
   useEffect(() => {
@@ -86,7 +87,7 @@ export default function Sidebar({ agenteCount }: Props) {
   )
 
   const sidebarContent = (onNavClick?: () => void, applyCollapsed = false) => {
-    const isCollapsed = applyCollapsed && collapsed
+    const isCollapsed = applyCollapsed && collapsed && !hovering
     return (
     <>
       {/* Logo */}
@@ -103,14 +104,14 @@ export default function Sidebar({ agenteCount }: Props) {
         {applyCollapsed && (
           <button
             onClick={toggleCollapsed}
-            title={isCollapsed ? "Expandir menú" : "Colapsar menú"}
+            title={collapsed ? "Expandir menú" : "Colapsar menú"}
             style={{
               background: "rgba(255,255,255,0.06)", border: "none", borderRadius: "8px",
               width: "28px", height: "28px", display: "flex", alignItems: "center", justifyContent: "center",
               cursor: "pointer", color: "rgba(255,255,255,0.5)", flexShrink: 0,
             }}
           >
-            {isCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+            {collapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
           </button>
         )}
       </div>
@@ -232,8 +233,10 @@ export default function Sidebar({ agenteCount }: Props) {
 
       {/* Desktop sidebar */}
       <aside
-        className={`hidden md:flex ${collapsed ? "w-[64px] min-w-[64px]" : "w-[224px] min-w-[224px]"} flex-col h-full flex-shrink-0 transition-all duration-200`}
-        style={{ background: "var(--crm-sidebar)", backdropFilter: "blur(16px)", borderRight: "1px solid var(--crm-divider)" }}
+        onMouseEnter={() => collapsed && setHovering(true)}
+        onMouseLeave={() => collapsed && setHovering(false)}
+        className={`hidden md:flex ${(collapsed && !hovering) ? "w-[64px] min-w-[64px]" : "w-[224px] min-w-[224px]"} flex-col h-full flex-shrink-0 transition-all duration-200`}
+        style={{ background: "var(--crm-sidebar)", backdropFilter: "blur(16px)", borderRight: "1px solid var(--crm-divider)", position: "relative", zIndex: collapsed && hovering ? 30 : "auto" }}
       >
         {sidebarContent(undefined, true)}
       </aside>
