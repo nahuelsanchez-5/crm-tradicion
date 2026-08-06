@@ -1,6 +1,7 @@
 "use client"
 import Image from "next/image"
 import DashboardClock from "@/app/DashboardClock"
+import AlertasBell from "@/components/AlertasBell"
 
 interface Props {
   moduleName: string
@@ -23,7 +24,8 @@ export default function Topbar({ moduleName }: Props) {
           className="md:w-[240px] md:h-[27px]"
         />
       </div>
-      <div className="flex-1 flex justify-end">
+      <div className="flex-1 flex justify-end items-center gap-2.5">
+        <AlertasBell />
         <div
           className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] md:text-[12.5px] font-semibold"
           style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", color: "var(--crm-text)" }}
