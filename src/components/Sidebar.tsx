@@ -234,9 +234,19 @@ export default function Sidebar({ agenteCount }: Props) {
       {/* Desktop sidebar */}
       <aside
         onMouseEnter={() => collapsed && setHovering(true)}
-        onMouseLeave={() => collapsed && setHovering(false)}
-        className={`hidden md:flex ${(collapsed && !hovering) ? "w-[64px] min-w-[64px]" : "w-[224px] min-w-[224px]"} flex-col h-full flex-shrink-0 transition-all duration-200`}
-        style={{ background: "var(--crm-sidebar)", backdropFilter: "blur(16px)", borderRight: "1px solid var(--crm-divider)", position: "relative", zIndex: collapsed && hovering ? 30 : "auto" }}
+        onMouseLeave={() => {
+          if (!collapsed) return
+          setTimeout(() => setHovering(false), 150)
+        }}
+        className={`hidden md:flex ${(collapsed && !hovering) ? "w-[64px] min-w-[64px]" : "w-[224px] min-w-[224px]"} flex-col h-full flex-shrink-0`}
+        style={{
+          background: "var(--crm-sidebar)",
+          backdropFilter: "blur(16px)",
+          borderRight: "1px solid var(--crm-divider)",
+          transition: "width 280ms cubic-bezier(0.4, 0, 0.2, 1)",
+          position: collapsed ? "relative" : "static",
+          zIndex: collapsed && hovering ? 30 : "auto",
+        }}
       >
         {sidebarContent(undefined, true)}
       </aside>
@@ -269,7 +279,17 @@ function NavItemLink({
       ].join(" ")}
     >
       <item.icon size={15} className="flex-shrink-0" style={isActive ? { filter: "drop-shadow(0 0 4px rgba(227,24,55,0.5))" } : undefined} />
-      {!collapsed && <span className="flex-1">{item.label}</span>}
+      <span
+        className="flex-1"
+        style={{
+          opacity: collapsed ? 0 : 1,
+          transition: "opacity 200ms ease",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+        }}
+      >
+        {item.label}
+      </span>
       {!collapsed && item.badge !== undefined && (
         <span
           className={[
