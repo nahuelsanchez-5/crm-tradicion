@@ -232,20 +232,31 @@ export default function Sidebar({ agenteCount }: Props) {
       </aside>
 
       {/* Desktop sidebar */}
+      {/* Spacer: reserva el espacio real en el layout, SIEMPRE 64px cuando está colapsado */}
+      <div className={`hidden md:block ${collapsed ? "w-[64px] min-w-[64px]" : "w-[224px] min-w-[224px]"} flex-shrink-0`} />
+
+      {/* Aside real: fixed cuando está colapsado, para no afectar el layout al desplegarse por hover */}
       <aside
         onMouseEnter={() => collapsed && setHovering(true)}
         onMouseLeave={() => {
           if (!collapsed) return
-          setTimeout(() => setHovering(false), 150)
+          setTimeout(() => setHovering(false), 2000)
         }}
-        className={`hidden md:flex ${(collapsed && !hovering) ? "w-[64px] min-w-[64px]" : "w-[224px] min-w-[224px]"} flex-col h-full flex-shrink-0`}
+        className="hidden md:flex flex-col h-full"
         style={{
           background: "var(--crm-sidebar)",
           backdropFilter: "blur(16px)",
           borderRight: "1px solid var(--crm-divider)",
-          transition: "width 280ms cubic-bezier(0.4, 0, 0.2, 1)",
-          position: collapsed ? "relative" : "static",
-          zIndex: collapsed && hovering ? 30 : "auto",
+          position: collapsed ? "fixed" : "static",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          width: (collapsed && !hovering) ? "64px" : "224px",
+          transform: (collapsed && !hovering) ? "translateX(0)" : "translateX(0)",
+          transition: "width 320ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 320ms ease",
+          boxShadow: (collapsed && hovering) ? "8px 0 24px rgba(0,0,0,0.35)" : "none",
+          zIndex: collapsed ? 40 : "auto",
+          willChange: "width",
         }}
       >
         {sidebarContent(undefined, true)}
