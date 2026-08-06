@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
@@ -60,12 +60,26 @@ export default function Sidebar({ agenteCount }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
   const [hovering, setHovering] = useState(false)
+  const asideRef = useRef<HTMLElement>(null)
   const { data: session } = useSession()
 
   useEffect(() => {
     const saved = localStorage.getItem("sidebar-collapsed")
     if (saved === "true") setCollapsed(true)
   }, [])
+
+  useEffect(() => {
+    if (!collapsed || !hovering) return
+
+    function handleClickOutside(e: MouseEvent) {
+      if (asideRef.current && !asideRef.current.contains(e.target as Node)) {
+        setHovering(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [collapsed, hovering])
 
   function toggleCollapsed() {
     setCollapsed(prev => {
@@ -237,11 +251,8 @@ export default function Sidebar({ agenteCount }: Props) {
 
       {/* Aside real: fixed cuando está colapsado, para no afectar el layout al desplegarse por hover */}
       <aside
+        ref={asideRef}
         onMouseEnter={() => collapsed && setHovering(true)}
-        onMouseLeave={() => {
-          if (!collapsed) return
-          setTimeout(() => setHovering(false), 2000)
-        }}
         className="hidden md:flex flex-col h-full"
         style={{
           background: "var(--crm-sidebar)",
