@@ -233,7 +233,7 @@ export default function Sidebar({ agenteCount }: Props) {
 
       {/* Desktop sidebar */}
       {/* Spacer: reserva el espacio real en el layout, SIEMPRE 64px cuando está colapsado */}
-      <div className={`hidden md:block ${collapsed ? "w-[64px] min-w-[64px]" : "w-[224px] min-w-[224px]"} flex-shrink-0`} />
+      <div className={`hidden md:block ${collapsed ? "w-[64px] min-w-[64px]" : "w-0 min-w-0"} flex-shrink-0 transition-all duration-200`} />
 
       {/* Aside real: fixed cuando está colapsado, para no afectar el layout al desplegarse por hover */}
       <aside
