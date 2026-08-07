@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
-import { Bell } from "lucide-react"
+import { Bell, ChevronDown } from "lucide-react"
 
 interface OfertaItem     { id: string; numero: number; direccion: string; dias: number; href: string }
 interface CartelItem     { id: string; numero: number; direccion: string; diasRestantes: number; href: string }
@@ -56,6 +56,7 @@ export default function AlertasBell() {
   const [data, setData] = useState<AlertasData>(EMPTY)
   const [open, setOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [expandida, setExpandida] = useState<"ofertas" | "carteleria" | "mainstreet" | null>(null)
 
   const lastTotalRef = useRef<number | null>(null)
   const panelRef = useRef<HTMLDivElement>(null)
@@ -187,68 +188,131 @@ export default function AlertasBell() {
               {/* Ofertas */}
               {categorias.ofertas.count > 0 && (
                 <div>
-                  <p style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "rgba(255,255,255,0.4)", marginBottom: "6px" }}>
-                    Ofertas sin actividad ({categorias.ofertas.count})
-                  </p>
-                  {categorias.ofertas.items.map(item => (
-                    <Link
-                      key={item.id}
-                      href={item.href}
-                      onClick={() => setOpen(false)}
-                      style={{ display: "block", padding: "8px 10px", borderRadius: "6px", fontSize: "12.5px", color: "var(--crm-text)", textDecoration: "none" }}
-                      className="hover:bg-white/[0.06]"
-                    >
-                      <span style={{ fontWeight: 700 }}>#{item.numero}</span> — {item.direccion} · <span style={{ color: "#fbbf24" }}>hace {item.dias} días</span>
-                    </Link>
-                  ))}
+                  <button
+                    onClick={() => setExpandida(prev => prev === "ofertas" ? null : "ofertas")}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      width: "100%", background: "none", border: "none", cursor: "pointer",
+                      padding: "6px 2px", fontFamily: "inherit",
+                    }}
+                  >
+                    <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "rgba(255,255,255,0.4)" }}>
+                      Ofertas sin actividad ({categorias.ofertas.count})
+                    </span>
+                    <ChevronDown
+                      size={14}
+                      style={{
+                        color: "rgba(255,255,255,0.4)",
+                        transform: expandida === "ofertas" ? "rotate(180deg)" : "rotate(0deg)",
+                        transition: "transform 150ms ease",
+                      }}
+                    />
+                  </button>
+                  {expandida === "ofertas" && (
+                    <div style={{ marginTop: "4px" }}>
+                      {categorias.ofertas.items.map(item => (
+                        <Link
+                          key={item.id}
+                          href={item.href}
+                          onClick={() => setOpen(false)}
+                          style={{ display: "block", padding: "8px 10px", borderRadius: "6px", fontSize: "12.5px", color: "var(--crm-text)", textDecoration: "none" }}
+                          className="hover:bg-white/[0.06]"
+                        >
+                          <span style={{ fontWeight: 700 }}>#{item.numero}</span> — {item.direccion} · <span style={{ color: "#fbbf24" }}>hace {item.dias} días</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Cartelería */}
               {categorias.carteleria.count > 0 && (
                 <div>
-                  <p style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "rgba(255,255,255,0.4)", marginBottom: "6px" }}>
-                    Cartelería vencida/próxima ({categorias.carteleria.count})
-                  </p>
-                  {categorias.carteleria.items.map(item => (
-                    <Link
-                      key={item.id}
-                      href={item.href}
-                      onClick={() => setOpen(false)}
-                      style={{ display: "block", padding: "8px 10px", borderRadius: "6px", fontSize: "12.5px", color: "var(--crm-text)", textDecoration: "none" }}
-                      className="hover:bg-white/[0.06]"
-                    >
-                      <span style={{ fontWeight: 700 }}>#{item.numero}</span> — {item.direccion} · {" "}
-                      <span style={{ color: item.diasRestantes < 0 ? "#ef4444" : "#f59e0b" }}>
-                        {item.diasRestantes < 0
-                          ? `vencido hace ${Math.abs(item.diasRestantes)}d`
-                          : item.diasRestantes === 0 ? "vence hoy" : `vence en ${item.diasRestantes}d`}
-                      </span>
-                    </Link>
-                  ))}
+                  <button
+                    onClick={() => setExpandida(prev => prev === "carteleria" ? null : "carteleria")}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      width: "100%", background: "none", border: "none", cursor: "pointer",
+                      padding: "6px 2px", fontFamily: "inherit",
+                    }}
+                  >
+                    <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "rgba(255,255,255,0.4)" }}>
+                      Cartelería vencida/próxima ({categorias.carteleria.count})
+                    </span>
+                    <ChevronDown
+                      size={14}
+                      style={{
+                        color: "rgba(255,255,255,0.4)",
+                        transform: expandida === "carteleria" ? "rotate(180deg)" : "rotate(0deg)",
+                        transition: "transform 150ms ease",
+                      }}
+                    />
+                  </button>
+                  {expandida === "carteleria" && (
+                    <div style={{ marginTop: "4px" }}>
+                      {categorias.carteleria.items.map(item => (
+                        <Link
+                          key={item.id}
+                          href={item.href}
+                          onClick={() => setOpen(false)}
+                          style={{ display: "block", padding: "8px 10px", borderRadius: "6px", fontSize: "12.5px", color: "var(--crm-text)", textDecoration: "none" }}
+                          className="hover:bg-white/[0.06]"
+                        >
+                          <span style={{ fontWeight: 700 }}>#{item.numero}</span> — {item.direccion} · {" "}
+                          <span style={{ color: item.diasRestantes < 0 ? "#ef4444" : "#f59e0b" }}>
+                            {item.diasRestantes < 0
+                              ? `vencido hace ${Math.abs(item.diasRestantes)}d`
+                              : item.diasRestantes === 0 ? "vence hoy" : `vence en ${item.diasRestantes}d`}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Mainstreet */}
               {categorias.mainstreet.count > 0 && (
                 <div>
-                  <p style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "rgba(255,255,255,0.4)", marginBottom: "6px" }}>
-                    Mainstreet próximo ({categorias.mainstreet.count})
-                  </p>
-                  {categorias.mainstreet.items.map((item, i) => (
-                    <Link
-                      key={`${item.nombre}-${i}`}
-                      href={item.href}
-                      onClick={() => setOpen(false)}
-                      style={{ display: "block", padding: "8px 10px", borderRadius: "6px", fontSize: "12.5px", color: "var(--crm-text)", textDecoration: "none" }}
-                      className="hover:bg-white/[0.06]"
-                    >
-                      <span style={{ fontWeight: 700 }}>{item.nombre}</span> · {fmtFechaCorta(item.fecha)} · {" "}
-                      <span style={{ color: "#60a5fa" }}>
-                        {item.diasFaltan === 0 ? "hoy" : `en ${item.diasFaltan}d`}
-                      </span>
-                    </Link>
-                  ))}
+                  <button
+                    onClick={() => setExpandida(prev => prev === "mainstreet" ? null : "mainstreet")}
+                    style={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      width: "100%", background: "none", border: "none", cursor: "pointer",
+                      padding: "6px 2px", fontFamily: "inherit",
+                    }}
+                  >
+                    <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px", color: "rgba(255,255,255,0.4)" }}>
+                      Mainstreet próximo ({categorias.mainstreet.count})
+                    </span>
+                    <ChevronDown
+                      size={14}
+                      style={{
+                        color: "rgba(255,255,255,0.4)",
+                        transform: expandida === "mainstreet" ? "rotate(180deg)" : "rotate(0deg)",
+                        transition: "transform 150ms ease",
+                      }}
+                    />
+                  </button>
+                  {expandida === "mainstreet" && (
+                    <div style={{ marginTop: "4px" }}>
+                      {categorias.mainstreet.items.map((item, i) => (
+                        <Link
+                          key={`${item.nombre}-${i}`}
+                          href={item.href}
+                          onClick={() => setOpen(false)}
+                          style={{ display: "block", padding: "8px 10px", borderRadius: "6px", fontSize: "12.5px", color: "var(--crm-text)", textDecoration: "none" }}
+                          className="hover:bg-white/[0.06]"
+                        >
+                          <span style={{ fontWeight: 700 }}>{item.nombre}</span> · {fmtFechaCorta(item.fecha)} · {" "}
+                          <span style={{ color: "#60a5fa" }}>
+                            {item.diasFaltan === 0 ? "hoy" : `en ${item.diasFaltan}d`}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
