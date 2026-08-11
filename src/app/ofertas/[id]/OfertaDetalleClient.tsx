@@ -820,7 +820,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               </Field>
               <Field label="Monto (USD, opcional)">
                 <input type="number" value={montoEstado} onChange={e => setMontoEstado(e.target.value)}
-                  min="0" step="100" placeholder="Si hubo movimiento de dinero" className="crm-input" />
+                  min="0" step="1" placeholder="Si hubo movimiento de dinero" className="crm-input" />
               </Field>
               {errEstado && (
                 <div style={{
@@ -914,7 +914,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               </Field>
               <Field label="Monto (USD, opcional)">
                 <input type="number" value={montoMov} onChange={e => setMontoMov(e.target.value)}
-                  min="0" step="100" placeholder="Si hubo movimiento de dinero" className="crm-input" />
+                  min="0" step="1" placeholder="Si hubo movimiento de dinero" className="crm-input" />
               </Field>
               {errMov && (
                 <div style={{
@@ -1082,19 +1082,19 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <Field label="Monto ofertado">
-                  <input type="number" min="0" step="100" value={editForm.monto_ofertado_usd}
+                  <input type="number" min="0" step="1" value={editForm.monto_ofertado_usd}
                     onChange={e => setEF("monto_ofertado_usd", e.target.value)} placeholder="0" className="crm-input" />
                 </Field>
                 <Field label="Precio publicación">
-                  <input type="number" min="0" step="100" value={editForm.precio_publicacion_usd}
+                  <input type="number" min="0" step="1" value={editForm.precio_publicacion_usd}
                     onChange={e => setEF("precio_publicacion_usd", e.target.value)} placeholder="0" className="crm-input" />
                 </Field>
                 <Field label="Precio acordado">
-                  <input type="number" min="0" step="100" value={editForm.precio_acordado_usd}
+                  <input type="number" min="0" step="1" value={editForm.precio_acordado_usd}
                     onChange={e => setEF("precio_acordado_usd", e.target.value)} placeholder="0" className="crm-input" />
                 </Field>
                 <Field label="Valor escritura">
-                  <input type="number" min="0" step="100" value={editForm.valor_escritura_usd}
+                  <input type="number" min="0" step="1" value={editForm.valor_escritura_usd}
                     onChange={e => setEF("valor_escritura_usd", e.target.value)} placeholder="0" className="crm-input" />
                 </Field>
               </div>
@@ -1102,11 +1102,11 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               {/* Reserva */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <Field label="Monto reserva">
-                  <input type="number" min="0" step="100" value={editForm.monto_reserva_usd}
+                  <input type="number" min="0" step="1" value={editForm.monto_reserva_usd}
                     onChange={e => setEF("monto_reserva_usd", e.target.value)} placeholder="0" className="crm-input" />
                 </Field>
                 <Field label="Monto refuerzo">
-                  <input type="number" min="0" step="100" value={editForm.monto_refuerzo_usd}
+                  <input type="number" min="0" step="1" value={editForm.monto_refuerzo_usd}
                     onChange={e => setEF("monto_refuerzo_usd", e.target.value)} placeholder="0" className="crm-input" />
                 </Field>
               </div>
