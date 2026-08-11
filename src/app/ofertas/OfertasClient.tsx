@@ -854,7 +854,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
               {/* Montos */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label={`Monto ofertado (${form.moneda}) *`}>
-                  <input type="number" value={form.monto_ofertado_usd} min="0" step="100"
+                  <input type="number" value={form.monto_ofertado_usd} min="0" step="1"
                     onChange={e => setF("monto_ofertado_usd", e.target.value)}
                     placeholder={form.moneda === "ARS" ? "180000000" : "150000"} style={inp} required />
                   {form.moneda === "ARS" && form.tipo_cambio && form.monto_ofertado_usd && (
@@ -864,7 +864,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                   )}
                 </Field>
                 <Field label={`Precio publicación (${form.moneda})`}>
-                  <input type="number" value={form.precio_publicacion_usd} min="0" step="100"
+                  <input type="number" value={form.precio_publicacion_usd} min="0" step="1"
                     onChange={e => setF("precio_publicacion_usd", e.target.value)}
                     placeholder={form.moneda === "ARS" ? "200000000" : "165000"} style={inp} />
                 </Field>
@@ -879,7 +879,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                     label="Tiene reserva"
                   />
                   {form.tiene_reserva && (
-                    <input type="number" value={form.monto_reserva_usd} min="0" step="100"
+                    <input type="number" value={form.monto_reserva_usd} min="0" step="1"
                       onChange={e => setF("monto_reserva_usd", e.target.value)}
                       placeholder="Monto reserva (USD)" style={inp} />
                   )}
