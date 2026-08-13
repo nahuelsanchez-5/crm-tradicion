@@ -590,12 +590,12 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
         const pagado = Number(p.monto_pagado)
         const resta  = debe - pagado
         if (p.estado === "Pagado" || resta <= 0) {
-          return `- ${p.concepto} — ${fmtUSD(debe > 0 ? debe : pagado)} ✔`
+          return `- ${p.concepto} — ${fmtUSD(debe > 0 ? debe : pagado)} *PAGADO*`
         }
         if (pagado > 0) {
           return `- ${p.concepto} — pagaste ${fmtUSD(pagado)} de ${fmtUSD(debe)}. Te quedan ${fmtUSD(resta)}.`
         }
-        return `- ${p.concepto} — pendiente ${fmtUSD(debe)}.`
+        return `- ${p.concepto} — pendiente ${fmtUSD(debe)}. *ADEUDADO*`
       })
       .join("\n")
 
