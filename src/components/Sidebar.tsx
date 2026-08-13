@@ -61,7 +61,6 @@ export default function Sidebar({ agenteCount }: Props) {
   const [collapsed, setCollapsed] = useState(false)
   const [hovering, setHovering] = useState(false)
   const asideRef = useRef<HTMLElement>(null)
-  const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { data: session } = useSession()
 
   useEffect(() => {
@@ -241,15 +240,11 @@ export default function Sidebar({ agenteCount }: Props) {
       <aside
         ref={asideRef}
         onMouseEnter={() => {
-          if (hideTimeoutRef.current) {
-            clearTimeout(hideTimeoutRef.current)
-            hideTimeoutRef.current = null
-          }
           collapsed && setHovering(true)
         }}
         onMouseLeave={() => {
           if (!collapsed) return
-          hideTimeoutRef.current = setTimeout(() => setHovering(false), 18000)
+          setHovering(false)
         }}
         className="hidden md:flex flex-col h-full"
         style={{
