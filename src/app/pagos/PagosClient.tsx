@@ -137,7 +137,7 @@ function mesLabel(monthVal: string): string {
 function ProgressBar({ pct }: { pct: number }) {
   const color = pct >= 80 ? "#059669" : pct >= 50 ? "#D97706" : "var(--crm-accent)"
   return (
-    <div style={{ width: "100%", height: "5px", borderRadius: "3px", background: "rgba(255,255,255,0.06)", overflow: "hidden", marginTop: "6px" }}>
+    <div style={{ width: "100%", height: "5px", borderRadius: "3px", background: "var(--crm-surface-3)", overflow: "hidden", marginTop: "6px" }}>
       <div style={{ width: `${Math.min(pct, 100)}%`, height: "100%", background: color, borderRadius: "3px", transition: "width 0.4s" }} />
     </div>
   )
@@ -180,7 +180,7 @@ function filterBtnStyle(key: string, selected: boolean): React.CSSProperties {
     cursor: "pointer", fontFamily: "inherit",
     transition: "all 0.15s",
   }
-  if (!selected) return { ...base, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.45)" }
+  if (!selected) return { ...base, border: "1px solid var(--crm-divider)", background: "var(--crm-surface-3)", color: "var(--crm-text-muted)" }
   const active: Record<string, React.CSSProperties> = {
     todos:     { border: "1px solid rgba(255,255,255,0.3)",   background: "rgba(255,255,255,0.12)", color: "var(--crm-text)" },
     Pagado:    { border: "1px solid rgba(74,222,128,0.4)",    background: "rgba(74,222,128,0.12)",  color: "#4ade80" },
@@ -205,7 +205,7 @@ function KpiConcepto({
   }
   const { bg, text, bar } = colorMap[color] ?? { bg: "rgba(255,255,255,0.06)", text: "rgba(255,255,255,0.6)", bar: "rgba(255,255,255,0.3)" }
   return (
-    <div onClick={onClick} style={{ background: bg, borderRadius: "16px", border: "1px solid rgba(255,255,255,0.08)", padding: "20px", display: "flex", flexDirection: "column", gap: "10px", minHeight: "110px", cursor: onClick ? "pointer" : "default" }}>
+    <div onClick={onClick} style={{ background: bg, borderRadius: "16px", border: "1px solid var(--crm-divider)", padding: "20px", display: "flex", flexDirection: "column", gap: "10px", minHeight: "110px", cursor: onClick ? "pointer" : "default" }}>
       <p style={{ fontSize: "10.5px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", color: text, margin: 0 }}>{label}</p>
       <div>
         <p style={{ fontSize: "30px", fontWeight: 700, color: text, lineHeight: 1, letterSpacing: "-0.025em", margin: 0 }}>
@@ -215,7 +215,7 @@ function KpiConcepto({
       </div>
       {pct !== undefined && (
         <div>
-          <div style={{ height: "6px", borderRadius: "3px", background: "rgba(255,255,255,0.08)", overflow: "hidden", marginTop: "4px" }}>
+          <div style={{ height: "6px", borderRadius: "3px", background: "var(--crm-surface-3)", overflow: "hidden", marginTop: "4px" }}>
             <div style={{ height: "100%", borderRadius: "3px", background: bar, width: `${Math.min(100, pct)}%` }} />
           </div>
           <p style={{ fontSize: "11px", fontWeight: 700, marginTop: "4px", margin: 0, color: text }}>{pct}% cobranza</p>
@@ -767,7 +767,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
             onClick={() => openGasto()}
             style={{
               background: "var(--crm-surface-2)", color: "var(--crm-text)",
-              border: "1px solid rgba(255,255,255,0.08)",
+              border: "1px solid var(--crm-divider)",
               padding: "8px 16px", borderRadius: "9px",
               fontSize: "13px", fontWeight: 700, cursor: "pointer",
               fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
@@ -778,11 +778,11 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
           <button
             onClick={() => openNuevo()}
             style={{
-              background: "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
+              background: "linear-gradient(135deg,var(--crm-accent) 0%,var(--crm-accent-hover) 100%)",
               color: "white", border: "none",
               padding: "8px 18px", borderRadius: "9px",
               fontSize: "13px", fontWeight: 700, cursor: "pointer",
-              boxShadow: "0 2px 10px rgba(227,24,55,0.35)",
+              boxShadow: "0 2px 10px var(--crm-accent-glow)",
               fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
             }}
           >
@@ -793,6 +793,22 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
 
       {/* ── Scrollable content ────────────────────── */}
       <div className="flex-1 overflow-auto p-5 md:p-6">
+
+        {/* ── Banda de encabezado ─────────────────── */}
+        <header style={{ marginBottom: "20px" }}>
+          <div style={{
+            fontSize: "11px", fontWeight: 700, letterSpacing: "1.2px",
+            textTransform: "uppercase" as const, color: "var(--crm-text-muted)", marginBottom: "6px",
+          }}>
+            Estado de cobranza
+          </div>
+          <h1 style={{
+            fontSize: "27px", fontWeight: 800, letterSpacing: "-0.02em",
+            color: "var(--crm-text)", margin: 0,
+          }}>
+            {selectedMonth === "todos" ? "Todos los meses" : mesLabel(selectedMonth)}
+          </h1>
+        </header>
 
         {/* ── KPI boxes (4 conceptos) ───────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-5">
@@ -858,7 +874,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
               <ProgressBar pct={kpiStats.pctGeneral} />
             </div>
           </div>
-          <span style={{ fontSize: "11px", color: "#94A3B8" }}>
+          <span style={{ fontSize: "11px", color: "var(--crm-text-muted)" }}>
             Promedio FEE + CRM + Mainstreet
           </span>
         </div>
@@ -869,7 +885,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
           padding: "12px 18px", marginBottom: "16px", overflow: "visible",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "12px", fontWeight: 600, color: "#94A3B8", marginRight: "4px" }}>
+            <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--crm-text-muted)", marginRight: "4px" }}>
               ESTADO
             </span>
             {(["todos", "Pagado", "Parcial", "Pendiente"] as const).map(e => (
@@ -883,14 +899,14 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
             ))}
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{ fontSize: "12px", fontWeight: 600, color: "#94A3B8" }}>MES</span>
+            <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--crm-text-muted)" }}>MES</span>
             <select
               value={selectedMonth}
               onChange={e => setSelectedMonth(e.target.value)}
               style={{
                 padding: "6px 10px", borderRadius: "8px",
-                border: "1px solid rgba(255,255,255,0.08)", fontSize: "12.5px",
-                fontWeight: 500, color: "var(--crm-text)", background: "rgba(255,255,255,0.06)",
+                border: "1px solid var(--crm-divider)", fontSize: "12.5px",
+                fontWeight: 500, color: "var(--crm-text)", background: "var(--crm-surface-3)",
                 cursor: "pointer", fontFamily: "inherit", outline: "none",
               }}
             >
@@ -898,7 +914,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                 <option key={m.value} value={m.value}>{m.label}</option>
               ))}
             </select>
-            <span style={{ fontSize: "12px", color: "#94A3B8", whiteSpace: "nowrap" }}>
+            <span style={{ fontSize: "12px", color: "var(--crm-text-muted)", whiteSpace: "nowrap" }}>
               {agentesPagos.length} agente{agentesPagos.length !== 1 ? "s" : ""}
             </span>
           </div>
@@ -908,23 +924,23 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
         <div className="crm-card">
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
+            padding: "14px 20px", borderBottom: "1px solid var(--crm-divider)",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
+              <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--crm-accent)" }} />
               <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--crm-text)" }}>
                 Estado de cobros por agente
               </span>
             </div>
             {agentesPagos.length === 0 && (
-              <span style={{ fontSize: "12px", color: "#94A3B8" }}>Sin resultados</span>
+              <span style={{ fontSize: "12px", color: "var(--crm-text-muted)" }}>Sin resultados</span>
             )}
           </div>
 
           {/* Mobile card list */}
           <div className="md:hidden divide-y divide-white/[0.06]">
             {agentesPagos.length === 0 ? (
-              <div style={{ padding: "32px 20px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
+              <div style={{ padding: "32px 20px", textAlign: "center", color: "var(--crm-text-muted)", fontSize: "13px" }}>
                 No hay registros para el filtro seleccionado.
               </div>
             ) : (
@@ -939,13 +955,13 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                         display: "flex", alignItems: "center", gap: "10px",
                         padding: "8px 16px",
                         background: "rgba(255,255,255,0.02)",
-                        borderTop: "1px solid rgba(255,255,255,0.08)",
-                        borderBottom: "1px solid rgba(255,255,255,0.05)",
+                        borderTop: "1px solid var(--crm-divider)",
+                        borderBottom: "1px solid var(--crm-divider)",
                       }}>
-                        <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", color: "rgba(255,255,255,0.3)" }}>
+                        <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", color: "var(--crm-text-muted)" }}>
                           Cuentas inactivas
                         </span>
-                        <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.07)" }} />
+                        <div style={{ flex: 1, height: "1px", background: "var(--crm-divider)" }} />
                       </div>
                     )}
                     <div style={{ opacity: ag.activo ? 1 : 0.5 }}>
@@ -954,7 +970,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                       className="flex items-center gap-3 px-4 py-3.5 cursor-pointer hover:bg-white/[0.03]"
                     >
                       <span style={{
-                        fontSize: "11px", color: "rgba(255,255,255,0.45)",
+                        fontSize: "11px", color: "var(--crm-text-muted)",
                         transform: isExpanded ? "rotate(90deg)" : "none",
                         display: "inline-block", transition: "transform 0.15s",
                       }}>▶</span>
@@ -978,7 +994,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                             }}>A FAVOR</span>
                           )}
                         </div>
-                        <div style={{ fontSize: "11px", color: "#94A3B8", marginTop: "2px" }}>{fmtFecha(ag.ultimoMov)}</div>
+                        <div style={{ fontSize: "11px", color: "var(--crm-text-muted)", marginTop: "2px" }}>{fmtFecha(ag.ultimoMov)}</div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <span style={{ fontSize: "13px", fontWeight: 700, color: Math.round(ag.saldo * 100) / 100 > 0 ? "var(--crm-accent)" : "#4ade80" }}>
@@ -988,15 +1004,15 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                       </div>
                     </div>
                     {isExpanded && (
-                      <div style={{ background: "rgba(255,255,255,0.04)", borderTop: "1px solid rgba(255,255,255,0.06)", padding: "12px 16px" }}>
+                      <div style={{ background: "var(--crm-surface-3)", borderTop: "1px solid var(--crm-divider)", padding: "12px 16px" }}>
                         <div className="flex gap-3 mb-3 flex-wrap" style={{ fontSize: "12px" }}>
-                          <span><span style={{ color: "rgba(255,255,255,0.45)" }}>Pagado: </span><strong style={{ color: "#059669" }}>{fmtUSD(ag.totalPagado)}</strong></span>
-                          <span><span style={{ color: "rgba(255,255,255,0.45)" }}>Pendiente: </span><strong style={{ color: "var(--crm-accent)" }}>{fmtUSD(Math.max(0, ag.saldo))}</strong></span>
+                          <span><span style={{ color: "var(--crm-text-muted)" }}>Pagado: </span><strong style={{ color: "#059669" }}>{fmtUSD(ag.totalPagado)}</strong></span>
+                          <span><span style={{ color: "var(--crm-text-muted)" }}>Pendiente: </span><strong style={{ color: "var(--crm-accent)" }}>{fmtUSD(Math.max(0, ag.saldo))}</strong></span>
                         </div>
                         {ag.pagos.map((p, pi) => (
                           <div key={p.id} style={{
                             background: p.concepto === "Saldo a favor" ? "rgba(74,222,128,0.06)" : "rgba(255,255,255,0.03)",
-                            borderRadius: "8px", border: "1px solid rgba(255,255,255,0.08)",
+                            borderRadius: "8px", border: "1px solid var(--crm-divider)",
                             padding: "10px 12px", marginBottom: pi < ag.pagos.length - 1 ? "8px" : 0,
                           }}>
                             <div className="flex items-start justify-between gap-2">
@@ -1006,7 +1022,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                                 ) : (
                                   <div style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--crm-text)" }}>{p.concepto}</div>
                                 )}
-                                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginTop: "2px" }}>{fmtFecha(p.fecha)}</div>
+                                <div style={{ fontSize: "11px", color: "var(--crm-text-muted)", marginTop: "2px" }}>{fmtFecha(p.fecha)}</div>
                               </div>
                               <div className="flex flex-col items-end gap-1">
                                 <StatusBadge estado={p.estado} />
@@ -1023,7 +1039,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                                   className="flex-1 min-h-[38px]"
                                   style={{
                                     padding: "6px 12px", borderRadius: "7px",
-                                    border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.06)",
+                                    border: "1px solid var(--crm-divider)", background: "var(--crm-surface-3)",
                                     fontSize: "12px", fontWeight: 600, color: "var(--crm-text)",
                                     cursor: "pointer", fontFamily: "inherit",
                                   }}
@@ -1065,7 +1081,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                               onClick={() => openNuevo(ag.agente_id)}
                               style={{
                                 padding: "8px 16px", borderRadius: "8px",
-                                border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.06)",
+                                border: "1px solid var(--crm-divider)", background: "var(--crm-surface-3)",
                                 fontSize: "12px", fontWeight: 600, color: "var(--crm-text)",
                                 cursor: "pointer", fontFamily: "inherit",
                               }}
@@ -1087,13 +1103,13 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
           <div className="hidden md:block" style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                <tr style={{ background: "var(--crm-surface-3)", borderBottom: "1px solid var(--crm-divider)" }}>
                   {["Agente", "Último movimiento", "Saldo del mes", "Estado", "WhatsApp", ""].map(h => (
                     <th key={h} style={{
                       padding: "10px 16px", textAlign: "left",
                       fontSize: "10.5px", fontWeight: 700,
                       textTransform: "uppercase" as const,
-                      letterSpacing: "0.8px", color: "#94A3B8",
+                      letterSpacing: "0.8px", color: "var(--crm-text-muted)",
                       whiteSpace: "nowrap",
                     }}>
                       {h}
@@ -1104,7 +1120,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
               <tbody>
                 {agentesPagos.length === 0 ? (
                   <tr>
-                    <td colSpan={6} style={{ padding: "40px", textAlign: "center", color: "#94A3B8", fontSize: "13px" }}>
+                    <td colSpan={6} style={{ padding: "40px", textAlign: "center", color: "var(--crm-text-muted)", fontSize: "13px" }}>
                       No hay registros para el filtro seleccionado.
                     </td>
                   </tr>
@@ -1123,13 +1139,13 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                                 display: "flex", alignItems: "center", gap: "10px",
                                 padding: "8px 16px",
                                 background: "rgba(255,255,255,0.02)",
-                                borderTop: "1px solid rgba(255,255,255,0.08)",
-                                borderBottom: "1px solid rgba(255,255,255,0.05)",
+                                borderTop: "1px solid var(--crm-divider)",
+                                borderBottom: "1px solid var(--crm-divider)",
                               }}>
-                                <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", color: "rgba(255,255,255,0.3)" }}>
+                                <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.8px", color: "var(--crm-text-muted)" }}>
                                   Cuentas inactivas
                                 </span>
-                                <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.07)" }} />
+                                <div style={{ flex: 1, height: "1px", background: "var(--crm-divider)" }} />
                               </div>
                             </td>
                           </tr>
@@ -1138,9 +1154,9 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                         <tr
                           onClick={() => setExpandedAgent(isExpanded ? null : ag.agente_id)}
                           style={{
-                            borderBottom: (isLast && !isExpanded) ? "none" : "1px solid rgba(255,255,255,0.06)",
+                            borderBottom: (isLast && !isExpanded) ? "none" : "1px solid var(--crm-divider)",
                             cursor: "pointer",
-                            background: isExpanded ? "rgba(255,255,255,0.05)" : "var(--crm-surface-2)",
+                            background: isExpanded ? "var(--crm-surface-3)" : "var(--crm-surface-2)",
                             transition: "background 0.1s",
                             opacity: ag.activo ? 1 : 0.5,
                           }}
@@ -1148,7 +1164,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                           <td style={{ padding: "12px 16px", fontWeight: 600, fontSize: "13px", color: "var(--crm-text)", whiteSpace: "nowrap" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                               <span style={{
-                                fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: 400,
+                                fontSize: "11px", color: "var(--crm-text-muted)", fontWeight: 400,
                                 transform: isExpanded ? "rotate(90deg)" : "none",
                                 display: "inline-block", transition: "transform 0.15s",
                               }}>▶</span>
@@ -1175,7 +1191,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                               )}
                             </div>
                           </td>
-                          <td style={{ padding: "12px 16px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
+                          <td style={{ padding: "12px 16px", fontSize: "12px", color: "var(--crm-text-muted)", whiteSpace: "nowrap" }}>
                             {fmtFecha(ag.ultimoMov)}
                           </td>
                           <td style={{
@@ -1202,7 +1218,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                                 <MessageCircle size={15} />
                               </button>
                             ) : (
-                              <span style={{ color: "#CBD5E1", fontSize: "12px" }}>—</span>
+                              <span style={{ color: "var(--crm-text-muted)", fontSize: "12px" }}>—</span>
                             )}
                           </td>
                           <td style={{ padding: "12px 16px" }}>
@@ -1211,7 +1227,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                                 onClick={e => { e.stopPropagation(); openNuevo(ag.agente_id) }}
                                 style={{
                                   padding: "5px 14px", borderRadius: "7px",
-                                  border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.06)",
+                                  border: "1px solid var(--crm-divider)", background: "var(--crm-surface-3)",
                                   fontSize: "12px", fontWeight: 600, color: "var(--crm-text)",
                                   cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
                                 }}
@@ -1224,10 +1240,10 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
 
                         {/* ── Expanded detail ── */}
                         {isExpanded && (
-                          <tr style={{ borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)" }}>
+                          <tr style={{ borderBottom: isLast ? "none" : "1px solid var(--crm-divider)" }}>
                             <td colSpan={6} style={{ padding: 0 }}>
                               <div style={{
-                                background: "rgba(255,255,255,0.04)", borderTop: "1px solid rgba(255,255,255,0.06)",
+                                background: "var(--crm-surface-3)", borderTop: "1px solid var(--crm-divider)",
                                 padding: "16px 24px",
                               }}>
                                 {/* Summary strip */}
@@ -1236,20 +1252,20 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                                   fontSize: "12.5px",
                                 }}>
                                   <span>
-                                    <span style={{ color: "rgba(255,255,255,0.45)" }}>Total pagado: </span>
+                                    <span style={{ color: "var(--crm-text-muted)" }}>Total pagado: </span>
                                     <strong style={{ color: "#059669" }}>{fmtUSD(ag.totalPagado)}</strong>
                                   </span>
                                   <span>
-                                    <span style={{ color: "rgba(255,255,255,0.45)" }}>Total pendiente: </span>
+                                    <span style={{ color: "var(--crm-text-muted)" }}>Total pendiente: </span>
                                     <strong style={{ color: "var(--crm-accent)" }}>{fmtUSD(Math.max(0, ag.saldo))}</strong>
                                   </span>
                                   <span>
-                                    <span style={{ color: "rgba(255,255,255,0.45)" }}>Estado: </span>
+                                    <span style={{ color: "var(--crm-text-muted)" }}>Estado: </span>
                                     <StatusBadge estado={ag.estadoGral} />
                                   </span>
                                   {creditoDisponiblePorAgente.get(ag.agente_id) && creditoDisponiblePorAgente.get(ag.agente_id)! > 0 && (
                                     <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                      <span style={{ color: "rgba(255,255,255,0.45)" }}>Saldo a favor: </span>
+                                      <span style={{ color: "var(--crm-text-muted)" }}>Saldo a favor: </span>
                                       <strong style={{ color: "#4ade80" }}>{fmtUSD(creditoDisponiblePorAgente.get(ag.agente_id)!)}</strong>
                                       <button
                                         onClick={e => {
@@ -1271,15 +1287,15 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                                 </div>
 
                                 {/* Movement detail */}
-                                <table style={{ width: "100%", borderCollapse: "collapse", background: "rgba(255,255,255,0.02)", borderRadius: "10px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)" }}>
+                                <table style={{ width: "100%", borderCollapse: "collapse", background: "rgba(255,255,255,0.02)", borderRadius: "10px", overflow: "hidden", border: "1px solid var(--crm-divider)" }}>
                                   <thead>
-                                    <tr style={{ background: "rgba(255,255,255,0.06)" }}>
+                                    <tr style={{ background: "var(--crm-surface-3)" }}>
                                       {["Fecha", "Concepto", "Cargo", "Pagado", "Estado", ""].map(h => (
                                         <th key={h} style={{
                                           padding: "8px 14px", textAlign: "left",
                                           fontSize: "10px", fontWeight: 700,
                                           textTransform: "uppercase" as const,
-                                          letterSpacing: "0.7px", color: "#94A3B8",
+                                          letterSpacing: "0.7px", color: "var(--crm-text-muted)",
                                         }}>
                                           {h}
                                         </th>
@@ -1293,8 +1309,8 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                                         ? "rgba(74,222,128,0.05)"
                                         : p.estado === "Pagado" ? "rgba(74,222,128,0.04)" : p.estado === "Parcial" ? "rgba(251,191,36,0.04)" : "rgba(248,113,113,0.04)"
                                       return (
-                                        <tr key={p.id} style={{ borderTop: pi > 0 ? "1px solid rgba(255,255,255,0.06)" : "none", background: rowBg }}>
-                                          <td style={{ padding: "10px 14px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
+                                        <tr key={p.id} style={{ borderTop: pi > 0 ? "1px solid var(--crm-divider)" : "none", background: rowBg }}>
+                                          <td style={{ padding: "10px 14px", fontSize: "12px", color: "var(--crm-text-muted)", whiteSpace: "nowrap" }}>
                                             {fmtFecha(p.fecha)}
                                           </td>
                                           <td style={{ padding: "10px 14px", fontSize: "12px", color: "var(--crm-text)" }}>
@@ -1322,7 +1338,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                                                   onClick={() => openEditar(p)}
                                                   style={{
                                                     padding: "3px 10px", borderRadius: "6px",
-                                                    border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.06)",
+                                                    border: "1px solid var(--crm-divider)", background: "var(--crm-surface-3)",
                                                     fontSize: "11px", fontWeight: 600, color: "var(--crm-text)",
                                                     cursor: "pointer", fontFamily: "inherit",
                                                   }}
