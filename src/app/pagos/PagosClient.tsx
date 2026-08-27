@@ -1974,7 +1974,8 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
         }
 
         return (
-          <Backdrop onClose={() => setAplicarCreditoAgente(null)} className="crm-modal" style={{ maxWidth: "520px" }}>
+          <Backdrop onClose={() => setAplicarCreditoAgente(null)} className="">
+            <div className="crm-modal" style={{ maxWidth: "520px" }}>
             <ModalHeader
               title="Aplicar saldo a favor"
               subtitle={`${agenteInfo?.nombre ?? ""} — Disponible: ${fmtUSD(saldoFavor)}`}
@@ -2071,6 +2072,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                   {aplicarLoading ? "Aplicando..." : "Confirmar"}
                 </button>
               </div>
+            </div>
             </div>
           </Backdrop>
         )
