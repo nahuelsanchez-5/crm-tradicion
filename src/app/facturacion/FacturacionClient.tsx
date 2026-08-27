@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
+import { useState, useMemo, useTransition, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import KpiCard from "@/components/KpiCard"
+import { Backdrop, ModalHeader } from "@/components/Modal"
 import { guardarFacturacion } from "./actions"
 import type { FacturacionFormData } from "./actions"
-import { DollarSign, TrendingUp, Award, X, Loader2 } from "lucide-react"
+import { DollarSign, TrendingUp, Award, Loader2 } from "lucide-react"
 import Topbar from "@/components/Topbar"
 import { fmtUSD } from "@/lib/format"
 
@@ -72,7 +73,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 const inp: React.CSSProperties = {
   width: "100%", padding: "9px 12px",
-  borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
+  borderRadius: "8px", border: "1px solid var(--crm-card-border)",
   fontSize: "13px", fontFamily: "inherit",
   color: "var(--crm-text)", outline: "none", background: "var(--crm-input-bg)",
   boxSizing: "border-box",
@@ -123,7 +124,7 @@ function EstadoBadge({ p, isFuture, real }: { p: number; isFuture: boolean; real
     return (
       <span style={{
         padding: "2px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700,
-        background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)",
+        background: "var(--crm-surface-3)", color: "var(--crm-text-muted)",
       }}>
         Pendiente
       </span>
@@ -142,7 +143,7 @@ function EstadoBadge({ p, isFuture, real }: { p: number; isFuture: boolean; real
   return (
     <span style={{
       padding: "2px 10px", borderRadius: "20px", fontSize: "11px", fontWeight: 700,
-      background: "rgba(227,24,55,0.12)", color: "var(--crm-accent)",
+      background: "var(--crm-accent-soft)", color: "var(--crm-accent)",
     }}>
       Bajo objetivo
     </span>
@@ -201,12 +202,6 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
 
   const closeModal = useCallback(() => { setModalMes(null); setError("") }, [])
 
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") closeModal() }
-    if (modalMes) document.addEventListener("keydown", h)
-    return () => document.removeEventListener("keydown", h)
-  }, [modalMes, closeModal])
-
   function openModal(m: MesData) {
     const sugerido = comisionesPorMes[`${m.mes}-${ANIO}`] ?? 0
     setForm({
@@ -248,27 +243,27 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
 
       <Topbar moduleName="Facturación" />
 
-      {/* ── Page Header ──────────────────────────── */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "flex-end",
-        minHeight: "62px", padding: "0 24px",
-        background: "var(--crm-card)", borderBottom: "1px solid rgba(255,255,255,0.07)", flexShrink: 0,
-        position: "sticky", top: "62px", zIndex: 15,
-      }}>
-        <div style={{
-          padding: "6px 14px", borderRadius: "8px",
-          background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
-          fontSize: "13px", fontWeight: 700, color: "var(--crm-text-muted)",
-        }}>
-          Año {ANIO}
-        </div>
-      </div>
-
       {/* ── Scrollable content ────────────────────── */}
-      <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
+      <div style={{ flex: 1, overflow: "auto", padding: "24px" }}>
+
+        {/* ── Banda de encabezado ─────────────────── */}
+        <header style={{ marginBottom: "22px" }}>
+          <div style={{
+            fontSize: "11px", fontWeight: 700, letterSpacing: "1.2px",
+            textTransform: "uppercase" as const, color: "var(--crm-text-muted)", marginBottom: "6px",
+          }}>
+            Objetivo anual · {fmtUSD(OBJETIVO_ANUAL_USD)}
+          </div>
+          <h1 style={{
+            fontSize: "27px", fontWeight: 800, letterSpacing: "-0.02em",
+            color: "var(--crm-text)", margin: 0,
+          }}>
+            Año {ANIO}
+          </h1>
+        </header>
 
         {/* ── KPI Cards ─────────────────────────── */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "14px", marginBottom: "20px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "16px", marginBottom: "16px" }}>
           <KpiCard
             title="Facturación anual acumulada"
             value={fmtUSD(stats.totalReal)}
@@ -284,6 +279,7 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
             iconBg={stats.pctAnual >= 100 ? "bg-emerald-500/[0.12]" : stats.pctAnual >= 80 ? "bg-violet-500/[0.12]" : "bg-amber-500/[0.12]"}
             iconColor={stats.pctAnual >= 100 ? "text-emerald-400" : stats.pctAnual >= 80 ? "text-violet-400" : "text-amber-400"}
             icon={<TrendingUp size={18} />}
+            primary
           />
           <KpiCard
             title="Mejor mes"
@@ -295,13 +291,42 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
           />
         </div>
 
+        {/* ── Barra de progreso anual ─────────────── */}
+        <div style={{
+          background: "var(--crm-surface-2)", borderRadius: "14px",
+          border: "1px solid var(--crm-divider)", padding: "18px 20px", marginBottom: "20px",
+        }}>
+          <div style={{
+            display: "flex", alignItems: "flex-end", justifyContent: "space-between",
+            gap: "16px", marginBottom: "12px",
+          }}>
+            <div>
+              <div style={{
+                fontSize: "13px", fontWeight: 700, color: "var(--crm-text)", marginBottom: "3px",
+              }}>
+                Progreso hacia el objetivo anual
+              </div>
+              <div style={{ fontSize: "12px", color: "var(--crm-text-muted)" }}>
+                {fmtUSD(stats.totalReal)} de {fmtUSD(stats.totalObj)} acumulado a la fecha
+              </div>
+            </div>
+            <span style={{
+              fontSize: "22px", fontWeight: 800, lineHeight: 1, whiteSpace: "nowrap",
+              color: stats.pctAnual >= 100 ? "#4ade80" : stats.pctAnual >= 80 ? "#0D9488" : "var(--crm-accent)",
+            }}>
+              {stats.pctAnual}%
+            </span>
+          </div>
+          <ProgressBar value={stats.pctAnual} isFuture={false} />
+        </div>
+
         {/* ── Tabla anual ──────────────────────────── */}
-        <div style={{ background: "var(--crm-surface-2)", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden" }}>
+        <div style={{ background: "var(--crm-surface-2)", borderRadius: "14px", border: "1px solid var(--crm-divider)", overflow: "hidden" }}>
           <div style={{
             display: "flex", alignItems: "center", gap: "8px",
-            padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)",
+            padding: "14px 20px", borderBottom: "1px solid var(--crm-divider)",
           }}>
-            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
+            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--crm-accent)" }} />
             <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--crm-text)" }}>
               Detalle mensual {ANIO}
             </span>
@@ -310,13 +335,13 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                <tr style={{ background: "var(--crm-surface-3)", borderBottom: "1px solid var(--crm-divider)" }}>
                   {["Mes","Objetivo","Real","% Cumplimiento","Progreso","Estado",""].map(h => (
                     <th key={h} style={{
                       padding: "10px 16px", textAlign: "left",
                       fontSize: "10.5px", fontWeight: 700,
                       textTransform: "uppercase" as const,
-                      letterSpacing: "0.8px", color: "#94A3B8",
+                      letterSpacing: "0.8px", color: "var(--crm-text-muted)",
                       whiteSpace: "nowrap",
                     }}>
                       {h}
@@ -334,8 +359,8 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
                     <tr
                       key={m.mes}
                       style={{
-                        borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)",
-                        background: isCurrent ? "rgba(227,24,55,0.03)" : undefined,
+                        borderBottom: isLast ? "none" : "1px solid var(--crm-divider)",
+                        background: isCurrent ? "var(--crm-accent-soft)" : undefined,
                       }}
                     >
                       {/* Mes */}
@@ -343,14 +368,14 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
                         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                           <span style={{
                             fontSize: "13px", fontWeight: isCurrent ? 800 : 600,
-                            color: isCurrent ? "#E31837" : "var(--crm-text)",
+                            color: isCurrent ? "var(--crm-accent)" : "var(--crm-text)",
                           }}>
                             {m.nombre}
                           </span>
                           {isCurrent && (
                             <span style={{
                               fontSize: "10px", fontWeight: 700,
-                              background: "rgba(227,24,55,0.12)", color: "var(--crm-accent)",
+                              background: "var(--crm-accent-soft)", color: "var(--crm-accent)",
                               padding: "1px 7px", borderRadius: "10px",
                             }}>
                               HOY
@@ -361,18 +386,18 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
 
                       {/* Objetivo */}
                       <td style={{ padding: "14px 16px", fontSize: "13px", color: "var(--crm-text-muted)", whiteSpace: "nowrap" }}>
-                        {m.objetivo_usd > 0 ? fmtUSD(m.objetivo_usd) : <span style={{ color: "rgba(255,255,255,0.15)" }}>—</span>}
+                        {m.objetivo_usd > 0 ? fmtUSD(m.objetivo_usd) : <span style={{ color: "var(--crm-text-muted)" }}>—</span>}
                       </td>
 
                       {/* Real */}
                       <td style={{ padding: "14px 16px", fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap",
-                        color: m.real_usd > 0 ? "var(--crm-text)" : "rgba(255,255,255,0.15)" }}>
+                        color: m.real_usd > 0 ? "var(--crm-text)" : "var(--crm-text-muted)" }}>
                         {m.real_usd > 0 ? fmtUSD(m.real_usd) : "—"}
                       </td>
 
                       {/* % */}
                       <td style={{ padding: "14px 16px", fontWeight: 700, fontSize: "14px", whiteSpace: "nowrap",
-                        color: m.isFuture || m.real_usd === 0 ? "rgba(255,255,255,0.15)" : p >= 100 ? "#4ade80" : p >= 80 ? "#0D9488" : "var(--crm-accent)" }}>
+                        color: m.isFuture || m.real_usd === 0 ? "var(--crm-text-muted)" : p >= 100 ? "#4ade80" : p >= 80 ? "#0D9488" : "var(--crm-accent)" }}>
                         {m.isFuture || (m.objetivo_usd === 0 && m.real_usd === 0) ? "—" : `${p}%`}
                       </td>
 
@@ -394,7 +419,7 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
                           onClick={() => openModal(m)}
                           style={{
                             padding: "5px 14px", borderRadius: "7px",
-                            border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
+                            border: "1px solid var(--crm-card-border)", background: "var(--crm-surface-3)",
                             fontSize: "12px", fontWeight: 600, color: "var(--crm-text)",
                             cursor: "pointer", fontFamily: "inherit",
                             whiteSpace: "nowrap",
@@ -411,7 +436,7 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
 
               {/* Footer total row */}
               <tfoot>
-                <tr style={{ background: "rgba(255,255,255,0.04)", borderTop: "2px solid rgba(255,255,255,0.1)" }}>
+                <tr style={{ background: "var(--crm-surface-3)", borderTop: "2px solid var(--crm-card-border)" }}>
                   <td style={{ padding: "12px 16px", fontWeight: 800, fontSize: "13px", color: "var(--crm-text)" }}>
                     TOTAL {ANIO}
                   </td>
@@ -437,53 +462,20 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
           MODAL — CARGAR / EDITAR FACTURACIÓN
       ════════════════════════════════════════════ */}
       {modalMes && (
-        <div
-          onClick={closeModal}
-          style={{
-            position: "fixed", inset: 0,
-            background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            zIndex: 1000, padding: "20px",
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: "var(--crm-card)", borderRadius: "16px",
-              width: "100%", maxWidth: "420px",
-              boxShadow: "0 20px 60px rgba(0,0,0,0.5)", overflow: "hidden",
-            }}
-          >
-            {/* Header */}
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "18px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)",
-            }}>
-              <div>
-                <h2 style={{ fontSize: "16px", fontWeight: 800, color: "var(--crm-text)", margin: 0 }}>
-                  {modalMes.id ? "Editar facturación" : "Cargar facturación"}
-                </h2>
-                <p style={{ fontSize: "12px", color: "var(--crm-text-muted)", margin: 0, marginTop: "2px" }}>
-                  {modalMes.nombre} {ANIO}
-                </p>
-              </div>
-              <button onClick={closeModal} style={{
-                background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "8px",
-                width: "32px", height: "32px", display: "flex",
-                alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "var(--crm-text-muted)",
-              }}>
-                <X size={16} />
-              </button>
-            </div>
+        <Backdrop onClose={closeModal} style={{ maxWidth: "420px" }}>
+          <ModalHeader
+            title={modalMes.id ? "Editar facturación" : "Cargar facturación"}
+            subtitle={`${modalMes.nombre} ${ANIO}`}
+            onClose={closeModal}
+          />
 
-            <form onSubmit={handleSubmit} style={{ padding: "20px" }}>
+          <form onSubmit={handleSubmit} style={{ padding: "20px" }}>
               {/* Objetivo auto-calculado (read-only) */}
               {modalMes && (
                 <Field label="Objetivo mensual (calculado automáticamente)">
                   <div style={{
-                    ...inp, background: "rgba(255,255,255,0.04)", color: "var(--crm-text-muted)",
-                    border: "1px solid rgba(255,255,255,0.06)", cursor: "default",
+                    ...inp, background: "var(--crm-surface-3)", color: "var(--crm-text-muted)",
+                    border: "1px solid var(--crm-divider)", cursor: "default",
                     display: "flex", alignItems: "center", justifyContent: "space-between",
                   }}>
                     <span style={{ fontWeight: 700, color: "var(--crm-text)" }}>
@@ -513,7 +505,7 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
                 {(() => {
                   const sugerido = comisionesPorMes[`${modalMes.mes}-${ANIO}`] ?? 0
                   return modalMes.real_usd === 0 && sugerido > 0 ? (
-                    <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", marginTop: "4px" }}>
+                    <p style={{ fontSize: "11px", color: "var(--crm-text-muted)", marginTop: "4px" }}>
                       Sugerido automáticamente desde Operaciones — verificá que estén todas las operaciones del mes cargadas antes de guardar.
                     </p>
                   ) : null
@@ -525,7 +517,7 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
                 <div style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
                   padding: "10px 12px", borderRadius: "8px",
-                  background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+                  background: "var(--crm-surface-3)", border: "1px solid var(--crm-divider)",
                   marginBottom: "14px",
                 }}>
                   <span style={{ fontSize: "12px", color: "var(--crm-text-muted)", fontWeight: 500 }}>
@@ -545,7 +537,7 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
 
               {error && (
                 <div style={{
-                  background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
+                  background: "var(--crm-accent-soft)", border: "1px solid var(--crm-accent-glow)",
                   borderRadius: "8px", padding: "10px 12px",
                   fontSize: "12.5px", color: "var(--crm-accent)", marginBottom: "14px",
                 }}>
@@ -557,8 +549,8 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
                 <button type="button" onClick={closeModal} disabled={isPending}
                   style={{
                     padding: "9px 20px", borderRadius: "8px",
-                    border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
-                    fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
+                    border: "1px solid var(--crm-card-border)", background: "var(--crm-surface-3)",
+                    fontSize: "13px", fontWeight: 600, color: "var(--crm-text-muted)",
                     cursor: "pointer", fontFamily: "inherit",
                   }}>
                   Cancelar
@@ -566,20 +558,19 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
                 <button type="submit" disabled={isPending}
                   style={{
                     padding: "9px 24px", borderRadius: "8px", border: "none",
-                    background: isPending ? "rgba(255,255,255,0.15)" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
+                    background: isPending ? "rgba(255,255,255,0.15)" : "linear-gradient(135deg,var(--crm-accent) 0%,var(--crm-accent-hover) 100%)",
                     color: "white", fontSize: "13px", fontWeight: 700,
                     cursor: isPending ? "not-allowed" : "pointer",
                     fontFamily: "inherit",
                     display: "flex", alignItems: "center", gap: "6px",
-                    boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
+                    boxShadow: isPending ? "none" : "0 2px 8px var(--crm-accent-glow)",
                   }}>
                   {isPending && <Loader2 size={14} className="animate-spin" />}
                   {isPending ? "Guardando..." : "Guardar"}
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
+          </form>
+        </Backdrop>
       )}
     </div>
   )
