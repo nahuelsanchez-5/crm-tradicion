@@ -149,7 +149,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label style={{
         display: "block", fontSize: "11px", fontWeight: 700,
         letterSpacing: "0.8px", textTransform: "uppercase" as const,
-        color: "rgba(255,255,255,0.45)", marginBottom: "5px",
+        color: "var(--crm-text-muted)", marginBottom: "5px",
       }}>
         {label}
       </label>
@@ -163,8 +163,8 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
     <Field label={label}>
       <div style={{
         padding: "9px 12px", borderRadius: "8px",
-        border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)",
-        fontSize: "13px", color: "rgba(255,255,255,0.45)",
+        border: "1px solid var(--crm-divider)", background: "var(--crm-surface-3)",
+        fontSize: "13px", color: "var(--crm-text-muted)",
       }}>
         {value}
       </div>
@@ -1402,8 +1402,8 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
               title="Registrar Pago"
               subtitle="Nuevo registro en el historial de pagos"
               onClose={closeModal}
-              icon={<DollarSign size={20} className="text-emerald-600" />}
-              iconBg="bg-emerald-50"
+              icon={<DollarSign size={20} className="text-emerald-400" />}
+              iconBg="bg-emerald-500/15"
             />
             <form onSubmit={handleNuevo} style={{ padding: "20px" }}>
               <Field label="Agente *">
@@ -1444,16 +1444,16 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
               <div style={{
                 display: "flex", alignItems: "center", gap: "8px",
                 padding: "10px 12px", borderRadius: "8px",
-                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+                background: "var(--crm-surface-3)", border: "1px solid var(--crm-divider)",
                 marginBottom: "14px",
               }}>
-                <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>Estado calculado:</span>
+                <span style={{ fontSize: "12px", color: "var(--crm-text-muted)", fontWeight: 500 }}>Estado calculado:</span>
                 <StatusBadge estado={nuevoEstado} />
               </div>
               <ErrorBox />
               <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center pt-1">
                 {saveSuccessNuevo ? (
-                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400 bg-emerald-500/10 px-4 py-2.5 rounded-lg">
                     <CheckCircle2 size={15} /> Pago registrado correctamente
                   </div>
                 ) : (
@@ -1481,8 +1481,8 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
               title="Registrar Gasto"
               subtitle="Nuevo cargo pendiente para el agente"
               onClose={closeModal}
-              icon={<TrendingDown size={20} className="text-rose-600" />}
-              iconBg="bg-rose-50"
+              icon={<TrendingDown size={20} className="text-rose-400" />}
+              iconBg="bg-rose-500/15"
             />
             <form onSubmit={handleGasto} style={{ padding: "20px" }}>
               <Field label="Agente *">
@@ -1513,9 +1513,9 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                           flex: 1, padding: "9px 0", borderRadius: "8px", fontSize: "12px",
                           fontWeight: gastoForm.tipo === t ? 700 : 500,
                           cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
-                          border: gastoForm.tipo === t ? "1.5px solid #E31837" : "1px solid rgba(255,255,255,0.08)",
-                          background: gastoForm.tipo === t ? "#FFF1F2" : "white",
-                          color: gastoForm.tipo === t ? "var(--crm-accent)" : "#64748B",
+                          border: gastoForm.tipo === t ? "1.5px solid var(--crm-accent)" : "1px solid var(--crm-divider)",
+                          background: gastoForm.tipo === t ? "var(--crm-accent-soft)" : "var(--crm-surface-3)",
+                          color: gastoForm.tipo === t ? "var(--crm-accent)" : "var(--crm-text-muted)",
                         }}
                       >
                         {t}
@@ -1542,14 +1542,14 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
               <div style={{
                 display: "flex", alignItems: "center", justifyContent: "space-between",
                 padding: "10px 14px", borderRadius: "10px",
-                background: "rgba(255,255,255,0.04)", border: "1.5px dashed #CBD5E1",
+                background: "var(--crm-surface-3)", border: "1.5px dashed var(--crm-card-border)",
                 marginBottom: "14px",
               }}>
                 <div>
                   <div style={{ fontSize: "12.5px", fontWeight: 700, color: "var(--crm-text)" }}>
                     ¿Aplicar a múltiples agentes?
                   </div>
-                  <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginTop: "2px" }}>
+                  <div style={{ fontSize: "11px", color: "var(--crm-text-muted)", marginTop: "2px" }}>
                     FEE mensual, CRM PRO o PRO+ — monto desde config
                   </div>
                 </div>
@@ -1571,7 +1571,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
               <ErrorBox />
               <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center pt-1">
                 {saveSuccessGasto ? (
-                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 px-4 py-2.5 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-emerald-400 bg-emerald-500/10 px-4 py-2.5 rounded-lg">
                     <CheckCircle2 size={15} /> Gasto registrado correctamente
                   </div>
                 ) : (
@@ -1636,13 +1636,13 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
               {/* Multi-select agentes */}
               <Field label={`Agentes (${selectedAgentesRec.size} seleccionados) *`}>
                 <div style={{
-                  border: "1px solid rgba(255,255,255,0.08)", borderRadius: "8px",
+                  border: "1px solid var(--crm-divider)", borderRadius: "8px",
                   overflow: "auto", maxHeight: "200px",
                   background: "var(--crm-surface-2)",
                 }}>
                   <div style={{
                     display: "flex", alignItems: "center", gap: "8px",
-                    padding: "8px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)",
+                    padding: "8px 12px", borderBottom: "1px solid var(--crm-divider)",
                   }}>
                     <button
                       type="button"
@@ -1651,11 +1651,11 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                     >
                       Todos activos
                     </button>
-                    <span style={{ color: "#CBD5E1" }}>|</span>
+                    <span style={{ color: "var(--crm-text-muted)" }}>|</span>
                     <button
                       type="button"
                       onClick={() => setSelectedAgentesRec(new Set())}
-                      style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", padding: 0 }}
+                      style={{ fontSize: "11px", color: "var(--crm-text-muted)", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", padding: 0 }}
                     >
                       Limpiar
                     </button>
@@ -1666,7 +1666,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                       style={{
                         display: "flex", alignItems: "center", gap: "10px",
                         padding: "8px 12px",
-                        borderBottom: "1px solid rgba(255,255,255,0.06)",
+                        borderBottom: "1px solid var(--crm-divider)",
                         cursor: "pointer",
                         background: selectedAgentesRec.has(a.id) ? "rgba(124,58,237,0.15)" : "transparent",
                         transition: "background 0.1s",
@@ -1737,12 +1737,12 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
               <div style={{
                 display: "flex", alignItems: "center", gap: "8px",
                 padding: "10px 12px", borderRadius: "8px",
-                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+                background: "var(--crm-surface-3)", border: "1px solid var(--crm-divider)",
                 marginBottom: "14px",
               }}>
-                <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", fontWeight: 500 }}>Nuevo estado:</span>
+                <span style={{ fontSize: "12px", color: "var(--crm-text-muted)", fontWeight: 500 }}>Nuevo estado:</span>
                 <StatusBadge estado={editEstado} />
-                <span style={{ marginLeft: "auto", fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>
+                <span style={{ marginLeft: "auto", fontSize: "12px", color: "var(--crm-text-muted)" }}>
                   Saldo: <strong style={{ color: editEstado === "Pagado" ? "#059669" : "var(--crm-accent)" }}>
                     {fmtUSD(Math.max(0, Number(selectedPago.monto_debe) - (parseFloat(editForm.monto_pagado) || 0)))}
                   </strong>
@@ -1771,8 +1771,8 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
               title="Registrar Saldo a Favor"
               subtitle="El monto se acredita como crédito del agente"
               onClose={closeModal}
-              icon={<TrendingUp size={20} className="text-emerald-600" />}
-              iconBg="bg-emerald-50"
+              icon={<TrendingUp size={20} className="text-emerald-400" />}
+              iconBg="bg-emerald-500/15"
             />
             <form onSubmit={handleSaldoFavor} style={{ padding: "20px" }}>
               <Field label="Agente *">
@@ -1895,20 +1895,20 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
             />
             <div style={{ overflow: "auto", padding: "0 20px 20px" }}>
               {detalleConceptoData.length === 0 ? (
-                <p style={{ textAlign: "center", color: "rgba(255,255,255,0.4)", fontSize: "13px", padding: "20px 0" }}>
+                <p style={{ textAlign: "center", color: "var(--crm-text-muted)", fontSize: "13px", padding: "20px 0" }}>
                   No hay agentes en este concepto este mes.
                 </p>
               ) : (
                 detalleConceptoData.map((d, i) => (
                   <div key={i} style={{
                     display: "flex", justifyContent: "space-between", alignItems: "center",
-                    padding: "10px 0", borderBottom: i < detalleConceptoData.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                    padding: "10px 0", borderBottom: i < detalleConceptoData.length - 1 ? "1px solid var(--crm-divider)" : "none",
                   }}>
                     <div>
                       <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--crm-text)", margin: 0 }}>{d.nombre}</p>
-                      <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", margin: 0 }}>{d.concepto}</p>
+                      <p style={{ fontSize: "11px", color: "var(--crm-text-muted)", margin: 0 }}>{d.concepto}</p>
                       {d.monto !== null && (
-                        <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", margin: "2px 0 0" }}>{fmtUSD(d.monto)}</p>
+                        <p style={{ fontSize: "11px", color: "var(--crm-text-muted)", margin: "2px 0 0" }}>{fmtUSD(d.monto)}</p>
                       )}
                     </div>
                     <span style={{
@@ -1985,7 +1985,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
 
               {/* Lista de conceptos pendientes */}
               {pendientes.length === 0 ? (
-                <p style={{ textAlign: "center", color: "rgba(255,255,255,0.4)", fontSize: "13px", padding: "16px 0" }}>
+                <p style={{ textAlign: "center", color: "var(--crm-text-muted)", fontSize: "13px", padding: "16px 0" }}>
                   No hay conceptos pendientes para este agente.
                 </p>
               ) : (
@@ -1997,7 +1997,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                       <div key={p.id} style={{
                         display: "flex", alignItems: "center", gap: "10px",
                         padding: "10px", borderRadius: "8px",
-                        border: seleccionado ? "1px solid rgba(74,222,128,0.3)" : "1px solid rgba(255,255,255,0.08)",
+                        border: seleccionado ? "1px solid rgba(74,222,128,0.3)" : "1px solid var(--crm-divider)",
                         background: seleccionado ? "rgba(74,222,128,0.06)" : "rgba(255,255,255,0.02)",
                       }}>
                         <input
@@ -2007,7 +2007,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                         />
                         <div style={{ flex: 1 }}>
                           <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--crm-text)", margin: 0 }}>{p.concepto}</p>
-                          <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", margin: 0 }}>Falta: {fmtUSD(faltante)}</p>
+                          <p style={{ fontSize: "11px", color: "var(--crm-text-muted)", margin: 0 }}>Falta: {fmtUSD(faltante)}</p>
                         </div>
                         {seleccionado && (
                           <input
@@ -2020,7 +2020,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                             }}
                             style={{
                               width: "90px", padding: "6px 8px", borderRadius: "6px",
-                              border: "1px solid rgba(255,255,255,0.12)", background: "var(--crm-input-bg)",
+                              border: "1px solid var(--crm-card-border)", background: "var(--crm-input-bg)",
                               color: "var(--crm-text)", fontSize: "12px", textAlign: "right",
                             }}
                           />
@@ -2034,15 +2034,15 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
               {/* Totales */}
               <div style={{
                 display: "flex", justifyContent: "space-between", marginTop: "16px",
-                padding: "12px", borderRadius: "8px", background: "rgba(255,255,255,0.03)",
+                padding: "12px", borderRadius: "8px", background: "var(--crm-surface-3)",
                 fontSize: "13px",
               }}>
                 <span>
-                  <span style={{ color: "rgba(255,255,255,0.45)" }}>A aplicar: </span>
+                  <span style={{ color: "var(--crm-text-muted)" }}>A aplicar: </span>
                   <strong style={{ color: "var(--crm-text)" }}>{fmtUSD(totalSeleccionado)}</strong>
                 </span>
                 <span>
-                  <span style={{ color: "rgba(255,255,255,0.45)" }}>Restante: </span>
+                  <span style={{ color: "var(--crm-text-muted)" }}>Restante: </span>
                   <strong style={{ color: restante >= 0 ? "#4ade80" : "#f87171" }}>{fmtUSD(restante)}</strong>
                 </span>
               </div>
@@ -2054,7 +2054,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
               <div style={{ display: "flex", gap: "10px", marginTop: "18px" }}>
                 <button
                   onClick={() => setAplicarCreditoAgente(null)}
-                  style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.12)", background: "transparent", color: "var(--crm-text)", cursor: "pointer", fontFamily: "inherit", fontSize: "13px", fontWeight: 600 }}
+                  style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid var(--crm-card-border)", background: "transparent", color: "var(--crm-text)", cursor: "pointer", fontFamily: "inherit", fontSize: "13px", fontWeight: 600 }}
                 >
                   Cancelar
                 </button>
