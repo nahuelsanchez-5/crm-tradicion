@@ -417,19 +417,19 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
         <div className="crm-card">
           <div style={{
             display: "flex", alignItems: "center", gap: "8px",
-            padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.07)",
+            padding: "14px 20px", borderBottom: "1px solid var(--crm-divider)",
           }}>
-            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
+            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--crm-accent)" }} />
             <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--crm-text)" }}>
               Historial de encuestas
             </span>
-            <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginLeft: "4px" }}>
+            <span style={{ fontSize: "12px", color: "var(--crm-text-muted)", marginLeft: "4px" }}>
               {registros.length} registros — últimos 6 meses
             </span>
           </div>
 
           {groupedByMes.length === 0 ? (
-            <div style={{ padding: "48px", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "13px" }}>
+            <div style={{ padding: "48px", textAlign: "center", color: "var(--crm-text-muted)", fontSize: "13px" }}>
               No hay encuestas registradas. Hacé clic en &quot;+ Registrar encuesta&quot; para empezar.
             </div>
           ) : (
@@ -453,17 +453,17 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                       style={{
                         display: "flex", alignItems: "center",
                         padding: "12px 20px",
-                        borderBottom: isOpen || (!isLast) ? "1px solid rgba(255,255,255,0.06)" : "none",
+                        borderBottom: isOpen || (!isLast) ? "1px solid var(--crm-divider)" : "none",
                         cursor: "pointer",
-                        background: isOpen ? "rgba(255,255,255,0.03)" : "transparent",
+                        background: isOpen ? "var(--crm-surface-3)" : "transparent",
                         transition: "background 0.1s",
                         userSelect: "none",
                       }}
                     >
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1 }}>
                         {isOpen
-                          ? <ChevronDown size={14} color="rgba(255,255,255,0.35)" />
-                          : <ChevronRight size={14} color="rgba(255,255,255,0.35)" />
+                          ? <ChevronDown size={14} color="var(--crm-text-muted)" />
+                          : <ChevronRight size={14} color="var(--crm-text-muted)" />
                         }
                         <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--crm-text)" }}>
                           {mesNombre(mesK)}
@@ -479,7 +479,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                         )}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                        <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>
+                        <span style={{ fontSize: "12px", color: "var(--crm-text-muted)" }}>
                           <strong style={{ color: "var(--crm-text)" }}>{regs.length}</strong> encuestas
                         </span>
                         {npsAvg !== null && (
@@ -491,16 +491,16 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                         )}
                         <span style={{
                           fontSize: "11px", fontWeight: 700,
-                          background: pctNps >= objetivoPct ? "rgba(74,222,128,0.12)" : "rgba(255,255,255,0.08)",
-                          color: pctNps >= objetivoPct ? "#4ade80" : "rgba(255,255,255,0.35)",
+                          background: pctNps >= objetivoPct ? "rgba(74,222,128,0.12)" : "var(--crm-surface-3)",
+                          color: pctNps >= objetivoPct ? "#4ade80" : "var(--crm-text-muted)",
                           padding: "2px 9px", borderRadius: "10px",
                         }}>
                           {pctNps}% NPS
                         </span>
                         <span style={{
                           fontSize: "11px", fontWeight: 700,
-                          background: tasaMes >= 50 ? "rgba(96,165,250,0.12)" : "rgba(255,255,255,0.08)",
-                          color: tasaMes >= 50 ? "#60a5fa" : "rgba(255,255,255,0.35)",
+                          background: tasaMes >= 50 ? "rgba(96,165,250,0.12)" : "var(--crm-surface-3)",
+                          color: tasaMes >= 50 ? "#60a5fa" : "var(--crm-text-muted)",
                           padding: "2px 9px", borderRadius: "10px",
                         }}>
                           {tasaMes}% resp
