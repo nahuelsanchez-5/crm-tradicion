@@ -106,7 +106,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label style={{
         display: "block", fontSize: "11px", fontWeight: 700,
         letterSpacing: "0.8px", textTransform: "uppercase" as const,
-        color: "rgba(255,255,255,0.45)", marginBottom: "5px",
+        color: "var(--crm-text-muted)", marginBottom: "5px",
       }}>
         {label}
       </label>
@@ -320,41 +320,58 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
 
       <Topbar moduleName="Cartelería" />
 
-      {/* ── Page Header ──────────────────────────── */}
-      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end", position: "sticky", top: "62px", zIndex: 15 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <button
-            onClick={() => setDevolverPickerOpen(true)}
-            style={{
-              display: "flex", alignItems: "center", gap: "7px",
-              padding: "8px 18px", borderRadius: "9px",
-              border: "1px solid rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.08)",
-              color: "#f87171", fontSize: "13px", fontWeight: 700,
-              cursor: "pointer", fontFamily: "inherit",
-            }}
-          >
-            <RotateCcw size={15} />
-            Devolver
-          </button>
-          <button
-            onClick={openNuevo}
-            style={{
-              display: "flex", alignItems: "center", gap: "7px",
-              padding: "8px 18px", borderRadius: "9px", border: "none",
-              background: "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
-              color: "white", fontSize: "13px", fontWeight: 700,
-              cursor: "pointer", fontFamily: "inherit",
-              boxShadow: "0 2px 8px rgba(227,24,55,0.3)",
-            }}
-          >
-            <Plus size={15} />
-            Nuevo cartel
-          </button>
-        </div>
-      </div>
-
       {/* ── Scrollable content ────────────────────── */}
-      <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
+      <div style={{ flex: 1, overflow: "auto", padding: "24px" }}>
+
+        {/* ── Banda de encabezado ─────────────────── */}
+        <header style={{
+          display: "flex", alignItems: "flex-end", justifyContent: "space-between",
+          gap: "16px", flexWrap: "wrap", marginBottom: "22px",
+        }}>
+          <div>
+            <div style={{
+              fontSize: "11px", fontWeight: 700, letterSpacing: "1.2px",
+              textTransform: "uppercase" as const, color: "var(--crm-text-muted)", marginBottom: "6px",
+            }}>
+              Cartelería · RE/MAX Tradición
+            </div>
+            <h1 style={{
+              fontSize: "27px", fontWeight: 800, letterSpacing: "-0.02em",
+              color: "var(--crm-text)", margin: 0,
+            }}>
+              Carteles activos
+            </h1>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <button
+              onClick={() => setDevolverPickerOpen(true)}
+              style={{
+                display: "flex", alignItems: "center", gap: "7px",
+                padding: "8px 18px", borderRadius: "9px",
+                border: "1px solid rgba(248,113,113,0.3)", background: "rgba(248,113,113,0.08)",
+                color: "#f87171", fontSize: "13px", fontWeight: 700,
+                cursor: "pointer", fontFamily: "inherit",
+              }}
+            >
+              <RotateCcw size={15} />
+              Devolver
+            </button>
+            <button
+              onClick={openNuevo}
+              style={{
+                display: "flex", alignItems: "center", gap: "7px",
+                padding: "8px 18px", borderRadius: "9px", border: "none",
+                background: "linear-gradient(135deg,var(--crm-accent) 0%,var(--crm-accent-hover) 100%)",
+                color: "white", fontSize: "13px", fontWeight: 700,
+                cursor: "pointer", fontFamily: "inherit",
+                boxShadow: "0 2px 8px var(--crm-accent-glow)",
+              }}
+            >
+              <Plus size={15} />
+              Nuevo cartel
+            </button>
+          </div>
+        </header>
 
         {/* ── KPI Cards ─────────────────────────── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "14px", marginBottom: panelOpen ? "8px" : "20px" }}>
