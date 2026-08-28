@@ -511,18 +511,18 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                     {/* Expanded detail */}
                     {isOpen && (
                       <div style={{
-                        background: "rgba(255,255,255,0.02)", borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)",
+                        background: "transparent", borderBottom: isLast ? "none" : "1px solid var(--crm-divider)",
                         overflowX: "auto",
                       }}>
                         <table style={{ width: "100%", borderCollapse: "collapse" }}>
                           <thead>
-                            <tr style={{ background: "rgba(255,255,255,0.04)" }}>
+                            <tr style={{ background: "var(--crm-surface-3)", borderBottom: "1px solid var(--crm-divider)" }}>
                               {["Fecha","Tipo","Referencia","Subtipo","NPS","Calificación","Comentario","Acciones"].map(h => (
                                 <th key={h} style={{
                                   padding: "8px 16px", textAlign: "left",
                                   fontSize: "10px", fontWeight: 700,
                                   textTransform: "uppercase" as const,
-                                  letterSpacing: "0.7px", color: "rgba(255,255,255,0.35)",
+                                  letterSpacing: "0.7px", color: "var(--crm-text-muted)",
                                   whiteSpace: "nowrap",
                                 }}>
                                   {h}
@@ -535,12 +535,12 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                               <tr
                                 key={r.id}
                                 style={{
-                                  borderTop: ri > 0 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                                  borderTop: ri > 0 ? "1px solid var(--crm-divider)" : "none",
                                   background: "transparent",
                                   animation: `rowIn 380ms cubic-bezier(0.34, 1.56, 0.64, 1) ${Math.min(ri * 25, 300)}ms both`,
                                 }}
                               >
-                                <td style={{ padding: "10px 16px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
+                                <td style={{ padding: "10px 16px", fontSize: "12px", color: "var(--crm-text-muted)", whiteSpace: "nowrap" }}>
                                   {fmtFecha(r.fecha)}
                                 </td>
                                 <td style={{ padding: "10px 16px" }}>
@@ -549,7 +549,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                                 <td style={{ padding: "10px 16px", fontSize: "12px", fontWeight: 600, color: "var(--crm-text)" }}>
                                   {r.referencia}
                                 </td>
-                                <td style={{ padding: "10px 16px", fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>
+                                <td style={{ padding: "10px 16px", fontSize: "12px", color: "var(--crm-text-muted)" }}>
                                   {r.subtipo ?? "—"}
                                 </td>
                                 <td style={{ padding: "10px 16px" }}>
@@ -558,9 +558,9 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                                 <td style={{ padding: "10px 16px", fontSize: "11.5px", color: npsColor(r.nps), fontWeight: 600 }}>
                                   {npsLabel(r.nps)}
                                 </td>
-                                <td style={{ padding: "10px 16px", fontSize: "12px", color: "rgba(255,255,255,0.45)",
+                                <td style={{ padding: "10px 16px", fontSize: "12px", color: "var(--crm-text-muted)",
                                   maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                  {r.comentario ?? <span style={{ color: "rgba(255,255,255,0.2)" }}>—</span>}
+                                  {r.comentario ?? <span style={{ color: "var(--crm-text-muted)" }}>—</span>}
                                 </td>
                                 <td style={{ padding: "10px 16px", whiteSpace: "nowrap" }}>
                                   <div style={{ display: "flex", gap: "6px" }}>
