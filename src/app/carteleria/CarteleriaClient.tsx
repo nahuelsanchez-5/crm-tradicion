@@ -673,6 +673,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                       style={{
                         borderBottom: isLast ? "none" : "1px solid var(--crm-divider)",
                         background: urgente ? "rgba(225,29,72,0.04)" : undefined,
+                        animation: `rowIn 280ms ease-out ${Math.min(i * 30, 400)}ms both`,
                       }}
                     >
                       {/* Nº */}
@@ -809,6 +810,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
               background: "var(--crm-surface-2)",
               border: "1px solid var(--crm-divider)", borderTop: "none",
               borderRadius: "0 0 14px 14px", padding: "16px 20px",
+              animation: "rowIn 220ms ease-out both",
             }}>
               {/* Selector mes/año */}
               <div style={{ display: "flex", gap: "10px", marginBottom: "16px", alignItems: "center", flexWrap: "wrap" }}>
