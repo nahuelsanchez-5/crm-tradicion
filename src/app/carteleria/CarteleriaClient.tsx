@@ -459,7 +459,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
-                  <tr style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                  <tr style={{ background: "var(--crm-surface-3)", borderBottom: "1px solid var(--crm-divider)" }}>
                     {(panelOpen === "recuperados"
                       ? ["Nº", "Dirección", "Agente", "Fecha de recuperación"]
                       : ["Nº", "Dirección", "Agente", panelOpen === "vencidos" ? "Vencido hace" : "Vence en", "Acciones"]
@@ -468,7 +468,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                         padding: "10px 14px", textAlign: "left",
                         fontSize: "10px", fontWeight: 700,
                         textTransform: "uppercase" as const,
-                        letterSpacing: "0.8px", color: "rgba(255,255,255,0.4)",
+                        letterSpacing: "0.8px", color: "var(--crm-text-muted)",
                         whiteSpace: "nowrap",
                       }}>
                         {h}
@@ -483,37 +483,37 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                         <tr>
                           <td colSpan={4} style={{
                             padding: "36px", textAlign: "center",
-                            color: "rgba(255,255,255,0.35)", fontSize: "13px",
+                            color: "var(--crm-text-muted)", fontSize: "13px",
                           }}>
                             No hay carteles recuperados este mes
                           </td>
                         </tr>
                       )
                       : recuperadosData.map((d, i) => (
-                        <tr key={d.id} style={{ borderBottom: i < recuperadosData.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                        <tr key={d.id} style={{ borderBottom: i < recuperadosData.length - 1 ? "1px solid var(--crm-divider)" : "none" }}>
                           <td style={{ padding: "10px 14px", fontSize: "13px", fontWeight: 700, color: "#10b981", whiteSpace: "nowrap" }}>
                             {d.nro_cartel || "—"}
                           </td>
                           <td style={{ padding: "10px 14px", fontSize: "13px", color: "var(--crm-text)", maxWidth: "280px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                             {d.direccion || "—"}
                           </td>
-                          <td style={{ padding: "10px 14px", fontSize: "12px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap" }}>
+                          <td style={{ padding: "10px 14px", fontSize: "12px", color: "var(--crm-text-muted)", whiteSpace: "nowrap" }}>
                             {d.agente || "—"}
                           </td>
-                          <td style={{ padding: "10px 14px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>
+                          <td style={{ padding: "10px 14px", fontSize: "12px", color: "var(--crm-text-muted)", whiteSpace: "nowrap" }}>
                             {fmtDate(d.fecha_devolucion.slice(0, 10))}
                           </td>
                         </tr>
                       ))
                     : (panelOpen === "vencidos" ? vencidos : proximos).map(c => (
-                      <tr key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      <tr key={c.id} style={{ borderBottom: "1px solid var(--crm-divider)" }}>
                         <td style={{ padding: "10px 14px", fontSize: "13px", fontWeight: 700, color: panelOpen === "vencidos" ? "#ef4444" : "#f59e0b", whiteSpace: "nowrap" }}>
                           {c.numero}
                         </td>
                         <td style={{ padding: "10px 14px", fontSize: "13px", color: "var(--crm-text)", maxWidth: "280px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {c.direccion || "—"}
                         </td>
-                        <td style={{ padding: "10px 14px", fontSize: "12px", color: "rgba(255,255,255,0.6)", whiteSpace: "nowrap" }}>
+                        <td style={{ padding: "10px 14px", fontSize: "12px", color: "var(--crm-text-muted)", whiteSpace: "nowrap" }}>
                           {c.agente || "—"}
                         </td>
                         <td style={{ padding: "10px 14px", fontSize: "12px", fontWeight: 600, color: panelOpen === "vencidos" ? "#ef4444" : "#f59e0b", whiteSpace: "nowrap" }}>
@@ -569,7 +569,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
           <div style={{ position: "relative", flex: "1", minWidth: "220px" }}>
             <Search size={14} style={{
               position: "absolute", left: "11px", top: "50%",
-              transform: "translateY(-50%)", color: "#94A3B8", pointerEvents: "none",
+              transform: "translateY(-50%)", color: "var(--crm-text-muted)", pointerEvents: "none",
             }} />
             <input
               type="text"
@@ -606,8 +606,8 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
               onClick={() => { setBusqueda(""); setFiltroAgente(""); setFiltroTipo("") }}
               style={{
                 padding: "9px 14px", borderRadius: "8px",
-                border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
-                fontSize: "12px", fontWeight: 600, color: "rgba(255,255,255,0.45)",
+                border: "1px solid var(--crm-card-border)", background: "var(--crm-surface-3)",
+                fontSize: "12px", fontWeight: 600, color: "var(--crm-text-muted)",
                 cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
               }}
             >
