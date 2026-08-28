@@ -105,7 +105,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <label style={{
         display: "block", fontSize: "11px", fontWeight: 700,
         letterSpacing: "0.8px", textTransform: "uppercase" as const,
-        color: "rgba(255,255,255,0.45)", marginBottom: "5px",
+        color: "var(--crm-text-muted)", marginBottom: "5px",
       }}>
         {label}
       </label>
@@ -335,25 +335,42 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
 
       <Topbar moduleName="Encuestas" />
 
-      {/* ── Page Header ──────────────────────────── */}
-      <div className="crm-page-header flex-shrink-0" style={{ justifyContent: "flex-end", position: "sticky", top: "62px", zIndex: 15 }}>
-        <button
-          onClick={openModal}
-          style={{
-            background: "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
-            color: "white", border: "none",
-            padding: "8px 18px", borderRadius: "9px",
-            fontSize: "13px", fontWeight: 700, cursor: "pointer",
-            boxShadow: "0 2px 10px rgba(227,24,55,0.35)",
-            fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
-          }}
-        >
-          <span style={{ fontSize: "16px", lineHeight: 1 }}>+</span> Registrar encuesta
-        </button>
-      </div>
-
       {/* ── Scrollable content ────────────────────── */}
-      <div style={{ flex: 1, overflow: "auto", padding: "20px 24px" }}>
+      <div style={{ flex: 1, overflow: "auto", padding: "24px" }}>
+
+        {/* ── Banda de encabezado ─────────────────── */}
+        <header style={{
+          display: "flex", alignItems: "flex-end", justifyContent: "space-between",
+          gap: "16px", flexWrap: "wrap", marginBottom: "22px",
+        }}>
+          <div>
+            <div style={{
+              fontSize: "11px", fontWeight: 700, letterSpacing: "1.2px",
+              textTransform: "uppercase" as const, color: "var(--crm-text-muted)", marginBottom: "6px",
+            }}>
+              Encuestas · RE/MAX Tradición
+            </div>
+            <h1 style={{
+              fontSize: "27px", fontWeight: 800, letterSpacing: "-0.02em",
+              color: "var(--crm-text)", margin: 0,
+            }}>
+              Satisfacción de clientes
+            </h1>
+          </div>
+          <button
+            onClick={openModal}
+            style={{
+              background: "linear-gradient(135deg,var(--crm-accent) 0%,var(--crm-accent-hover) 100%)",
+              color: "white", border: "none",
+              padding: "8px 18px", borderRadius: "9px",
+              fontSize: "13px", fontWeight: 700, cursor: "pointer",
+              boxShadow: "0 2px 10px var(--crm-accent-glow)",
+              fontFamily: "inherit", display: "flex", alignItems: "center", gap: "6px",
+            }}
+          >
+            <span style={{ fontSize: "16px", lineHeight: 1 }}>+</span> Registrar encuesta
+          </button>
+        </header>
 
         {/* ── KPI Cards ─────────────────────────── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "14px", marginBottom: "20px" }}>
