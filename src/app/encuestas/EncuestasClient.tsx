@@ -520,6 +520,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                                 style={{
                                   borderTop: ri > 0 ? "1px solid rgba(255,255,255,0.06)" : "none",
                                   background: "transparent",
+                                  animation: `rowIn 380ms cubic-bezier(0.34, 1.56, 0.64, 1) ${Math.min(ri * 25, 300)}ms both`,
                                 }}
                               >
                                 <td style={{ padding: "10px 16px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>

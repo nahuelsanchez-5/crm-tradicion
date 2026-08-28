@@ -535,7 +535,7 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
                     return (
                       <tr
                         key={o.id}
-                        style={{ borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)" }}
+                        style={{ borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)", animation: `rowIn 380ms cubic-bezier(0.34, 1.56, 0.64, 1) ${Math.min(i * 25, 300)}ms both` }}
                         className="hover:bg-[rgba(255,255,255,0.03)]"
                       >
                         <td style={{ padding: "12px 16px", fontSize: "12px", color: "rgba(255,255,255,0.45)", whiteSpace: "nowrap" }}>

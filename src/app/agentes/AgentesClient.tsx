@@ -442,6 +442,7 @@ export default function AgentesClient({
                     padding: "14px 18px",
                     borderRight: idx < proximosMainstreet.length - 1 ? "1px solid rgba(251,191,36,0.15)" : "none",
                     display: "flex", flexDirection: "column", gap: "4px",
+                    animation: `rowIn 380ms cubic-bezier(0.34, 1.56, 0.64, 1) ${Math.min(idx * 25, 300)}ms both`,
                   }}
                 >
                   <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--crm-text)" }}>{ag.nombre}</div>
@@ -525,7 +526,7 @@ export default function AgentesClient({
                       <div style={{ flex: 1, height: "1px", background: "rgba(255,255,255,0.07)" }} />
                     </div>
                   )}
-                  <div className="flex items-center gap-3 px-4 py-3.5" onClick={() => setDetalleAgente(ag)} style={{ opacity: ag.activo ? 1 : 0.5, cursor: "pointer" }}>
+                  <div className="flex items-center gap-3 px-4 py-3.5" onClick={() => setDetalleAgente(ag)} style={{ opacity: ag.activo ? 1 : 0.5, cursor: "pointer", animation: ag.activo ? `rowIn 380ms cubic-bezier(0.34, 1.56, 0.64, 1) ${Math.min(i * 25, 300)}ms both` : undefined }}>
                     <div style={{
                       width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0,
                       background: AVATAR_GRADIENTS[i % AVATAR_GRADIENTS.length],
@@ -628,7 +629,7 @@ export default function AgentesClient({
                       )}
                       <tr
                         onClick={() => setDetalleAgente(ag)}
-                        style={{ borderBottom: i === sorted.length - 1 ? "none" : "1px solid rgba(255,255,255,0.06)", opacity: ag.activo ? 1 : 0.5, cursor: "pointer" }}
+                        style={{ borderBottom: i === sorted.length - 1 ? "none" : "1px solid rgba(255,255,255,0.06)", opacity: ag.activo ? 1 : 0.5, cursor: "pointer", animation: ag.activo ? `rowIn 380ms cubic-bezier(0.34, 1.56, 0.64, 1) ${Math.min(i * 25, 300)}ms both` : undefined }}
                         className="hover:bg-[rgba(255,255,255,0.03)]"
                       >
                         {/* Nombre con avatar */}

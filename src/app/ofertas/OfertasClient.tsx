@@ -540,13 +540,13 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                     Sin ofertas en esta etapa
                   </div>
                 )
-                return colOfertas.map(o => {
+                return colOfertas.map((o, i) => {
                   const vendedor = agenteName(o.agente_vendedor_id, o.agente_vendedor_externo)
                   const diasAct  = o.updated_at
                     ? Math.floor((Date.now() - new Date(o.updated_at).getTime()) / (1000 * 60 * 60 * 24))
                     : null
                   return (
-                    <Link key={o.id} href={`/ofertas/${o.id}`} style={{ textDecoration: "none" }}>
+                    <Link key={o.id} href={`/ofertas/${o.id}`} style={{ textDecoration: "none", animation: `rowIn 380ms cubic-bezier(0.34, 1.56, 0.64, 1) ${Math.min(i * 25, 300)}ms both` }}>
                       <div style={{
                         background: "var(--crm-surface-2)", borderRadius: "10px",
                         border: "1px solid rgba(255,255,255,0.07)", padding: "14px 16px",
@@ -600,13 +600,13 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                             Sin ofertas
                           </div>
                         ) : (
-                          colOfertas.map(o => {
+                          colOfertas.map((o, i) => {
                             const vendedor = agenteName(o.agente_vendedor_id, o.agente_vendedor_externo)
                             const diasAct  = o.updated_at
                               ? Math.floor((Date.now() - new Date(o.updated_at).getTime()) / (1000 * 60 * 60 * 24))
                               : null
                             return (
-                              <Link key={o.id} href={`/ofertas/${o.id}`} style={{ textDecoration: "none" }}>
+                              <Link key={o.id} href={`/ofertas/${o.id}`} style={{ textDecoration: "none", animation: `rowIn 380ms cubic-bezier(0.34, 1.56, 0.64, 1) ${Math.min(i * 25, 300)}ms both` }}>
                                 <div style={{
                                   background: "var(--crm-surface-2)", borderRadius: "10px",
                                   border: "1px solid rgba(255,255,255,0.07)", padding: "12px 14px",
@@ -689,7 +689,7 @@ export default function OfertasClient({ ofertas, agentes }: Props) {
                       const vendedor  = agenteName(o.agente_vendedor_id, o.agente_vendedor_externo)
                       const comprador = agenteName(o.agente_comprador_id, o.agente_comprador_externo)
                       return (
-                        <tr key={o.id} style={{ borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)" }} className="hover:bg-[rgba(255,255,255,0.03)]">
+                        <tr key={o.id} style={{ borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)", animation: `rowIn 380ms cubic-bezier(0.34, 1.56, 0.64, 1) ${Math.min(i * 25, 300)}ms both` }} className="hover:bg-[rgba(255,255,255,0.03)]">
                           <td style={{ padding: "12px 14px", fontSize: "13px", fontWeight: 700, color: "var(--crm-text)" }}>{o.numero}</td>
                           <td style={{ padding: "12px 14px", fontSize: "13px", color: "var(--crm-text)", maxWidth: "180px" }}>
                             <span title={o.direccion} style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.direccion}</span>

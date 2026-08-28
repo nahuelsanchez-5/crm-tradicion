@@ -142,7 +142,7 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
               </thead>
               <tbody>
                 {kpis.map((kpi, i) => (
-                  <tr key={kpi.label} style={{ borderBottom: i < kpis.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
+                  <tr key={kpi.label} style={{ borderBottom: i < kpis.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none", animation: `rowIn 380ms cubic-bezier(0.34, 1.56, 0.64, 1) ${Math.min(i * 25, 300)}ms both` }}>
                     <td style={{ padding: "16px 20px", fontWeight: 700, fontSize: "14px", color: "var(--crm-text)" }}>
                       {kpi.label}
                     </td>
@@ -190,8 +190,8 @@ export default function ResumenClient({ mes, kpis, totalACobrar, selectedMonth, 
 
           {/* Mobile cards */}
           <div className="md:hidden divide-y divide-white/[0.06]">
-            {kpis.map(kpi => (
-              <div key={kpi.label} style={{ padding: "16px" }}>
+            {kpis.map((kpi, i) => (
+              <div key={kpi.label} style={{ padding: "16px", animation: `rowIn 380ms cubic-bezier(0.34, 1.56, 0.64, 1) ${Math.min(i * 25, 300)}ms both` }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
                   <span style={{ fontWeight: 700, fontSize: "14px", color: "var(--crm-text)" }}>{kpi.label}</span>
                   <span className={kpi.aCobrar > 0 ? "kpi-badge-pos" : "kpi-badge-neg"} style={{
