@@ -43,6 +43,7 @@ interface MesData {
   real_usd:     number
   id:           string | null   // null = sin datos aún
   isFuture:     boolean
+  esEnVivo:     boolean         // true = valor tomado en vivo de Operaciones, sin guardar aún
 }
 
 interface FormData {
@@ -169,16 +170,19 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
     return MONTH_NAMES.map((nombre, idx) => {
       const mes = idx + 1
       const row = rows.find(r => r.mes === mes && r.anio === ANIO)
+      const tieneGuardado = !!(row?.real_usd && row.real_usd > 0)
+      const enVivo        = comisionesPorMes[`${mes}-${ANIO}`] ?? 0
       return {
         mes,
         nombre,
         objetivo_usd: calcObjetivoMes(mes),
-        real_usd:     row?.real_usd ?? 0,
+        real_usd:     tieneGuardado ? row!.real_usd : enVivo,
         id:           row?.id       ?? null,
         isFuture:     mes > currentMonth,
+        esEnVivo:     !tieneGuardado && enVivo > 0,
       }
     })
-  }, [rows, currentMonth])
+  }, [rows, currentMonth, comisionesPorMes])
 
   // ── KPI stats ──────────────────────────────────────
   const stats = useMemo(() => {
@@ -205,9 +209,9 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
   function openModal(m: MesData) {
     const sugerido = comisionesPorMes[`${m.mes}-${ANIO}`] ?? 0
     setForm({
-      // Si el mes ya tiene un real guardado (>0), respetarlo (no pisar ajustes manuales).
-      // Si está en 0, pre-llenar con la suma de comisiones de Operaciones (si hay).
-      real_usd: m.real_usd > 0 ? String(m.real_usd) : (sugerido > 0 ? String(sugerido.toFixed(2)) : ""),
+      // Si el mes ya tiene un real guardado de verdad (>0 y no "en vivo"), respetarlo (no pisar ajustes manuales).
+      // Si está vacío o el valor es "en vivo", pre-llenar con la suma de comisiones de Operaciones (si hay).
+      real_usd: (m.real_usd > 0 && !m.esEnVivo) ? String(m.real_usd) : (sugerido > 0 ? String(sugerido.toFixed(2)) : ""),
     })
     setError("")
     setModalMes(m)
@@ -393,6 +397,14 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
                       <td style={{ padding: "14px 16px", fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap",
                         color: m.real_usd > 0 ? "var(--crm-text)" : "var(--crm-text-muted)" }}>
                         {m.real_usd > 0 ? fmtUSD(m.real_usd) : "—"}
+                        {m.esEnVivo && (
+                          <span style={{
+                            fontSize: "9px", fontWeight: 700, color: "#fbbf24",
+                            marginLeft: "6px", verticalAlign: "middle",
+                          }}>
+                            EN VIVO
+                          </span>
+                        )}
                       </td>
 
                       {/* % */}
@@ -504,7 +516,7 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
                 />
                 {(() => {
                   const sugerido = comisionesPorMes[`${modalMes.mes}-${ANIO}`] ?? 0
-                  return modalMes.real_usd === 0 && sugerido > 0 ? (
+                  return (modalMes.esEnVivo || modalMes.real_usd === 0) && sugerido > 0 ? (
                     <p style={{ fontSize: "11px", color: "var(--crm-text-muted)", marginTop: "4px" }}>
                       Sugerido automáticamente desde Operaciones — verificá que estén todas las operaciones del mes cargadas antes de guardar.
                     </p>
