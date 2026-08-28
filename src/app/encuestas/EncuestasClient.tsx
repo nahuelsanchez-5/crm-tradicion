@@ -42,7 +42,7 @@ interface FormState {
 
 // ── Helpers ──────────────────────────────────────────
 function npsColor(nps: number | null): string {
-  if (nps === null) return "rgba(255,255,255,0.35)"
+  if (nps === null) return "var(--crm-text-muted)"
   if (nps >= 9) return "#4ade80"
   if (nps >= 7) return "#fbbf24"
   return "#f87171"
@@ -72,7 +72,7 @@ function mesNombre(key: string): string {
 
 function NpsBadge({ nps }: { nps: number | null }) {
   const color = npsColor(nps)
-  const bg    = nps === null ? "rgba(255,255,255,0.08)" : nps >= 9 ? "rgba(74,222,128,0.12)" : nps >= 7 ? "rgba(251,191,36,0.12)" : "rgba(248,113,113,0.12)"
+  const bg    = nps === null ? "var(--crm-surface-3)" : nps >= 9 ? "rgba(74,222,128,0.12)" : nps >= 7 ? "rgba(251,191,36,0.12)" : "rgba(248,113,113,0.12)"
   return (
     <span style={{
       background: bg, color, padding: "2px 9px",
@@ -634,13 +634,13 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                           cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
                           border: editForm.tipo === t
                             ? `1.5px solid ${t === "ESPONTANEA" ? "#7C3AED" : "#2563EB"}`
-                            : "1.5px solid rgba(255,255,255,0.1)",
+                            : "1.5px solid var(--crm-card-border)",
                           background: editForm.tipo === t
                             ? (t === "ESPONTANEA" ? "rgba(167,139,250,0.12)" : "rgba(96,165,250,0.12)")
-                            : "rgba(255,255,255,0.06)",
+                            : "var(--crm-surface-3)",
                           color: editForm.tipo === t
                             ? (t === "ESPONTANEA" ? "#7C3AED" : "#2563EB")
-                            : "#64748B",
+                            : "var(--crm-text-muted)",
                         }}
                       >
                         {t === "ESPONTANEA" ? "ESPONTÁNEA" : "MAILING"}
@@ -687,9 +687,9 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                               flex: 1, padding: "9px 0", borderRadius: "8px",
                               fontSize: "12px", fontWeight: editForm.subtipo === s ? 700 : 500,
                               cursor: "pointer", fontFamily: "inherit",
-                              border: editForm.subtipo === s ? "1.5px solid #7C3AED" : "1.5px solid rgba(255,255,255,0.1)",
-                              background: editForm.subtipo === s ? "rgba(167,139,250,0.12)" : "rgba(255,255,255,0.06)",
-                              color: editForm.subtipo === s ? "#7C3AED" : "rgba(255,255,255,0.45)",
+                              border: editForm.subtipo === s ? "1.5px solid #7C3AED" : "1.5px solid var(--crm-card-border)",
+                              background: editForm.subtipo === s ? "rgba(167,139,250,0.12)" : "var(--crm-surface-3)",
+                              color: editForm.subtipo === s ? "#7C3AED" : "var(--crm-text-muted)",
                             }}
                           >
                             {s}
@@ -726,9 +726,9 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                           onClick={() => setEditForm(f => f ? { ...f, nps: selected ? "" : String(n) } : f)}
                           style={{
                             width: "32px", height: "32px", borderRadius: "8px",
-                            border: selected ? `2px solid ${color}` : "1px solid rgba(255,255,255,0.12)",
-                            background: selected ? `${color}22` : "rgba(255,255,255,0.04)",
-                            color: selected ? color : "rgba(255,255,255,0.6)",
+                            border: selected ? `2px solid ${color}` : "1px solid var(--crm-card-border)",
+                            background: selected ? `${color}22` : "var(--crm-surface-3)",
+                            color: selected ? color : "var(--crm-text-muted)",
                             fontSize: "13px", fontWeight: 700, cursor: "pointer",
                             fontFamily: "inherit",
                           }}
@@ -741,7 +741,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                   {editForm.nps !== "" && (
                     <div style={{ marginTop: "8px" }}>
                       <NpsBadge nps={parseInt(editForm.nps) || null} />
-                      <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginLeft: "6px" }}>
+                      <span style={{ fontSize: "11px", color: "var(--crm-text-muted)", marginLeft: "6px" }}>
                         {npsLabel(parseInt(editForm.nps) || null)}
                       </span>
                     </div>
@@ -758,7 +758,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
 
                 {editError && (
                   <div style={{
-                    background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
+                    background: "var(--crm-accent-soft)", border: "1px solid var(--crm-accent-glow)",
                     borderRadius: "8px", padding: "10px 12px",
                     fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                   }}>
@@ -769,8 +769,8 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                 <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
                   <button type="button" onClick={closeEdit} style={{
                     padding: "9px 20px", borderRadius: "8px",
-                    border: "1.5px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
-                    fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
+                    border: "1.5px solid var(--crm-card-border)", background: "var(--crm-surface-3)",
+                    fontSize: "13px", fontWeight: 600, color: "var(--crm-text-muted)",
                     cursor: "pointer", fontFamily: "inherit",
                   }}>
                     Cancelar
@@ -805,14 +805,14 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                       ["NPS",      editForm.nps !== "" ? `${editForm.nps}/10` : "Sin NPS"],
                     ].map(([k, v]) => (
                       <div key={k} style={{ fontSize: "12px" }}>
-                        <span style={{ color: "rgba(255,255,255,0.4)" }}>{k}: </span>
+                        <span style={{ color: "var(--crm-text-muted)" }}>{k}: </span>
                         <span style={{ color: "var(--crm-text)", fontWeight: 600 }}>{v}</span>
                       </div>
                     ))}
                   </div>
                   {editForm.comentario && (
                     <div style={{ marginTop: "6px", fontSize: "12px" }}>
-                      <span style={{ color: "rgba(255,255,255,0.4)" }}>Comentario: </span>
+                      <span style={{ color: "var(--crm-text-muted)" }}>Comentario: </span>
                       <span style={{ color: "var(--crm-text)" }}>{editForm.comentario}</span>
                     </div>
                   )}
@@ -820,7 +820,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
 
                 {editError && (
                   <div style={{
-                    background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
+                    background: "var(--crm-accent-soft)", border: "1px solid var(--crm-accent-glow)",
                     borderRadius: "8px", padding: "10px 12px",
                     fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                   }}>
@@ -836,15 +836,15 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                   <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
                     <button type="button" onClick={() => setEditStep("form")} disabled={isEditPending} style={{
                       padding: "9px 20px", borderRadius: "8px",
-                      border: "1.5px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
-                      fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
+                      border: "1.5px solid var(--crm-card-border)", background: "var(--crm-surface-3)",
+                      fontSize: "13px", fontWeight: 600, color: "var(--crm-text-muted)",
                       cursor: "pointer", fontFamily: "inherit",
                     }}>
                       ← Volver
                     </button>
                     <button type="button" onClick={handleEditConfirm} disabled={isEditPending} style={{
                       padding: "9px 24px", borderRadius: "8px", border: "none",
-                      background: isEditPending ? "#CBD5E1" : "linear-gradient(135deg,#2563EB 0%,#1d4ed8 100%)",
+                      background: isEditPending ? "rgba(255,255,255,0.15)" : "linear-gradient(135deg,#2563EB 0%,#1d4ed8 100%)",
                       color: "white", fontSize: "13px", fontWeight: 700,
                       cursor: isEditPending ? "not-allowed" : "pointer", fontFamily: "inherit",
                       display: "flex", alignItems: "center", gap: "6px",
@@ -879,23 +879,23 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                     ¿Confirmás eliminar esta encuesta?
                   </h2>
                   <div style={{
-                    background: "rgba(255,255,255,0.05)", borderRadius: "8px",
+                    background: "var(--crm-surface-3)", borderRadius: "8px",
                     padding: "10px 12px", fontSize: "12.5px",
                   }}>
-                    <span style={{ color: "rgba(255,255,255,0.5)" }}>Fecha: </span>
+                    <span style={{ color: "var(--crm-text-muted)" }}>Fecha: </span>
                     <span style={{ color: "var(--crm-text)", fontWeight: 600 }}>{fmtFecha(deleteRow.fecha)}</span>
-                    <span style={{ color: "rgba(255,255,255,0.3)", margin: "0 8px" }}>·</span>
+                    <span style={{ color: "var(--crm-text-muted)", margin: "0 8px" }}>·</span>
                     <TipoBadge tipo={deleteRow.tipo} />
-                    <span style={{ color: "rgba(255,255,255,0.3)", margin: "0 8px" }}>·</span>
+                    <span style={{ color: "var(--crm-text-muted)", margin: "0 8px" }}>·</span>
                     <span style={{ color: "var(--crm-text)", fontWeight: 600 }}>{deleteRow.referencia}</span>
                     {deleteRow.nps !== null && (
                       <>
-                        <span style={{ color: "rgba(255,255,255,0.3)", margin: "0 8px" }}>·</span>
+                        <span style={{ color: "var(--crm-text-muted)", margin: "0 8px" }}>·</span>
                         <NpsBadge nps={deleteRow.nps} />
                       </>
                     )}
                   </div>
-                  <p style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.35)", margin: "8px 0 0" }}>
+                  <p style={{ fontSize: "11.5px", color: "var(--crm-text-muted)", margin: "8px 0 0" }}>
                     El registro será marcado como eliminado. No se borrará físicamente de la base de datos.
                   </p>
                 </div>
@@ -903,7 +903,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
 
               {deleteError && (
                 <div style={{
-                  background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
+                  background: "var(--crm-accent-soft)", border: "1px solid var(--crm-accent-glow)",
                   borderRadius: "8px", padding: "10px 12px",
                   fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                 }}>
@@ -914,19 +914,19 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
               <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
                 <button type="button" onClick={closeDelete} disabled={isDelPending} style={{
                   padding: "9px 20px", borderRadius: "8px",
-                  border: "1.5px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
-                  fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
+                  border: "1.5px solid var(--crm-card-border)", background: "var(--crm-surface-3)",
+                  fontSize: "13px", fontWeight: 600, color: "var(--crm-text-muted)",
                   cursor: "pointer", fontFamily: "inherit",
                 }}>
                   Cancelar
                 </button>
                 <button type="button" onClick={handleDeleteConfirm} disabled={isDelPending} style={{
                   padding: "9px 20px", borderRadius: "8px", border: "none",
-                  background: isDelPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
+                  background: isDelPending ? "rgba(255,255,255,0.15)" : "linear-gradient(135deg,var(--crm-accent) 0%,var(--crm-accent-hover) 100%)",
                   color: "white", fontSize: "13px", fontWeight: 700,
                   cursor: isDelPending ? "not-allowed" : "pointer", fontFamily: "inherit",
                   display: "flex", alignItems: "center", gap: "6px",
-                  boxShadow: isDelPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
+                  boxShadow: isDelPending ? "none" : "0 2px 8px var(--crm-accent-glow)",
                 }}>
                   {isDelPending && <Loader2 size={14} className="animate-spin" />}
                   {isDelPending ? "Eliminando..." : <><Trash2 size={14} /> Eliminar</>}
@@ -964,20 +964,20 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                         cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
                         border: form.tipo === t
                           ? `1.5px solid ${t === "ESPONTANEA" ? "#7C3AED" : "#2563EB"}`
-                          : "1.5px solid rgba(255,255,255,0.1)",
+                          : "1.5px solid var(--crm-card-border)",
                         background: form.tipo === t
                           ? (t === "ESPONTANEA" ? "rgba(167,139,250,0.12)" : "rgba(96,165,250,0.12)")
-                          : "rgba(255,255,255,0.06)",
+                          : "var(--crm-surface-3)",
                         color: form.tipo === t
                           ? (t === "ESPONTANEA" ? "#7C3AED" : "#2563EB")
-                          : "#64748B",
+                          : "var(--crm-text-muted)",
                       }}
                     >
                       {t === "ESPONTANEA" ? "ESPONTÁNEA" : "MAILING"}
                     </button>
                   ))}
                 </div>
-                <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", marginTop: "5px" }}>
+                <div style={{ fontSize: "11px", color: "var(--crm-text-muted)", marginTop: "5px" }}>
                   {form.tipo === "ESPONTANEA"
                     ? "Feedback espontáneo de un cliente en una operación"
                     : "Respuesta a una campaña de mailing enviada a un agente"
@@ -1030,9 +1030,9 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                             flex: 1, padding: "9px 0", borderRadius: "8px",
                             fontSize: "12px", fontWeight: form.subtipo === s ? 700 : 500,
                             cursor: "pointer", fontFamily: "inherit",
-                            border: form.subtipo === s ? "1.5px solid #7C3AED" : "1.5px solid rgba(255,255,255,0.1)",
-                            background: form.subtipo === s ? "rgba(167,139,250,0.12)" : "rgba(255,255,255,0.06)",
-                            color: form.subtipo === s ? "#7C3AED" : "rgba(255,255,255,0.45)",
+                            border: form.subtipo === s ? "1.5px solid #7C3AED" : "1.5px solid var(--crm-card-border)",
+                            background: form.subtipo === s ? "rgba(167,139,250,0.12)" : "var(--crm-surface-3)",
+                            color: form.subtipo === s ? "#7C3AED" : "var(--crm-text-muted)",
                           }}
                         >
                           {s}
@@ -1070,9 +1070,9 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                         onClick={() => setForm(f => ({ ...f, nps: selected ? "" : String(n) }))}
                         style={{
                           width: "32px", height: "32px", borderRadius: "8px",
-                          border: selected ? `2px solid ${color}` : "1px solid rgba(255,255,255,0.12)",
-                          background: selected ? `${color}22` : "rgba(255,255,255,0.04)",
-                          color: selected ? color : "rgba(255,255,255,0.6)",
+                          border: selected ? `2px solid ${color}` : "1px solid var(--crm-card-border)",
+                          background: selected ? `${color}22` : "var(--crm-surface-3)",
+                          color: selected ? color : "var(--crm-text-muted)",
                           fontSize: "13px", fontWeight: 700, cursor: "pointer",
                           fontFamily: "inherit",
                         }}
@@ -1085,7 +1085,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                 {form.nps !== "" && (
                   <div style={{ marginTop: "8px" }}>
                     <NpsBadge nps={parseInt(form.nps) || null} />
-                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginLeft: "6px" }}>
+                    <span style={{ fontSize: "11px", color: "var(--crm-text-muted)", marginLeft: "6px" }}>
                       {npsLabel(parseInt(form.nps) || null)}
                     </span>
                   </div>
@@ -1104,7 +1104,7 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
 
               {error && (
                 <div style={{
-                  background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
+                  background: "var(--crm-accent-soft)", border: "1px solid var(--crm-accent-glow)",
                   borderRadius: "8px", padding: "10px 12px",
                   fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                 }}>
@@ -1122,8 +1122,8 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                     <button type="button" onClick={closeModal} disabled={isPending}
                       style={{
                         padding: "9px 20px", borderRadius: "8px",
-                        border: "1.5px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
-                        fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
+                        border: "1.5px solid var(--crm-card-border)", background: "var(--crm-surface-3)",
+                        fontSize: "13px", fontWeight: 600, color: "var(--crm-text-muted)",
                         cursor: "pointer", fontFamily: "inherit",
                       }}>
                       Cancelar
@@ -1131,11 +1131,11 @@ export default function EncuestasClient({ registros, objetivoPct, mesActual, ani
                     <button type="submit" disabled={isPending}
                       style={{
                         padding: "9px 24px", borderRadius: "8px", border: "none",
-                        background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
+                        background: isPending ? "rgba(255,255,255,0.15)" : "linear-gradient(135deg,var(--crm-accent) 0%,var(--crm-accent-hover) 100%)",
                         color: "white", fontSize: "13px", fontWeight: 700,
                         cursor: isPending ? "not-allowed" : "pointer", fontFamily: "inherit",
                         display: "flex", alignItems: "center", gap: "6px",
-                        boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
+                        boxShadow: isPending ? "none" : "0 2px 8px var(--crm-accent-glow)",
                       }}>
                       {isPending && <Loader2 size={14} className="animate-spin" />}
                       {isPending ? "Guardando..." : <><Save size={14} /> Registrar</>}
