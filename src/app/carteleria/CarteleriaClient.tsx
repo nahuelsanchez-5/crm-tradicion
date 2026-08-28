@@ -984,7 +984,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
               {/* Error */}
               {error && (
                 <div style={{
-                  background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
+                  background: "var(--crm-accent-soft)", border: "1px solid var(--crm-accent-glow)",
                   borderRadius: "8px", padding: "10px 12px",
                   fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                 }}>
@@ -1006,8 +1006,8 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                       disabled={isPending}
                       style={{
                         padding: "9px 20px", borderRadius: "8px",
-                        border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
-                        fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
+                        border: "1px solid var(--crm-card-border)", background: "var(--crm-surface-3)",
+                        fontSize: "13px", fontWeight: 600, color: "var(--crm-text-muted)",
                         cursor: "pointer", fontFamily: "inherit",
                       }}
                     >
@@ -1019,13 +1019,13 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                       style={{
                         padding: "9px 24px", borderRadius: "8px", border: "none",
                         background: isPending
-                          ? "#CBD5E1"
-                          : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
+                          ? "rgba(255,255,255,0.15)"
+                          : "linear-gradient(135deg,var(--crm-accent) 0%,var(--crm-accent-hover) 100%)",
                         color: "white", fontSize: "13px", fontWeight: 700,
                         cursor: isPending ? "not-allowed" : "pointer",
                         fontFamily: "inherit",
                         display: "flex", alignItems: "center", gap: "6px",
-                        boxShadow: isPending ? "none" : "0 2px 8px rgba(227,24,55,0.3)",
+                        boxShadow: isPending ? "none" : "0 2px 8px var(--crm-accent-glow)",
                       }}
                     >
                       {isPending && <Loader2 size={14} className="animate-spin" />}
@@ -1058,13 +1058,13 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
               <p style={{ fontSize: "13px", color: "var(--crm-text)", marginBottom: "8px", lineHeight: 1.5 }}>
                 ¿Confirmar la devolución de este cartel? Se registrará en el historial y se eliminará de Airtable.
               </p>
-              <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "20px" }}>
+              <p style={{ fontSize: "12px", color: "var(--crm-text-muted)", marginBottom: "20px" }}>
                 Agente: <strong>{devolverTarget.agente || "—"}</strong>
               </p>
 
               {devolverError && (
                 <div style={{
-                  background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
+                  background: "var(--crm-accent-soft)", border: "1px solid var(--crm-accent-glow)",
                   borderRadius: "8px", padding: "10px 12px",
                   fontSize: "12.5px", color: "var(--crm-accent-light)", marginBottom: "14px",
                 }}>
@@ -1078,8 +1078,8 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                   disabled={devolverLoading}
                   style={{
                     padding: "9px 20px", borderRadius: "8px",
-                    border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)",
-                    fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.5)",
+                    border: "1px solid var(--crm-card-border)", background: "var(--crm-surface-3)",
+                    fontSize: "13px", fontWeight: 600, color: "var(--crm-text-muted)",
                     cursor: "pointer", fontFamily: "inherit",
                   }}
                 >
@@ -1090,7 +1090,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                   disabled={devolverLoading}
                   style={{
                     padding: "9px 20px", borderRadius: "8px", border: "none",
-                    background: devolverLoading ? "#CBD5E1" : "var(--crm-accent)",
+                    background: devolverLoading ? "rgba(255,255,255,0.15)" : "var(--crm-accent)",
                     color: "white", fontSize: "13px", fontWeight: 700,
                     cursor: devolverLoading ? "not-allowed" : "pointer",
                     fontFamily: "inherit",
@@ -1119,20 +1119,14 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
             <div style={{ padding: "16px 20px" }}>
               {/* Buscador */}
               <div style={{ position: "relative", marginBottom: "12px" }}>
-                <Search size={15} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "rgba(255,255,255,0.35)" }} />
+                <Search size={15} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--crm-text-muted)", pointerEvents: "none" }} />
                 <input
                   type="text"
                   autoFocus
                   value={devolverPickerBusqueda}
                   onChange={e => setDevolverPickerBusqueda(e.target.value)}
                   placeholder="Buscar por dirección o número..."
-                  style={{
-                    width: "100%", padding: "9px 12px 9px 34px",
-                    borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
-                    fontSize: "13px", fontFamily: "inherit",
-                    color: "var(--crm-text)", outline: "none", background: "var(--crm-input-bg)",
-                    boxSizing: "border-box",
-                  }}
+                  className="crm-input" style={{ paddingLeft: "34px" }}
                 />
               </div>
 
@@ -1146,7 +1140,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                   if (filtrados.length === 0) return (
                     <div style={{
                       padding: "24px 14px", textAlign: "center",
-                      fontSize: "13px", color: "rgba(255,255,255,0.35)",
+                      fontSize: "13px", color: "var(--crm-text-muted)",
                     }}>
                       No se encontraron carteles
                     </div>
@@ -1164,7 +1158,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                       style={{
                         display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px",
                         padding: "10px 12px", borderRadius: "8px",
-                        border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)",
+                        border: "1px solid var(--crm-card-border)", background: "var(--crm-surface-3)",
                         cursor: "pointer", fontFamily: "inherit", textAlign: "left", width: "100%",
                       }}
                     >
@@ -1172,7 +1166,7 @@ export default function CarteleriaClient({ carteles, agentes, recuperadosMes, re
                         <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--crm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           #{c.numero} · {c.direccion}
                         </div>
-                        <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginTop: "2px" }}>
+                        <div style={{ fontSize: "11px", color: "var(--crm-text-muted)", marginTop: "2px" }}>
                           {c.agente || "Sin agente"} · {c.tipo || "—"}
                         </div>
                       </div>
