@@ -488,6 +488,13 @@
     print-color-adjust: exact;
   }
 
+  /* Desactivar animaciones/transiciones al imprimir: evita que rowIn/pageIn
+     queden congeladas en opacity 0 y salga la hoja en blanco */
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+
   main {
     overflow: visible !important;
     background: white !important;
