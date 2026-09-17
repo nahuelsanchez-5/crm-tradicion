@@ -193,9 +193,9 @@ function filterBtnStyle(key: string, selected: boolean): React.CSSProperties {
 
 // ── KPI box component ────────────────────────────────
 function KpiConcepto({
-  label, x, y, pct, color, gradient: _g, onClick,
+  label, x, y, pct, color, gradient: _g, onClick, detalleUSD,
 }: {
-  label: string; x: number; y?: number; pct?: number; color: string; gradient: string; onClick?: () => void
+  label: string; x: number; y?: number; pct?: number; color: string; gradient: string; onClick?: () => void; detalleUSD?: string
 }) {
   const colorMap: Record<string, { bg: string; text: string; bar: string }> = {
     "#E31837": { bg: "rgba(248,113,113,0.08)", text: "#f87171",  bar: "#f87171" },
@@ -213,6 +213,9 @@ function KpiConcepto({
           {y !== undefined ? `${x}/${y}` : String(x)}
         </p>
         <p style={{ fontSize: "11px", fontWeight: 500, color: text, opacity: 0.7, marginTop: "2px", margin: 0 }}>cobrados</p>
+        {detalleUSD && (
+          <p style={{ fontSize: "10px", color: "var(--crm-text-muted)", marginTop: "4px", margin: 0 }}>{detalleUSD}</p>
+        )}
       </div>
       {pct !== undefined && (
         <div>
@@ -356,7 +359,27 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
     const otrosCobrX  = otrosPagos.filter(p => p.estado === "Pagado").length
     const otrosTotal  = otrosPagos.length
 
-    const pctGeneral = Math.round((feePct + crmPct + mainPct) / 3)
+    // ── Montos en dólares por categoría (plata real, no por agente) ──
+    // FEE
+    const feeDebeUSD    = feePagos.reduce((s, p) => s + Number(p.monto_debe), 0)
+    const feePagadoUSD  = feePagos.reduce((s, p) => s + Number(p.monto_pagado), 0)
+    // CRM
+    const crmDebeUSD    = crmPagos.reduce((s, p) => s + Number(p.monto_debe), 0)
+    const crmPagadoUSD  = crmPagos.reduce((s, p) => s + Number(p.monto_pagado), 0)
+    // Mainstreet
+    const mainDebeUSD   = mainPagos.reduce((s, p) => s + Number(p.monto_debe), 0)
+    const mainPagadoUSD = mainPagos.reduce((s, p) => s + Number(p.monto_pagado), 0)
+    // Bolsas de vinos
+    const bolsasDebeUSD   = bolsasPagos.reduce((s, p) => s + Number(p.monto_debe), 0)
+    const bolsasPagadoUSD = bolsasPagos.reduce((s, p) => s + Number(p.monto_pagado), 0)
+    // Otros
+    const otrosDebeUSD   = otrosPagos.reduce((s, p) => s + Number(p.monto_debe), 0)
+    const otrosPagadoUSD = otrosPagos.reduce((s, p) => s + Number(p.monto_pagado), 0)
+
+    // Cobranza general: SUMA(cobrado) / SUMA(total) de TODAS las categorías, ponderado por plata real
+    const totalDebeGeneral   = feeDebeUSD + crmDebeUSD + mainDebeUSD + bolsasDebeUSD + otrosDebeUSD
+    const totalPagadoGeneral = feePagadoUSD + crmPagadoUSD + mainPagadoUSD + bolsasPagadoUSD + otrosPagadoUSD
+    const pctGeneral = totalDebeGeneral > 0 ? Math.round((totalPagadoGeneral / totalDebeGeneral) * 100) : 0
 
     return {
       feeCobrX, feeTotal: agentesFeeCount, feePct,
@@ -364,6 +387,12 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
       mainCobrX, mainTotal, mainPct,
       bolsasCobrX, bolsasTotal, bolsasPct,
       otrosCobrX, otrosTotal, pctGeneral,
+      feeDebeUSD, feePagadoUSD,
+      crmDebeUSD, crmPagadoUSD,
+      mainDebeUSD, mainPagadoUSD,
+      bolsasDebeUSD, bolsasPagadoUSD,
+      otrosDebeUSD, otrosPagadoUSD,
+      totalDebeGeneral, totalPagadoGeneral,
     }
   }, [pagos, agentes, selectedMonth])
 
@@ -826,6 +855,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
             x={kpiStats.feeCobrX}
             y={kpiStats.feeTotal}
             pct={kpiStats.feePct}
+            detalleUSD={`${fmtUSD(kpiStats.feePagadoUSD)} / ${fmtUSD(kpiStats.feeDebeUSD)}`}
             color="#E31837"
             gradient="linear-gradient(135deg,#E31837 0%,#9B0F26 100%)"
             onClick={() => setDetalleConcepto("FEE")}
@@ -835,6 +865,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
             x={kpiStats.crmCobrX}
             y={kpiStats.crmTotal}
             pct={kpiStats.crmPct}
+            detalleUSD={`${fmtUSD(kpiStats.crmPagadoUSD)} / ${fmtUSD(kpiStats.crmDebeUSD)}`}
             color="#7C3AED"
             gradient="linear-gradient(135deg,#7C3AED 0%,#5B21B6 100%)"
             onClick={() => setDetalleConcepto("CRM")}
@@ -844,6 +875,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
             x={kpiStats.mainCobrX}
             y={kpiStats.mainTotal}
             pct={kpiStats.mainPct}
+            detalleUSD={`${fmtUSD(kpiStats.mainPagadoUSD)} / ${fmtUSD(kpiStats.mainDebeUSD)}`}
             color="#0D9488"
             gradient="linear-gradient(135deg,#0D9488 0%,#0F766E 100%)"
             onClick={() => setDetalleConcepto("Mainstreet")}
@@ -853,6 +885,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
             x={kpiStats.bolsasCobrX}
             y={kpiStats.bolsasTotal}
             pct={kpiStats.bolsasPct}
+            detalleUSD={`${fmtUSD(kpiStats.bolsasPagadoUSD)} / ${fmtUSD(kpiStats.bolsasDebeUSD)}`}
             color="#BE185D"
             gradient="linear-gradient(135deg,#BE185D 0%,#831843 100%)"
             onClick={() => setDetalleConcepto("BolsasVino")}
@@ -861,6 +894,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
             label="Otros"
             x={kpiStats.otrosCobrX}
             y={kpiStats.otrosTotal}
+            detalleUSD={`${fmtUSD(kpiStats.otrosPagadoUSD)} / ${fmtUSD(kpiStats.otrosDebeUSD)}`}
             color="#D97706"
             gradient="linear-gradient(135deg,#D97706 0%,#B45309 100%)"
             onClick={() => setDetalleConcepto("Otros")}
@@ -884,7 +918,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
             </div>
           </div>
           <span style={{ fontSize: "11px", color: "var(--crm-text-muted)" }}>
-            Promedio FEE + CRM + Mainstreet
+            {fmtUSD(kpiStats.totalPagadoGeneral)} de {fmtUSD(kpiStats.totalDebeGeneral)} — FEE + CRM + Mainstreet + Bolsas + Otros
           </span>
         </div>
 
@@ -1762,6 +1796,25 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                 <ReadOnlyField label="Concepto" value={selectedPago.concepto} />
                 <ReadOnlyField label="Monto que debe" value={fmtUSD(Number(selectedPago.monto_debe))} />
               </div>
+              <label style={{
+                display: "flex", alignItems: "center", gap: "8px",
+                padding: "10px 12px", borderRadius: "8px",
+                background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.25)",
+                cursor: "pointer", marginBottom: "10px", fontSize: "13px", fontWeight: 600, color: "#4ade80",
+              }}>
+                <input
+                  type="checkbox"
+                  checked={parseFloat(editForm.monto_pagado) === Number(selectedPago.monto_debe)}
+                  onChange={e => {
+                    if (e.target.checked) {
+                      setEditForm({ monto_pagado: String(selectedPago.monto_debe) })
+                    } else {
+                      setEditForm({ monto_pagado: "" })
+                    }
+                  }}
+                />
+                Pago completo ({fmtUSD(Number(selectedPago.monto_debe))})
+              </label>
               <Field label="Nuevo monto pagado total (USD) *">
                 <input
                   type="number" min="0" max={Number(selectedPago.monto_debe)} step="0.01"
