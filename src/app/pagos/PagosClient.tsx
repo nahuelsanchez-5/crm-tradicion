@@ -34,7 +34,7 @@ const MONTHS_OPTIONS: Array<{ label: string; value: string }> = (() => {
 
 const CONCEPTOS_PAGO = ["FEE mensual", "Licencias CRM", "Mainstreet", "Otros"]
 
-const CONCEPTOS_RECURRENTE = ["FEE mensual", "Licencia CRM PRO", "Licencia CRM PRO+"]
+const CONCEPTOS_RECURRENTE = ["FEE mensual", "Licencia CRM PRO", "Licencia CRM PRO+", "Otro"]
 
 const CONCEPTO_CONFIG_KEY: Record<string, string> = {
   "FEE mensual":       "fee_mensual",
@@ -83,6 +83,7 @@ interface GastoForm {
 
 interface GastoRecForm {
   concepto: string
+  conceptoOtro?: string
   fecha: string
 }
 
@@ -280,6 +281,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
     fecha:    todayStr,
   })
   const [selectedAgentesRec, setSelectedAgentesRec] = useState<Set<string>>(new Set())
+  const [gastoRecMontoManual, setGastoRecMontoManual] = useState("")
 
   // ── Eliminar registro ──────────────────────────────
   const [deleteTarget,  setDeleteTarget]  = useState<PagoRow | null>(null)
@@ -516,9 +518,12 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
 
   // ── Auto-fill monto for gasto recurrente ──────────
   const gastoRecMonto = useMemo(() => {
+    if (gastoRec.concepto === "Otro") {
+      return parseFloat(gastoRecMontoManual) || 0
+    }
     const key = CONCEPTO_CONFIG_KEY[gastoRec.concepto]
     return key ? (configBonos[key] ?? 0) : 0
-  }, [gastoRec.concepto, configBonos])
+  }, [gastoRec.concepto, configBonos, gastoRecMontoManual])
 
   // ── Keyboard ───────────────────────────────────────
   const closeModal = useCallback(() => { setModal("none"); setError("") }, [])
@@ -566,6 +571,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
   function openGastoRec() {
     setGastoRec({ concepto: CONCEPTOS_RECURRENTE[0], fecha: todayStr })
     setSelectedAgentesRec(new Set())
+    setGastoRecMontoManual("")
     setError("")
     setModal("gasto_rec")
   }
@@ -683,13 +689,16 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
     e.preventDefault()
     setError("")
     if (selectedAgentesRec.size === 0) { setError("Seleccioná al menos un agente"); return }
-    if (gastoRecMonto <= 0) { setError("El monto del concepto no está configurado"); return }
+    if (gastoRec.concepto === "Otro" && !gastoRec.conceptoOtro?.trim()) { setError("Describí el concepto"); return }
+    if (gastoRecMonto <= 0) { setError(gastoRec.concepto === "Otro" ? "Ingresá un monto válido" : "El monto del concepto no está configurado"); return }
+
+    const conceptoFinal = gastoRec.concepto === "Otro" ? (gastoRec.conceptoOtro?.trim() || "Otro") : gastoRec.concepto
 
     startTransition(async () => {
       const result = await crearGastoRecurrente({
         agente_ids: Array.from(selectedAgentesRec),
         fecha:      gastoRec.fecha,
-        concepto:   gastoRec.concepto,
+        concepto:   conceptoFinal,
         monto_debe: gastoRecMonto,
       })
       if (result.error) setError(result.error)
@@ -1610,6 +1619,16 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                   >
                     {CONCEPTOS_RECURRENTE.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
+                  {gastoRec.concepto === "Otro" && (
+                    <input
+                      type="text"
+                      placeholder="Describí el concepto (ej: Entrada Convención 2026)"
+                      value={gastoRec.conceptoOtro ?? ""}
+                      onChange={e => setGastoRec(f => ({ ...f, conceptoOtro: e.target.value }))}
+                      className="crm-input"
+                      style={{ marginTop: "8px" }}
+                    />
+                  )}
                 </Field>
                 <Field label="Fecha *">
                   <input type="date" value={gastoRec.fecha}
@@ -1618,20 +1637,37 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                 </Field>
               </div>
 
-              {/* Auto monto */}
-              <div style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "10px 14px", borderRadius: "8px",
-                background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.25)",
-                marginBottom: "14px",
-              }}>
-                <span style={{ fontSize: "12px", color: "#4ade80", fontWeight: 600 }}>
-                  Monto por agente (desde config):
-                </span>
-                <span style={{ fontSize: "16px", fontWeight: 800, color: "#059669" }}>
-                  {fmtUSD(gastoRecMonto)}
-                </span>
-              </div>
+              {/* Monto — editable si es "Otro", desde config en el resto */}
+              {gastoRec.concepto === "Otro" ? (
+                <div style={{ marginBottom: "14px" }}>
+                  <label style={{ display: "block", fontSize: "11px", color: "rgba(255,255,255,0.45)", marginBottom: "4px" }}>
+                    Monto por agente (USD) *
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    value={gastoRecMontoManual}
+                    onChange={e => setGastoRecMontoManual(e.target.value)}
+                    className="crm-input"
+                  />
+                </div>
+              ) : (
+                <div style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "10px 14px", borderRadius: "8px",
+                  background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.25)",
+                  marginBottom: "14px",
+                }}>
+                  <span style={{ fontSize: "12px", color: "#4ade80", fontWeight: 600 }}>
+                    Monto por agente (desde config):
+                  </span>
+                  <span style={{ fontSize: "16px", fontWeight: 800, color: "#059669" }}>
+                    {fmtUSD(gastoRecMonto)}
+                  </span>
+                </div>
+              )}
 
               {/* Multi-select agentes */}
               <Field label={`Agentes (${selectedAgentesRec.size} seleccionados) *`}>
