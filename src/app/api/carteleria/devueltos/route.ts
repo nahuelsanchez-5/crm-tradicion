@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 import { getSession } from "@/lib/auth-guard"
+import { limitesMesArgentina } from "@/lib/fecha"
+import { esEnteroEnRango } from "@/lib/validate"
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const session = await getSession()
@@ -12,14 +14,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const month = parseInt(searchParams.get("month") ?? "0")
     const year  = parseInt(searchParams.get("year")  ?? "0")
 
-    if (!month || !year) {
-      return NextResponse.json({ error: "month y year son requeridos" }, { status: 400 })
+    if (!esEnteroEnRango(month, 1, 12) || !esEnteroEnRango(year, 2000, 2100)) {
+      return NextResponse.json({ error: "month (1-12) y year (2000-2100) son requeridos" }, { status: 400 })
     }
 
-    const startDate = `${year}-${String(month).padStart(2, "0")}-01`
-    const endYear   = month === 12 ? year + 1 : year
-    const endMonth  = month === 12 ? 1 : month + 1
-    const endDate   = `${endYear}-${String(endMonth).padStart(2, "0")}-01`
+    const { desde: startDate, hasta: endDate } = limitesMesArgentina(year, month)
 
     const supabase = createServerClient()
     const { data, error } = await supabase

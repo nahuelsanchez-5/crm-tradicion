@@ -3,12 +3,13 @@ export const dynamic = "force-dynamic"
 import { getConfig } from "./actions"
 import ConfiguracionClient from "./ConfiguracionClient"
 import { createServerClient } from "@/lib/supabase"
+import { limitesMesArgentina, mesAnioArgentina } from "@/lib/fecha"
 
 export default async function ConfiguracionPage() {
   const supabase  = createServerClient()
-  const year      = new Date().getFullYear()
-  const startDate = `${year}-01-01`
-  const endDate   = `${year + 1}-01-01`
+  const { anio: year } = mesAnioArgentina()
+  const startDate = limitesMesArgentina(year, 1).desde
+  const endDate   = limitesMesArgentina(year, 12).hasta
 
   const [entries, { data: devueltosRaw }] = await Promise.all([
     getConfig(),
@@ -20,12 +21,15 @@ export default async function ConfiguracionPage() {
   ])
 
   const devueltos = devueltosRaw ?? []
-  const recuperadosPorMes = Array.from({ length: 12 }, (_, i) => {
-    const mes = String(i + 1).padStart(2, "0")
-    return devueltos.filter(r =>
-      (r.fecha_devolucion as string).startsWith(`${year}-${mes}`)
-    ).length
-  })
+  // El mes de cada devolución se toma en hora Argentina (no por prefijo del string UTC)
+  const recuperadosPorMes = Array.from({ length: 12 }, () => 0)
+  for (const r of devueltos) {
+    const mes = parseInt(
+      new Date(r.fecha_devolucion as string).toLocaleDateString("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).slice(5, 7),
+      10,
+    )
+    if (mes >= 1 && mes <= 12) recuperadosPorMes[mes - 1]++
+  }
 
   return <ConfiguracionClient initialEntries={entries} recuperadosPorMes={recuperadosPorMes} />
 }

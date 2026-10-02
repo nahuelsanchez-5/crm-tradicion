@@ -1,11 +1,10 @@
 import { createServerClient } from "@/lib/supabase"
 import AgentesClient from "./AgentesClient"
+import { mesAnioArgentina } from "@/lib/fecha"
 
 export default async function AgentesPage() {
   const supabase = createServerClient()
-  const now  = new Date()
-  const mes  = now.getMonth() + 1
-  const anio = now.getFullYear()
+  const { mes, anio } = mesAnioArgentina()
   const mesStr  = `${anio}-${String(mes).padStart(2, "0")}`
   const anioStr = String(anio)
 
@@ -41,7 +40,7 @@ export default async function AgentesPage() {
 
     supabase
       .from("ofertas")
-      .select("agente_vendedor")
+      .select("agente_vendedor_id, agente_vendedor_externo")
       .neq("estado", "Cerradas")
       .neq("estado", "Caídas"),
   ])
@@ -79,9 +78,12 @@ export default async function AgentesPage() {
 
   // Ofertas activas por nombre de agente
   const ofertasActivasNombre: Record<string, number> = {}
+  const nombrePorId = new Map((agentes ?? []).map(a => [a.id as string, a.nombre as string]))
   for (const o of (ofertasRaw ?? [])) {
-    if (o.agente_vendedor) {
-      const k = (o.agente_vendedor as string).toLowerCase().trim()
+    const nombre = (o.agente_vendedor_id ? nombrePorId.get(o.agente_vendedor_id as string) : null)
+      ?? (o.agente_vendedor_externo as string | null)
+    if (nombre) {
+      const k = nombre.toLowerCase().trim()
       ofertasActivasNombre[k] = (ofertasActivasNombre[k] ?? 0) + 1
     }
   }

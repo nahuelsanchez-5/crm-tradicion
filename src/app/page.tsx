@@ -6,6 +6,8 @@ import StatusBadge from "@/components/StatusBadge"
 import Link from "next/link"
 import { Users, Building2, DollarSign, Handshake, Clock } from "lucide-react"
 import { fmtUSD } from "@/lib/format"
+import { mesAnioArgentina } from "@/lib/fecha"
+import { CLAVE_OBJETIVO_ANUAL, calcObjetivoMes, parseObjetivoAnual, realDelMes } from "@/lib/objetivos"
 
 const MES_NAMES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
                    "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
@@ -36,6 +38,7 @@ function extractPlan(concepto: string) {
 }
 
 interface PagoRow {
+  fecha: string
   concepto: string
   monto_debe: number
   monto_pagado: number
@@ -69,9 +72,7 @@ export interface OfertaActiva {
 
 export default async function DashboardPage() {
   const supabase  = createServerClient()
-  const now       = new Date()
-  const MES       = now.getMonth() + 1
-  const ANIO      = now.getFullYear()
+  const { mes: MES, anio: ANIO } = mesAnioArgentina()
   const MES_LABEL = `${MES_NAMES[MES - 1]} ${ANIO}`
 
   const mesStr       = String(MES).padStart(2, "0")
@@ -84,6 +85,7 @@ export default async function DashboardPage() {
     { data: agentesListData },
     { data: opsMesData },
     { data: facturacionData },
+    { data: objAnualConfig },
     { count: ofertasEnCursoCount },
     { data: ofertasSinActividadRaw },
     { data: ofertasActivasRaw },
@@ -98,9 +100,10 @@ export default async function DashboardPage() {
       .gte("fecha", `${ANIO}-${mesStr}-01`)
       .lt("fecha",  `${anioSig}-${mesSiguiente}-01`),
     supabase.from("facturacion")
-      .select("objetivo_usd, real_usd")
+      .select("real_usd")
       .eq("mes", MES).eq("anio", ANIO)
       .maybeSingle(),
+    supabase.from("config").select("valor").eq("clave", CLAVE_OBJETIVO_ANUAL).maybeSingle(),
     supabase.from("ofertas")
       .select("id", { count: "exact", head: true })
       .neq("estado", "Cerradas")
@@ -131,7 +134,7 @@ export default async function DashboardPage() {
       .eq("mes", MES).eq("anio", ANIO)
       .maybeSingle(),
     supabase.from("pagos")
-      .select("concepto, monto_debe, monto_pagado, estado, agentes(nombre)")
+      .select("fecha, concepto, monto_debe, monto_pagado, estado, agentes(nombre)")
       .in("estado", ["Pendiente", "Parcial"])
       .order("fecha", { ascending: false })
       .limit(5),
@@ -157,10 +160,12 @@ export default async function DashboardPage() {
   const ofertasSinActividad = (ofertasSinActividadRaw ?? []) as OfertaSinActividad[]
   const ofertasActivas      = (ofertasActivasRaw ?? []) as OfertaActiva[]
 
-  const factReal  = ((opsMesData ?? []) as Array<{ comision_bruta: number }>).reduce((s, o) => s + (Number(o.comision_bruta) || 0), 0)
-  const factObj   = Number(facturacionData?.objetivo_usd ?? 1)
+  // Misma regla que Facturación y Resumen: carga manual si existe (>0), si no comisiones de Operaciones
+  const comisionesMes = ((opsMesData ?? []) as Array<{ comision_bruta: number }>).reduce((s, o) => s + (Number(o.comision_bruta) || 0), 0)
+  const factReal  = realDelMes(facturacionData?.real_usd, comisionesMes)
+  const factObj   = calcObjetivoMes(parseObjetivoAnual(objAnualConfig?.valor), MES)
   const factLabel = fmtUSD(factReal)
-  const factPct   = facturacionData?.objetivo_usd ? Math.round((factReal / factObj) * 100) : null
+  const factPct   = factObj > 0 ? Math.round((factReal / factObj) * 100) : null
 
   const opsFeed   = (opsFeedRaw ?? []) as OperacionRow[]
   const pagos     = ((pagosRaw  ?? []) as unknown) as PagoRow[]
@@ -292,7 +297,7 @@ export default async function DashboardPage() {
               </div>
               {pagos.length === 0 ? (
                 <div className="px-5 py-8 text-center text-crm-md" style={{ color: "var(--crm-text-muted)" }}>
-                  ✓ No hay pagos pendientes este mes
+                  ✓ No hay pagos pendientes
                 </div>
               ) : (
                 <>
@@ -314,7 +319,7 @@ export default async function DashboardPage() {
                           <tr key={i}>
                             <td>
                               <p className="font-semibold m-0" style={{ color: "var(--crm-text)" }}>{nombre}</p>
-                              <p className="text-crm-xs mt-0.5 m-0" style={{ color: "var(--crm-text-muted)" }}>{MES_LABEL}</p>
+                              <p className="text-crm-xs mt-0.5 m-0" style={{ color: "var(--crm-text-muted)" }}>{p.fecha ? fmtFecha(p.fecha) : "—"}</p>
                             </td>
                             <td><StatusBadge estado={plan} /></td>
                             <td className="font-bold" style={{ color: "var(--crm-text)" }}>{fmtUSD(p.monto_debe)}</td>

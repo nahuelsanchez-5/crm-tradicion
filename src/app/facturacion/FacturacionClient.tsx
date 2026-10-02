@@ -9,6 +9,7 @@ import type { FacturacionFormData } from "./actions"
 import { DollarSign, TrendingUp, Award, Loader2 } from "lucide-react"
 import Topbar from "@/components/Topbar"
 import { fmtUSD } from "@/lib/format"
+import { ESTACIONALIDAD_PCT, calcObjetivoMes, realDelMes } from "@/lib/objetivos"
 
 // ── Constants ────────────────────────────────────────
 const MONTH_NAMES = [
@@ -16,16 +17,6 @@ const MONTH_NAMES = [
   "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
 ]
 
-const ANIO = new Date().getFullYear()
-
-const OBJETIVO_ANUAL_USD = 710_000
-
-// Estacionalidad (índice 0 = Enero … 11 = Diciembre), suma = 100%
-const ESTACIONALIDAD_PCT = [4.72, 5.41, 7.12, 6.82, 8.41, 9.15, 8.66, 9.64, 9.42, 9.65, 9.78, 11.22]
-
-function calcObjetivoMes(mes: number): number {
-  return Math.round(OBJETIVO_ANUAL_USD * ESTACIONALIDAD_PCT[mes - 1] / 100)
-}
 
 // ── Types ────────────────────────────────────────────
 export interface FacturacionRow {
@@ -157,15 +148,16 @@ function EstadoBadge({ p, isFuture, real }: { p: number; isFuture: boolean; real
 interface Props {
   rows: FacturacionRow[]
   comisionesPorMes: Record<string, number>
+  anio: number          // año actual (hora Argentina), calculado en el server
+  mesActual: number     // 1-12, hora Argentina
+  objetivoAnual: number // config `obj_anual_usd`
 }
 
-export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
+export default function FacturacionClient({ rows, comisionesPorMes, anio: ANIO, mesActual: currentMonth, objetivoAnual }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   // ── Build 12-month grid ────────────────────────────
-  const currentMonth = new Date().getMonth() + 1  // 1-12
-
   const meses: MesData[] = useMemo(() => {
     return MONTH_NAMES.map((nombre, idx) => {
       const mes = idx + 1
@@ -175,14 +167,14 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
       return {
         mes,
         nombre,
-        objetivo_usd: calcObjetivoMes(mes),
-        real_usd:     tieneGuardado ? row!.real_usd : enVivo,
+        objetivo_usd: calcObjetivoMes(objetivoAnual, mes),
+        real_usd:     realDelMes(row?.real_usd, enVivo),
         id:           row?.id       ?? null,
         isFuture:     mes > currentMonth,
         esEnVivo:     !tieneGuardado && enVivo > 0,
       }
     })
-  }, [rows, currentMonth, comisionesPorMes])
+  }, [rows, currentMonth, comisionesPorMes, ANIO, objetivoAnual])
 
   // ── KPI stats ──────────────────────────────────────
   const stats = useMemo(() => {
@@ -223,7 +215,7 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
     if (!modalMes) return
 
     const real = parseFloat(form.real_usd) || 0
-    const obj  = calcObjetivoMes(modalMes.mes)
+    const obj  = calcObjetivoMes(objetivoAnual, modalMes.mes)
 
     const payload: FacturacionFormData = {
       mes:          modalMes.mes,
@@ -256,7 +248,7 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
             fontSize: "11px", fontWeight: 700, letterSpacing: "1.2px",
             textTransform: "uppercase" as const, color: "var(--crm-text-muted)", marginBottom: "6px",
           }}>
-            Objetivo anual · {fmtUSD(OBJETIVO_ANUAL_USD)}
+            Objetivo anual · {fmtUSD(objetivoAnual)}
           </div>
           <h1 style={{
             fontSize: "27px", fontWeight: 800, letterSpacing: "-0.02em",
@@ -491,13 +483,13 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
                     display: "flex", alignItems: "center", justifyContent: "space-between",
                   }}>
                     <span style={{ fontWeight: 700, color: "var(--crm-text)" }}>
-                      {fmtUSD(calcObjetivoMes(modalMes.mes))}
+                      {fmtUSD(calcObjetivoMes(objetivoAnual, modalMes.mes))}
                     </span>
                     <span style={{
                       fontSize: "11px", background: "rgba(96,165,250,0.12)", color: "#60a5fa",
                       padding: "2px 8px", borderRadius: "6px", fontWeight: 600,
                     }}>
-                      {ESTACIONALIDAD_PCT[modalMes.mes - 1]}% × {fmtUSD(OBJETIVO_ANUAL_USD)}
+                      {ESTACIONALIDAD_PCT[modalMes.mes - 1]}% × {fmtUSD(objetivoAnual)}
                     </span>
                   </div>
                 </Field>
@@ -538,11 +530,11 @@ export default function FacturacionClient({ rows, comisionesPorMes }: Props) {
                   <span style={{
                     fontWeight: 800, fontSize: "16px",
                     color: (() => {
-                      const p = pct(parseFloat(form.real_usd) || 0, calcObjetivoMes(modalMes.mes))
+                      const p = pct(parseFloat(form.real_usd) || 0, calcObjetivoMes(objetivoAnual, modalMes.mes))
                       return p >= 100 ? "#4ade80" : p >= 80 ? "#0D9488" : "var(--crm-accent)"
                     })(),
                   }}>
-                    {pct(parseFloat(form.real_usd) || 0, calcObjetivoMes(modalMes.mes))}%
+                    {pct(parseFloat(form.real_usd) || 0, calcObjetivoMes(objetivoAnual, modalMes.mes))}%
                   </span>
                 </div>
               )}

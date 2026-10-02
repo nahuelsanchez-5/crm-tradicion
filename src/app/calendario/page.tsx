@@ -24,7 +24,8 @@ function nextMainstreetDate(fechaStr: string, today: Date): string {
   const candidate = new Date(alta)
   const t = new Date(today); t.setHours(0, 0, 0, 0)
   candidate.setFullYear(t.getFullYear())
-  if (candidate <= t) candidate.setFullYear(t.getFullYear() + 1)
+  // `<` (no `<=`): si el aniversario es hoy se muestra hoy, igual que en Agentes y Alertas
+  if (candidate < t) candidate.setFullYear(t.getFullYear() + 1)
   return candidate.toISOString().split("T")[0]
 }
 

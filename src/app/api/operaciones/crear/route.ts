@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 import { getSession } from "@/lib/auth-guard"
 import { hoyArgentina } from "@/lib/fecha"
+import { esNumeroNoNegativo, esUUIDValido } from "@/lib/validate"
 
 const VALID_TIPOS = ["Venta", "Alquiler", "Alquiler Temporal", "Referido", "Otro"]
 
@@ -16,8 +17,11 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as { oferta_id?: string; precio_acordado_usd?: number }
     const { oferta_id, precio_acordado_usd } = body
 
-    if (!oferta_id) {
-      return NextResponse.json({ success: false, error: "oferta_id requerido" }, { status: 400 })
+    if (!esUUIDValido(oferta_id)) {
+      return NextResponse.json({ success: false, error: "oferta_id inválido" }, { status: 400 })
+    }
+    if (precio_acordado_usd != null && !esNumeroNoNegativo(precio_acordado_usd)) {
+      return NextResponse.json({ success: false, error: "precio_acordado_usd inválido" }, { status: 400 })
     }
 
     const supabase = createServerClient()

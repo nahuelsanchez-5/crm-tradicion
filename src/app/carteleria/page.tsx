@@ -1,5 +1,6 @@
 import { createServerClient } from "@/lib/supabase"
 import CarteleriaClient, { CartelRow } from "./CarteleriaClient"
+import { limitesMesArgentina, mesAnioArgentina } from "@/lib/fecha"
 
 // ── Field IDs de Airtable ─────────────────────────────
 const FIELD_IDS = [
@@ -56,13 +57,8 @@ async function fetchCarteles(): Promise<CartelRow[]> {
 export default async function CarteleriaPage() {
   const supabase = createServerClient()
 
-  const now       = new Date()
-  const year      = now.getFullYear()
-  const month     = now.getMonth() + 1
-  const startDate = `${year}-${String(month).padStart(2, "00")}-01`
-  const endYear   = month === 12 ? year + 1 : year
-  const endMonth  = month === 12 ? 1 : month + 1
-  const endDate   = `${endYear}-${String(endMonth).padStart(2, "00")}-01`
+  const { anio: year, mes: month } = mesAnioArgentina()
+  const { desde: startDate, hasta: endDate } = limitesMesArgentina(year, month)
 
   const [carteles, { data: agentesRaw }, { data: recuperadosRaw }] = await Promise.all([
     fetchCarteles(),

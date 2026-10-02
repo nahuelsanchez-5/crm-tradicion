@@ -14,7 +14,7 @@ import { esStringNoVacio, esFechaValida, esUUIDValido, esNumeroNoNegativo, esEnt
 //   tipo        text NOT NULL,   -- 'ESPONTANEA' | 'MAILING'
 //   subtipo     text,            -- 'Comprador' | 'Vendedor' (ESPONTANEA)
 //   referencia  text NOT NULL,   -- oferta numero (ESPONTANEA) | agente nombre (MAILING)
-//   nps         integer CHECK (nps >= -100 AND nps <= 100),
+//   nps         integer CHECK (nps >= -100 AND nps <= 100),  -- el server valida 0..10 (nota por respuesta)
 //   comentario  text,
 //   created_at  timestamptz DEFAULT now()
 // );
@@ -43,7 +43,7 @@ export async function registrarEncuesta(data: RegistroEncuestaData) {
   if (!esFechaValida(data.fecha))                     return { error: "Fecha inválida" }
   if (!esUnoDe(data.tipo, ["ESPONTANEA", "MAILING"])) return { error: "Tipo de encuesta inválido" }
   if (!esStringNoVacio(data.referencia))              return { error: "La referencia no puede estar vacía" }
-  if (data.nps != null && !esEnteroEnRango(data.nps, -100, 100)) return { error: "El NPS debe estar entre -100 y 100" }
+  if (data.nps != null && !esEnteroEnRango(data.nps, 0, 10)) return { error: "El NPS debe ser un entero entre 0 y 10" }
 
   const supabase = createServerClient()
 
@@ -69,7 +69,7 @@ export async function editarEncuesta(id: string, data: EditarEncuestaData) {
   if (!esFechaValida(data.fecha))                     return { error: "Fecha inválida" }
   if (!esUnoDe(data.tipo, ["ESPONTANEA", "MAILING"])) return { error: "Tipo de encuesta inválido" }
   if (!esStringNoVacio(data.referencia))              return { error: "La referencia no puede estar vacía" }
-  if (data.nps != null && !esEnteroEnRango(data.nps, -100, 100)) return { error: "El NPS debe estar entre -100 y 100" }
+  if (data.nps != null && !esEnteroEnRango(data.nps, 0, 10)) return { error: "El NPS debe ser un entero entre 0 y 10" }
 
   const supabase = createServerClient()
   const { error } = await supabase

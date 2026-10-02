@@ -3,10 +3,8 @@ import ResumenClient from "./ResumenClient"
 import type { KpiRow } from "./ResumenClient"
 import { fmtUSD } from "@/lib/format"
 import { getEfectivoPagaFee } from "@/lib/fee"
-
-// Estacionalidad — mismos valores que ConfiguracionClient.tsx ESTACIONALIDAD_PCT
-// Jan    Feb    Mar    Apr    May    Jun    Jul    Aug    Sep    Oct    Nov    Dec
-const SEASON_PCT = [4.72, 5.41, 7.12, 6.82, 8.41, 9.15, 8.66, 9.64, 9.42, 9.65, 9.78, 11.22]
+import { limitesMesArgentina, mesAnioArgentina } from "@/lib/fecha"
+import { CLAVE_OBJETIVO_ANUAL, calcObjetivoMes, parseObjetivoAnual, realDelMes } from "@/lib/objetivos"
 
 const MONTH_NAMES = [
   "Enero","Febrero","Marzo","Abril","Mayo","Junio",
@@ -37,9 +35,12 @@ export default async function ResumenPage({
   searchParams: Promise<{ mes?: string; anio?: string }>
 }) {
   const { mes, anio } = await searchParams
-  const now   = new Date()
-  const year  = anio ? Math.max(2020, Math.min(2099, parseInt(anio))) : now.getFullYear()
-  const month = mes  ? Math.max(1,    Math.min(12,   parseInt(mes)))  : now.getMonth() + 1
+  const hoy   = mesAnioArgentina()
+  // parseInt("abc") = NaN: si el parámetro no es un número válido se usa el mes/año actual
+  const anioParam = parseInt(anio ?? "", 10)
+  const mesParam  = parseInt(mes  ?? "", 10)
+  const year  = Number.isFinite(anioParam) ? Math.max(2020, Math.min(2099, anioParam)) : hoy.anio
+  const month = Number.isFinite(mesParam)  ? Math.max(1,    Math.min(12,   mesParam))  : hoy.mes
 
   const supabase  = createServerClient()
   const startDate = `${year}-${String(month).padStart(2, "0")}-01`
@@ -53,6 +54,7 @@ export default async function ResumenPage({
     { data: encuestas },
     { data: operaciones },
     { data: configs },
+    { data: factManual },
     { count: cartelesDevueltosCount },
   ] = await Promise.all([
     supabase.from("pagos")
@@ -70,18 +72,22 @@ export default async function ResumenPage({
       .gte("fecha", startDate).lt("fecha", endDate),
     supabase.from("config")
       .select("clave, valor")
-      .in("clave", ["obj_facturacion_anual", "obj_encuestas_pct", objCartelesMesKey]),
+      .in("clave", [CLAVE_OBJETIVO_ANUAL, "obj_encuestas_pct", objCartelesMesKey]),
+    supabase.from("facturacion")
+      .select("real_usd")
+      .eq("mes", month).eq("anio", year)
+      .maybeSingle(),
     supabase.from("carteles_devueltos")
       .select("*", { count: "exact", head: true })
-      .gte("fecha_devolucion", startDate)
-      .lt("fecha_devolucion", endDate),
+      .gte("fecha_devolucion", limitesMesArgentina(year, month).desde)
+      .lt("fecha_devolucion", limitesMesArgentina(year, month).hasta),
   ])
 
   const cartelesCount = cartelesDevueltosCount ?? 0
 
   // ── Config values ────────────────────────────────────────
   const configMap    = Object.fromEntries((configs ?? []).map(c => [c.clave, c.valor]))
-  const objFactAnual = parseFloat(configMap.obj_facturacion_anual ?? "710000") || 710000
+  const objFactAnual = parseObjetivoAnual(configMap[CLAVE_OBJETIVO_ANUAL])
   const objEncPct    = parseInt(configMap.obj_encuestas_pct       ?? "60")     || 60
   const objCartelesMes = parseInt(configMap[objCartelesMesKey]    ?? "0")      || 0
 
@@ -91,22 +97,17 @@ export default async function ResumenPage({
   const activos      = agentesData.filter(a => a.activo)
 
   // FEE: agentes que efectivamente pagan fee (override manual o cálculo 180 días + quincena)
-  const agentesFee   = Math.max(
-    activos.filter(a => getEfectivoPagaFee(a.fecha_alta, a.paga_fee)).length,
-    1
-  )
+  const agentesFee   = activos.filter(a => getEfectivoPagaFee(a.fecha_alta, a.paga_fee)).length
 
   // CRM: solo PRO y PRO+ — Bonificado (B QR, B Ofi) y sin plan NO cuentan
   const agenteCrmIds = new Set(
     activos.filter(a => a.tipo_plan === "PRO" || a.tipo_plan === "PRO+").map(a => a.id)
   )
-  const agentesCrm   = Math.max(agenteCrmIds.size, 1)
+  const agentesCrm   = agenteCrmIds.size
 
   // Mainstreet: solo agentes cuyo aniversario (mes de fecha_mainstreet) cae en el mes seleccionado
-  const agentesMainstreet = Math.max(
-    activos.filter(a => a.fecha_mainstreet && new Date(a.fecha_mainstreet + "T00:00:00").getMonth() + 1 === month).length,
-    1
-  )
+  const agentesMainstreet =
+    activos.filter(a => a.fecha_mainstreet && new Date(a.fecha_mainstreet + "T00:00:00").getMonth() + 1 === month).length
 
   const feePagados  = new Set(pagosData.filter(p => getConceptGroup(p.concepto) === "FEE"        && p.estado === "Pagado").map(p => p.agente_id)).size
   // crmPagados solo cuenta agentes que efectivamente tienen plan PRO/PRO+
@@ -114,13 +115,18 @@ export default async function ResumenPage({
   const mainPagados = new Set(pagosData.filter(p => getConceptGroup(p.concepto) === "Mainstreet" && p.estado === "Pagado").map(p => p.agente_id)).size
 
   // Individual pcts for display
-  const feePct  = Math.round((feePagados  / agentesFee)   * 100)
-  const crmPct  = Math.round((crmPagados  / agentesCrm)   * 100)
-  const mainPct = Math.round((mainPagados / agentesMainstreet) * 100)
+  // Un grupo sin agentes esperados (ej: mes sin aniversarios Mainstreet) no entra en el cálculo
+  const pctGrupo = (pagados: number, esperados: number) => esperados > 0 ? Math.round((pagados / esperados) * 100) : 0
+  const feePct  = pctGrupo(feePagados,  agentesFee)
+  const crmPct  = pctGrupo(crmPagados,  agentesCrm)
+  const mainPct = pctGrupo(mainPagados, agentesMainstreet)
 
   // Ponderada: SUMA(cobrado) / SUMA(total) × 100
-  const cobrosPct    = Math.round(((feePagados + crmPagados + mainPagados) / (agentesFee + agentesCrm + agentesMainstreet)) * 100)
-  const cobrosACobrar = cobrosPct >= 100 ? 100 : 0
+  const cobrosEsperados = agentesFee + agentesCrm + agentesMainstreet
+  const cobrosRatio     = cobrosEsperados > 0 ? (feePagados + crmPagados + mainPagados) / cobrosEsperados : 0
+  const cobrosPct       = Math.round(cobrosRatio * 100)
+  // El bono se evalúa sobre el ratio exacto (99,5% redondeado a 100 no debe cobrar)
+  const cobrosACobrar   = cobrosEsperados > 0 && cobrosRatio >= 1 ? 100 : 0
 
   // ── Cartelería — fórmula: recuperados / objetivo_mes × 100 ─────────────────
   const pctCartMes = objCartelesMes > 0
@@ -158,8 +164,10 @@ export default async function ResumenPage({
   const encACobrar  = totalEncuestasEsperadas > 0 && tasaRespPct >= objEncPct ? 100 : 0
 
   // ── Facturación ──────────────────────────────────────────
-  const comisionTotal  = (operaciones ?? []).reduce((s, o) => s + (Number(o.comision_bruta) || 0), 0)
-  const objFactMensual = objFactAnual * SEASON_PCT[month - 1] / 100
+  // Misma regla que Dashboard y Facturación: carga manual si existe (>0), si no comisiones de Operaciones
+  const comisiones     = (operaciones ?? []).reduce((s, o) => s + (Number(o.comision_bruta) || 0), 0)
+  const comisionTotal  = realDelMes(factManual?.real_usd, comisiones)
+  const objFactMensual = calcObjetivoMes(objFactAnual, month)
   const factRatio      = objFactMensual > 0 ? comisionTotal / objFactMensual : 0
   const factACobrar    = factRatio >= 1 ? 100 : 0
 

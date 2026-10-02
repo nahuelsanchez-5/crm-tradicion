@@ -1,5 +1,6 @@
 import { createServerClient } from "@/lib/supabase"
 import EncuestasClient from "./EncuestasClient"
+import { mesAnioArgentina } from "@/lib/fecha"
 
 export interface RegistroRow {
   id:         string
@@ -32,12 +33,10 @@ function contarPuntasInternas(agentesTexto: string, nombresInternos: Set<string>
 
 export default async function EncuestasPage() {
   const supabase  = createServerClient()
-  const now       = new Date()
-  const anio      = now.getFullYear()
-  const mesActual = now.getMonth() + 1
+  const { anio, mes: mesActual } = mesAnioArgentina()
 
   // Query last 6 months of individual records
-  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1)
+  const sixMonthsAgo = new Date(Date.UTC(anio, mesActual - 1 - 5, 1))
   const desde = sixMonthsAgo.toISOString().split("T")[0]
 
   const { data: registros } = await supabase

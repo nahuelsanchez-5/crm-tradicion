@@ -1,10 +1,11 @@
-﻿"use client"
+"use client"
 
 import { useState, useTransition } from "react"
 import { guardarConfig } from "./actions"
 import type { ConfigEntry } from "./actions"
 import { Settings, Save, Loader2, Check } from "lucide-react"
 import Topbar from "@/components/Topbar"
+import { CLAVE_OBJETIVO_ANUAL, ESTACIONALIDAD_PCT, calcObjetivoMes, parseObjetivoAnual } from "@/lib/objetivos"
 
 // ── Default config (seeds empty tables) ──────────────
 const DEFAULT_CONFIG: ConfigEntry[] = [
@@ -66,7 +67,6 @@ const MONTH_KEYS = [
   "enero","febrero","marzo","abril","mayo","junio",
   "julio","agosto","septiembre","octubre","noviembre","diciembre",
 ]
-const ESTACIONALIDAD_PCT = [4.72, 5.41, 7.12, 6.82, 8.41, 9.15, 8.66, 9.64, 9.42, 9.65, 9.78, 11.22]
 
 const TEXTAREA_CLAVES = new Set(["mensaje_whatsapp"])
 
@@ -273,8 +273,7 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
                   <tbody>
                     {MONTH_NAMES.map((nombre, idx) => {
                       const pct    = ESTACIONALIDAD_PCT[idx]
-                      const anual  = parseFloat(values["obj_anual_usd"] || "710000") || 710000
-                      const obj    = Math.round(anual * pct / 100)
+                      const obj    = calcObjetivoMes(parseObjetivoAnual(values[CLAVE_OBJETIVO_ANUAL]), idx + 1)
                       const isLast = idx === 11
                       return (
                         <tr key={nombre} style={{ borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)" }}>

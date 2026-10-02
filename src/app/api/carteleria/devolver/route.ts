@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 import { getSession } from "@/lib/auth-guard"
+import { ahoraArgentinaISO } from "@/lib/fecha"
+import { esEnteroPositivo } from "@/lib/validate"
 
 const AIRTABLE_TABLE_URL = `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${process.env.AIRTABLE_CARTELERIA_TABLE_ID}`
 
@@ -20,12 +22,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     const { airtable_record_id, nro_cartel, direccion, agente, tipo_propiedad } = body
 
-    if (!nro_cartel) {
-      return NextResponse.json({ success: false, error: "Datos incompletos" }, { status: 400 })
+    if (!esEnteroPositivo(nro_cartel)) {
+      return NextResponse.json({ success: false, error: "Número de cartel inválido" }, { status: 400 })
+    }
+    // El id de Airtable se concatena en la URL del DELETE: solo se acepta el formato real "rec…"
+    if (airtable_record_id != null && !/^rec[A-Za-z0-9]{10,20}$/.test(airtable_record_id)) {
+      return NextResponse.json({ success: false, error: "ID de Airtable inválido" }, { status: 400 })
+    }
+    for (const campo of [direccion, agente, tipo_propiedad]) {
+      if (campo != null && (typeof campo !== "string" || campo.length > 300)) {
+        return NextResponse.json({ success: false, error: "Datos inválidos" }, { status: 400 })
+      }
     }
 
     const supabase         = createServerClient()
-    const fecha_devolucion = new Date().toISOString()
+    // Hora Argentina (-03:00): con toISOString() un cartel devuelto después de las 21hs
+    // del último día del mes contaba en el mes siguiente.
+    const fecha_devolucion = ahoraArgentinaISO()
 
     // 1. INSERT en Supabase
     const { data: inserted, error: insertError } = await supabase
