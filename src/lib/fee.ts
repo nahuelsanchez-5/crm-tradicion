@@ -3,7 +3,9 @@
 // Solo cuando paga_fee es null se calcula automático: 180 días de antigüedad + regla de quincena
 // (si el día 180 cae en la 2da quincena —día 16 en adelante—, el fee arranca recién el mes siguiente).
 
-export function getEfectivoPagaFee(fechaAlta: string, pagaFeeManual: boolean | null): boolean {
+// `refDate`: mes contra el que se evalúa (por defecto hoy). Para un Resumen de un mes pasado hay que
+// pasar ese mes; si no, "quién paga fee" cambia retroactivamente con el paso del tiempo.
+export function getEfectivoPagaFee(fechaAlta: string, pagaFeeManual: boolean | null, refDate: Date = new Date()): boolean {
   if (pagaFeeManual !== null) return pagaFeeManual
 
   const alta = new Date(fechaAlta + "T00:00:00")
@@ -16,8 +18,7 @@ export function getEfectivoPagaFee(fechaAlta: string, pagaFeeManual: boolean | n
     ? new Date(cumple180.getFullYear(), cumple180.getMonth() + 1, 1)
     : new Date(cumple180.getFullYear(), cumple180.getMonth(), 1)
 
-  const hoy = new Date()
-  const inicioMesActual = new Date(hoy.getFullYear(), hoy.getMonth(), 1)
+  const inicioMesRef = new Date(refDate.getFullYear(), refDate.getMonth(), 1)
 
-  return mesEfectivo <= inicioMesActual
+  return mesEfectivo <= inicioMesRef
 }

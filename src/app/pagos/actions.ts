@@ -1,5 +1,6 @@
 "use server"
 
+import { mensajeErrorDB } from "@/lib/errores"
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 import { requireSession } from "@/lib/auth-guard"
@@ -55,7 +56,7 @@ export async function crearPago(data: {
     estado,
   })
 
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
 
   revalidatePath("/pagos")
   return { success: true }
@@ -89,7 +90,7 @@ export async function crearGasto(data: {
     estado:       "Pendiente",
   })
 
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
 
   revalidatePath("/pagos")
   return { success: true }
@@ -127,7 +128,7 @@ export async function crearGastoRecurrente(data: {
 
   const { error } = await supabase.from("pagos").insert(rows)
 
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
 
   revalidatePath("/pagos")
   return { success: true }
@@ -148,7 +149,7 @@ export async function eliminarPago(id: string) {
     .delete()
     .eq("id", id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
 
   revalidatePath("/pagos")
   return { success: true }
@@ -179,7 +180,7 @@ export async function registrarSaldoFavor(data: {
     estado:       "Pagado",
   })
 
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
 
   revalidatePath("/pagos")
   return { success: true }
@@ -250,7 +251,7 @@ export async function crearGastoConCredito(data: {
   // both add to the balance, making the agent appear to owe less than they actually do.
   const { data: saldos, error: saldosError } = await leerSaldosFIFO(supabase, data.agente_id)
 
-  if (saldosError) return { error: saldosError.message }
+  if (saldosError) return { error: mensajeErrorDB(saldosError) }
 
   // Validar ANTES de tocar nada: el crédito debe existir (si no, se creaba plata de la nada)
   const saldoDisponible = (saldos ?? []).reduce((s, x) => s + Number(x.monto_pagado), 0)
@@ -273,7 +274,7 @@ export async function crearGastoConCredito(data: {
     estado,
   })
 
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
 
   revalidatePath("/pagos")
   return { success: true }
@@ -302,7 +303,7 @@ export async function actualizarPago(
     .select("concepto, monto_debe")
     .eq("id", id)
     .maybeSingle()
-  if (fetchError) return { error: fetchError.message }
+  if (fetchError) return { error: mensajeErrorDB(fetchError) }
   if (!actual) return { error: "Pago no encontrado" }
 
   // Las filas de crédito ("Saldo a favor") tienen monto_debe 0: se editan tal cual.
@@ -320,7 +321,7 @@ export async function actualizarPago(
     .update({ monto_pagado: data.monto_pagado, estado })
     .eq("id", id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
 
   revalidatePath("/pagos")
   return { success: true }
@@ -350,7 +351,7 @@ export async function aplicarCreditoAPendientes(data: {
 
   // ── Validar TODO antes de modificar nada ──────────────────────────────────
   const { data: saldos, error: saldosError } = await leerSaldosFIFO(supabase, data.agente_id)
-  if (saldosError) return { error: saldosError.message }
+  if (saldosError) return { error: mensajeErrorDB(saldosError) }
 
   const saldoDisponible = (saldos ?? []).reduce((s, x) => s + Number(x.monto_pagado), 0)
   if (totalAplicar > saldoDisponible + EPS) {
@@ -362,7 +363,7 @@ export async function aplicarCreditoAPendientes(data: {
     .from("pagos")
     .select("id, agente_id, concepto, monto_debe, monto_pagado")
     .in("id", ids)
-  if (destinosError) return { error: destinosError.message }
+  if (destinosError) return { error: mensajeErrorDB(destinosError) }
 
   const destinoPorId = new Map((destinos ?? []).map(d => [d.id as string, d]))
   for (const ap of data.aplicaciones) {
@@ -386,7 +387,7 @@ export async function aplicarCreditoAPendientes(data: {
       .update({ monto_pagado: nuevoPagado, estado })
       .eq("id", ap.pago_id)
 
-    if (error) return { error: error.message }
+    if (error) return { error: mensajeErrorDB(error) }
   }
 
   const consumoError = await consumirSaldosFIFO(supabase, saldos ?? [], totalAplicar)

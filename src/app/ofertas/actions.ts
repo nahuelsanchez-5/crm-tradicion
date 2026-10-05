@@ -1,11 +1,13 @@
 "use server"
 
+import { mensajeErrorDB } from "@/lib/errores"
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 import { CHECKLIST_ITEMS } from "./checklist-items"
 import { requireSession } from "@/lib/auth-guard"
 import { hoyArgentina } from "@/lib/fecha"
-import { esStringNoVacio, esFechaValida, esUUIDValido, esMontoValido, esNumeroNoNegativo, esEnteroPositivo } from "@/lib/validate"
+import { esStringNoVacio, esFechaValida, esUUIDValido, esMontoValido, esNumeroNoNegativo, esEnteroPositivo, esUnoDe } from "@/lib/validate"
+import { ESTADOS_OFERTA, TIPOLOGIAS_VALIDAS, TIPOS_OPERACION_OFERTA_VALIDOS } from "@/lib/constantes"
 
 // ── Types ─────────────────────────────────────────────
 export interface EditarOfertaData {
@@ -56,8 +58,8 @@ export async function crearOferta(
 
   if (!esEnteroPositivo(data.numero))          return { error: "Número de oferta inválido" }
   if (!esStringNoVacio(data.direccion))        return { error: "La dirección no puede estar vacía" }
-  if (!esStringNoVacio(data.tipologia))        return { error: "La tipología no puede estar vacía" }
-  if (!esStringNoVacio(data.tipo_operacion))   return { error: "El tipo de operación no puede estar vacío" }
+  if (!esUnoDe(data.tipologia, TIPOLOGIAS_VALIDAS))                   return { error: "Tipología inválida" }
+  if (!esUnoDe(data.tipo_operacion, TIPOS_OPERACION_OFERTA_VALIDOS))  return { error: "Tipo de operación inválido" }
   if (!esFechaValida(data.fecha_oferta))       return { error: "Fecha de oferta inválida" }
   if (data.agente_vendedor_id  && !esUUIDValido(data.agente_vendedor_id))  return { error: "Agente vendedor inválido" }
   if (data.agente_comprador_id && !esUUIDValido(data.agente_comprador_id)) return { error: "Agente comprador inválido" }
@@ -94,7 +96,7 @@ export async function crearOferta(
     .select("id")
     .single()
 
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
 
   await supabase.from("ofertas_historial").insert({
     oferta_id:   oferta.id,
@@ -127,7 +129,7 @@ export async function cambiarEstado(
   await requireSession()
 
   if (!esUUIDValido(id))              return { error: "ID de oferta inválido" }
-  if (!esStringNoVacio(nuevoEstado)) return { error: "Estado inválido" }
+  if (!esUnoDe(nuevoEstado, ESTADOS_OFERTA)) return { error: "Estado inválido" }
   if (monto != null && !esNumeroNoNegativo(monto)) return { error: "Monto inválido" }
 
   const supabase = createServerClient()
@@ -138,7 +140,7 @@ export async function cambiarEstado(
   }
 
   const { error } = await supabase.from("ofertas").update(updates).eq("id", id)
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
 
   await supabase.from("ofertas_historial").insert({
     oferta_id:   id,
@@ -174,7 +176,7 @@ export async function agregarMovimiento(
     monto_usd:   monto ?? null,
   })
 
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
 
   revalidatePath(`/ofertas/${ofertaId}`)
   return {}
@@ -197,7 +199,7 @@ export async function toggleChecklist(
     .update({ completado })
     .eq("id", checklistId)
 
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
 
   revalidatePath(`/ofertas/${ofertaId}`)
   return {}
@@ -220,7 +222,7 @@ export async function registrarCierre(
     .from("ofertas")
     .update({ estado: "Cerradas", fecha_cierre: fecha, valor_escritura_usd: precioCierre })
     .eq("id", ofertaId)
-  if (ofertaError) return { error: ofertaError.message }
+  if (ofertaError) return { error: mensajeErrorDB(ofertaError) }
 
   await supabase.from("ofertas_historial").insert({
     oferta_id:   ofertaId,
@@ -244,8 +246,8 @@ export async function editarOferta(id: string, data: EditarOfertaData): Promise<
 
   if (!esUUIDValido(id))                     return { error: "ID de oferta inválido" }
   if (!esStringNoVacio(data.direccion))      return { error: "La dirección no puede estar vacía" }
-  if (!esStringNoVacio(data.tipologia))      return { error: "La tipología no puede estar vacía" }
-  if (!esStringNoVacio(data.tipo_operacion)) return { error: "El tipo de operación no puede estar vacío" }
+  if (!esUnoDe(data.tipologia, TIPOLOGIAS_VALIDAS))                   return { error: "Tipología inválida" }
+  if (!esUnoDe(data.tipo_operacion, TIPOS_OPERACION_OFERTA_VALIDOS))  return { error: "Tipo de operación inválido" }
   if (data.agente_vendedor_id  && !esUUIDValido(data.agente_vendedor_id))  return { error: "Agente vendedor inválido" }
   if (data.agente_comprador_id && !esUUIDValido(data.agente_comprador_id)) return { error: "Agente comprador inválido" }
   if (data.monto_ofertado_usd     != null && !esNumeroNoNegativo(data.monto_ofertado_usd))     return { error: "Monto ofertado inválido" }
@@ -281,7 +283,7 @@ export async function editarOferta(id: string, data: EditarOfertaData): Promise<
     })
     .eq("id", id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
 
   revalidatePath(`/ofertas/${id}`)
   revalidatePath("/ofertas")

@@ -1,3 +1,4 @@
+import { mensajeErrorDB } from "@/lib/errores"
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 import { getSession } from "@/lib/auth-guard"
@@ -339,7 +340,7 @@ async function executeAction(
       if (nuevoEstado === "Cerradas") updates.fecha_cierre = today
 
       const { error } = await supabase.from("ofertas").update(updates).eq("id", oferta.id)
-      if (error) return { success: false, message: error.message }
+      if (error) return { success: false, message: mensajeErrorDB(error) }
 
       await supabase.from("ofertas_historial").insert({
         oferta_id:   oferta.id,
@@ -375,7 +376,7 @@ async function executeAction(
         estado:       "Pagado",
       })
 
-      if (error) return { success: false, message: error.message }
+      if (error) return { success: false, message: mensajeErrorDB(error) }
       return {
         success: true,
         message: `✅ Pago de USD ${monto.toLocaleString("es-AR")} registrado para ${agente.nombre}`,
@@ -401,7 +402,7 @@ async function executeAction(
         encuesta_vendedor:  false,
       })
 
-      if (error) return { success: false, message: error.message }
+      if (error) return { success: false, message: mensajeErrorDB(error) }
       return { success: true, message: `✅ Operación registrada: ${direccion}` }
     }
 
@@ -422,7 +423,7 @@ async function executeAction(
         comentario: textoOpcional(params.comentario),
       })
 
-      if (error) return { success: false, message: error.message }
+      if (error) return { success: false, message: mensajeErrorDB(error) }
       return { success: true, message: `✅ Encuesta registrada (NPS: ${params.nps})` }
     }
 

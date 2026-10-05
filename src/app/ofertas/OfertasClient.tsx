@@ -1,5 +1,7 @@
 "use client"
 
+import { fmtFecha } from "@/lib/format"
+import { MONTH_NAMES } from "@/lib/constantes"
 import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -95,11 +97,6 @@ const TIPOLOGIA_STYLE: Record<string, { bg: string; color: string }> = {
   Otro:     { bg: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.5)" },
 }
 
-const MONTH_NAMES = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
-]
-
 const todayStr = hoyArgentina()
 
 const currentMonth = (() => {
@@ -133,12 +130,6 @@ function emptyForm(numero: number): FormData {
 }
 
 // ── Helpers ───────────────────────────────────────────
-function fmtFecha(s: string | null): string {
-  if (!s) return "—"
-  const [a, m, d] = s.split("-")
-  return `${parseInt(d)} ${MONTH_NAMES[parseInt(m) - 1].slice(0, 3)} ${a}`
-}
-
 function pctNeg(ofertado: number | null, publicacion: number | null): string {
   if (!ofertado || !publicacion || publicacion === 0) return "—"
   const pct = ((publicacion - ofertado) / publicacion) * 100

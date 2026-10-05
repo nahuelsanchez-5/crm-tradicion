@@ -6,7 +6,7 @@ import StatusBadge from "@/components/StatusBadge"
 import Link from "next/link"
 import { Users, Building2, DollarSign, Handshake, Clock } from "lucide-react"
 import { fmtUSD } from "@/lib/format"
-import { mesAnioArgentina } from "@/lib/fecha"
+import { limitesMesArgentina, mesAnioArgentina } from "@/lib/fecha"
 import { CLAVE_OBJETIVO_ANUAL, calcObjetivoMes, parseObjetivoAnual, realDelMes } from "@/lib/objetivos"
 
 const MES_NAMES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
@@ -90,8 +90,8 @@ export default async function DashboardPage() {
     { data: ofertasSinActividadRaw },
     { data: ofertasActivasRaw },
     { data: opsFeedRaw },
-    { data: cartelesData },
-    { data: encuestasData },
+    { count: cartelesRecuperados },
+    { data: encuestasMes },
     { data: pagosRaw },
   ] = await Promise.all([
     supabase.from("agentes").select("id, activo, fecha_alta, fecha_baja"),
@@ -125,14 +125,16 @@ export default async function DashboardPage() {
       .select("fecha, direccion, agentes, tipo, comision_neta")
       .order("fecha", { ascending: false })
       .limit(5),
-    supabase.from("carteles")
-      .select("total_entregados, total_recuperados")
-      .eq("mes", MES).eq("anio", ANIO)
-      .maybeSingle(),
-    supabase.from("encuestas")
-      .select("total_enviadas, total_respondidas")
-      .eq("mes", MES).eq("anio", ANIO)
-      .maybeSingle(),
+    // Mismas tablas vivas que usan Resumen y Cartelería (`carteles` y `encuestas` ya no se escriben)
+    supabase.from("carteles_devueltos")
+      .select("*", { count: "exact", head: true })
+      .gte("fecha_devolucion", limitesMesArgentina(ANIO, MES).desde)
+      .lt("fecha_devolucion", limitesMesArgentina(ANIO, MES).hasta),
+    supabase.from("encuestas_registros")
+      .select("nps")
+      .gte("fecha", `${ANIO}-${mesStr}-01`)
+      .lt("fecha", `${anioSig}-${mesSiguiente}-01`)
+      .eq("eliminado", false),
     supabase.from("pagos")
       .select("fecha, concepto, monto_debe, monto_pagado, estado, agentes(nombre)")
       .in("estado", ["Pendiente", "Parcial"])
@@ -166,6 +168,12 @@ export default async function DashboardPage() {
   const factObj   = calcObjetivoMes(parseObjetivoAnual(objAnualConfig?.valor), MES)
   const factLabel = fmtUSD(factReal)
   const factPct   = factObj > 0 ? Math.round((factReal / factObj) * 100) : null
+
+  const encuestasCount = encuestasMes?.length ?? 0
+  const npsValores     = (encuestasMes ?? []).map(e => e.nps).filter((n): n is number => typeof n === "number")
+  const npsPromedio    = npsValores.length > 0
+    ? (npsValores.reduce((a, b) => a + b, 0) / npsValores.length).toFixed(1).replace(".", ",")
+    : "—"
 
   const opsFeed   = (opsFeedRaw ?? []) as OperacionRow[]
   const pagos     = ((pagosRaw  ?? []) as unknown) as PagoRow[]
@@ -368,10 +376,10 @@ export default async function DashboardPage() {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4">
                 {[
-                  { n: cartelesData?.total_entregados  ?? 0, label: "Carteles entregados",  cls: "bg-rose-500/[0.12] text-rose-400" },
-                  { n: cartelesData?.total_recuperados ?? 0, label: "Carteles recuperados", cls: "bg-emerald-500/[0.12] text-emerald-400" },
-                  { n: encuestasData?.total_enviadas   ?? 0, label: "Encuestas enviadas",   cls: "bg-blue-500/[0.12] text-blue-400" },
-                  { n: encuestasData?.total_respondidas ?? 0, label: "Encuestas resp.",     cls: "bg-amber-500/[0.12] text-amber-400" },
+                  { n: cartelesRecuperados ?? 0,  label: "Carteles recuperados", cls: "bg-emerald-500/[0.12] text-emerald-400" },
+                  { n: encuestasCount,            label: "Encuestas registradas", cls: "bg-blue-500/[0.12] text-blue-400" },
+                  { n: npsPromedio,               label: "NPS promedio",          cls: "bg-amber-500/[0.12] text-amber-400" },
+                  { n: opsMesCount,               label: "Operaciones del mes",   cls: "bg-rose-500/[0.12] text-rose-400" },
                 ].map(({ n, label, cls }) => (
                   <div
                     key={label}

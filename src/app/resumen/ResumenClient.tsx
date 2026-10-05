@@ -1,13 +1,9 @@
-﻿"use client"
+"use client"
 
+import { MONTH_NAMES } from "@/lib/constantes"
 import { useRouter, usePathname } from "next/navigation"
 import { Printer } from "lucide-react"
 import Topbar from "@/components/Topbar"
-
-const MONTH_NAMES = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
-]
 
 export interface KpiRow {
   label:    string

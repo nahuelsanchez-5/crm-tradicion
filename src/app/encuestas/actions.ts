@@ -1,5 +1,6 @@
 "use server"
 
+import { mensajeErrorDB } from "@/lib/errores"
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 import { requireSession } from "@/lib/auth-guard"
@@ -56,7 +57,7 @@ export async function registrarEncuesta(data: RegistroEncuestaData) {
     comentario: data.comentario.trim() || null,
   })
 
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
 
   revalidatePath("/encuestas")
   return { success: true }
@@ -85,7 +86,7 @@ export async function editarEncuesta(id: string, data: EditarEncuestaData) {
     })
     .eq("id", id)
     .eq("eliminado", false)
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
   revalidatePath("/encuestas")
   return { success: true }
 }
@@ -100,7 +101,7 @@ export async function eliminarEncuesta(id: string) {
     .from("encuestas_registros")
     .update({ eliminado: true, updated_at: new Date().toISOString() })
     .eq("id", id)
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
   revalidatePath("/encuestas")
   return { success: true }
 }

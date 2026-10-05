@@ -147,8 +147,9 @@ export async function GET(): Promise<NextResponse> {
 
     return NextResponse.json({ total, categorias })
   } catch (err) {
+    console.error("[api] error:", err)
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Error interno" },
+      { error: "Error interno" },
       { status: 500 },
     )
   }

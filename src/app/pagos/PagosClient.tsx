@@ -1,5 +1,8 @@
 "use client"
 
+import { getConceptGroup } from "@/lib/conceptos"
+import { fmtFecha } from "@/lib/format"
+import { MONTH_NAMES } from "@/lib/constantes"
 import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
 import { crearPago, actualizarPago, crearGasto, crearGastoRecurrente, eliminarPago, registrarSaldoFavor, aplicarCreditoAPendientes } from "./actions"
@@ -12,11 +15,6 @@ import { Backdrop, ModalHeader } from "@/components/Modal"
 import { getEfectivoPagaFee } from "@/lib/fee"
 
 // ── Constants ────────────────────────────────────────
-const MONTH_NAMES = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
-]
-
 const MONTHS_OPTIONS: Array<{ label: string; value: string }> = (() => {
   const opts: Array<{ label: string; value: string }> = [
     { label: "Todos los meses", value: "todos" },
@@ -110,22 +108,6 @@ function calcEstadoGeneral(totalDebe: number, totalPagado: number): string {
   if (totalPagado <= 0)                   return "Pendiente"
   if (totalPagado >= totalDebe - epsilon) return "Pagado"
   return "Parcial"
-}
-
-function getConceptGroup(concepto: string): "FEE" | "CRM" | "Mainstreet" | "BolsasVino" | "SaldoFavor" | "Otros" {
-  const c = concepto.toLowerCase()
-  if (c.includes("fee"))                                                          return "FEE"
-  if (c.includes("pro") || c.includes("crm") || c.includes("plan") || c.includes("licencia")) return "CRM"
-  if (c.includes("mainstreet"))                                                   return "Mainstreet"
-  if (c.includes("bolsa") && c.includes("vino"))                                  return "BolsasVino"
-  if (concepto === "Saldo a favor")                                               return "SaldoFavor"
-  return "Otros"
-}
-
-function fmtFecha(fechaStr: string) {
-  if (!fechaStr) return "—"
-  const [a, m, d] = fechaStr.split("-")
-  return `${parseInt(d)} ${MONTH_NAMES[parseInt(m) - 1].slice(0, 3)} ${a}`
 }
 
 function mesLabel(monthVal: string): string {

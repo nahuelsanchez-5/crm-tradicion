@@ -1,5 +1,6 @@
 "use server"
 
+import { mensajeErrorDB } from "@/lib/errores"
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 import { requireSession } from "@/lib/auth-guard"
@@ -49,7 +50,7 @@ export async function crearAgente(data: AgenteFormData) {
     })
 
   if (error) {
-    return { error: error.message }
+    return { error: mensajeErrorDB(error) }
   }
 
   revalidatePath("/agentes")
@@ -71,7 +72,7 @@ export async function actualizarPagaFee(id: string, pagaFee: boolean) {
     .update({ paga_fee: pagaFee })
     .eq("id", id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
 
   revalidatePath("/agentes")
   revalidatePath("/pagos")
@@ -104,7 +105,7 @@ export async function actualizarAgente(id: string, data: AgenteFormData) {
     })
     .eq("id", id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
 
   revalidatePath("/agentes")
   return { success: true }

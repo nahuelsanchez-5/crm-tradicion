@@ -55,8 +55,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       tipo_propiedad:     ((r.fields[FIELD_IDS.tipo]   as string) ?? "").trim(),
     })
   } catch (err) {
+    console.error("[api] error:", err)
     return NextResponse.json(
-      { found: false, error: err instanceof Error ? err.message : "Error interno" },
+      { found: false, error: "Error interno" },
       { status: 500 },
     )
   }

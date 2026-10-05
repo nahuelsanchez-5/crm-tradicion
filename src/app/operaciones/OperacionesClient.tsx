@@ -1,5 +1,7 @@
-﻿"use client"
+"use client"
 
+import { fmtFecha } from "@/lib/format"
+import { MONTH_NAMES } from "@/lib/constantes"
 import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import KpiCard from "@/components/KpiCard"
@@ -12,11 +14,6 @@ import { fmtUSD } from "@/lib/format"
 import { Backdrop, ModalHeader } from "@/components/Modal"
 
 // ── Constants ────────────────────────────────────────
-const MONTH_NAMES = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
-]
-
 const TIPOS = ["Venta", "Alquiler", "Alquiler Temporal", "Referido", "Otro"]
 
 const TIPO_STYLES: Record<string, { bg: string; color: string }> = {
@@ -129,11 +126,6 @@ function parseAgentesStr(raw: string, internos: Set<string>) {
     compradorExt:p2 && !internos.has(p2) ? p2 : "",
     dosPuntas:   false,
   }
-}
-
-function fmtFecha(fechaStr: string) {
-  const [a, m, d] = fechaStr.split("-")
-  return `${parseInt(d)} ${MONTH_NAMES[parseInt(m) - 1].slice(0, 3)} ${a}`
 }
 
 // ── Sub-components ───────────────────────────────────

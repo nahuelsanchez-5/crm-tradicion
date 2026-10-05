@@ -1,5 +1,6 @@
 "use client"
 
+import { MONTH_NAMES } from "@/lib/constantes"
 import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
 import { registrarEncuesta, editarEncuesta, eliminarEncuesta } from "./actions"
@@ -12,11 +13,6 @@ import Topbar from "@/components/Topbar"
 import { Backdrop, ModalHeader } from "@/components/Modal"
 
 // ── Constants ────────────────────────────────────────
-const MONTH_NAMES = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
-]
-
 // ── Types ────────────────────────────────────────────
 interface Agente {
   id:     string

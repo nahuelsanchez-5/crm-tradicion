@@ -1,5 +1,6 @@
 "use client"
 
+import { MONTH_NAMES } from "@/lib/constantes"
 import { useState, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -123,11 +124,6 @@ const CHECKLIST_CATS: Array<{ id: "pre_sena" | "documentacion" | "post_cierre"; 
   { id: "pre_sena",      label: "Pre-seña",      from: 1,  to: 12 },
   { id: "documentacion", label: "Documentación", from: 13, to: 22 },
   { id: "post_cierre",   label: "Post-cierre",   from: 23, to: 36 },
-]
-
-const MONTH_NAMES = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
 ]
 
 // ── Helpers ───────────────────────────────────────────

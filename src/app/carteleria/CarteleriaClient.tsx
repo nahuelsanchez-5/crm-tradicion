@@ -1,5 +1,6 @@
 "use client"
 
+import { MONTH_NAMES } from "@/lib/constantes"
 import { useState, useMemo, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import KpiCard from "@/components/KpiCard"
@@ -48,11 +49,6 @@ const AGENTES_AIRTABLE = [
   "Pedro Aleman", "Rocío Vildósola", "Romina Prieto",
   "Romina Villaboa", "Sapo Pagano", "Silvana Ameri",
   "Silvina Scordo", "Vanina Bravo",
-]
-
-const MONTH_NAMES = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
 ]
 
 interface CartelDevuelto {

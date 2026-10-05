@@ -1,3 +1,4 @@
+import { mensajeErrorDB } from "@/lib/errores"
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 import { getSession } from "@/lib/auth-guard"
@@ -116,12 +117,13 @@ export async function POST(req: NextRequest) {
     })
 
     if (insertError) {
-      return NextResponse.json({ success: false, error: insertError.message }, { status: 500 })
+      return NextResponse.json({ success: false, error: mensajeErrorDB(insertError) }, { status: 500 })
     }
 
     return NextResponse.json({ success: true })
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "Error desconocido"
+    console.error("[api] error:", err)
+    const msg = "Error interno"
     return NextResponse.json({ success: false, error: msg }, { status: 500 })
   }
 }

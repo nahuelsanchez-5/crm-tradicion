@@ -1,5 +1,6 @@
 "use server"
 
+import { mensajeErrorDB } from "@/lib/errores"
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 import { requireSession } from "@/lib/auth-guard"
@@ -52,7 +53,7 @@ export async function guardarConfig(entries: ConfigEntry[]) {
     .from("config")
     .upsert(upserts, { onConflict: "clave" })
 
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
 
   revalidatePath("/configuracion")
   revalidatePath("/")

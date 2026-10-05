@@ -1,3 +1,5 @@
+import { getConceptGroup } from "@/lib/conceptos"
+import { MONTH_NAMES } from "@/lib/constantes"
 import { createServerClient } from "@/lib/supabase"
 import ResumenClient from "./ResumenClient"
 import type { KpiRow } from "./ResumenClient"
@@ -6,11 +8,6 @@ import { getEfectivoPagaFee } from "@/lib/fee"
 import { limitesMesArgentina, mesAnioArgentina } from "@/lib/fecha"
 import { CLAVE_OBJETIVO_ANUAL, calcObjetivoMes, parseObjetivoAnual, realDelMes } from "@/lib/objetivos"
 
-const MONTH_NAMES = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
-]
-
 const MONTH_KEYS = [
   "enero","febrero","marzo","abril","mayo","junio",
   "julio","agosto","septiembre","octubre","noviembre","diciembre",
@@ -18,14 +15,6 @@ const MONTH_KEYS = [
 
 function nextMonthDate(year: number, month: number) {
   return month === 12 ? `${year + 1}-01-01` : `${year}-${String(month + 1).padStart(2, "0")}-01`
-}
-
-function getConceptGroup(concepto: string): "FEE" | "CRM" | "Mainstreet" | "Otros" {
-  const c = concepto.toLowerCase()
-  if (c.includes("fee"))                                                              return "FEE"
-  if (c.includes("pro") || c.includes("crm") || c.includes("plan") || c.includes("licencia")) return "CRM"
-  if (c.includes("mainstreet"))                                                       return "Mainstreet"
-  return "Otros"
 }
 
 
@@ -97,7 +86,9 @@ export default async function ResumenPage({
   const activos      = agentesData.filter(a => a.activo)
 
   // FEE: agentes que efectivamente pagan fee (override manual o cálculo 180 días + quincena)
-  const agentesFee   = activos.filter(a => getEfectivoPagaFee(a.fecha_alta, a.paga_fee)).length
+  // Se evalúa contra el mes del Resumen (no contra hoy) para que un mes pasado no cambie con el tiempo
+  const mesRef       = new Date(year, month - 1, 1)
+  const agentesFee   = activos.filter(a => getEfectivoPagaFee(a.fecha_alta, a.paga_fee, mesRef)).length
 
   // CRM: solo PRO y PRO+ — Bonificado (B QR, B Ofi) y sin plan NO cuentan
   const agenteCrmIds = new Set(
@@ -121,7 +112,8 @@ export default async function ResumenPage({
   const crmPct  = pctGrupo(crmPagados,  agentesCrm)
   const mainPct = pctGrupo(mainPagados, agentesMainstreet)
 
-  // Ponderada: SUMA(cobrado) / SUMA(total) × 100
+  // Criterio (definido con el dueño): se mide por AGENTES que pagaron, no por plata. Un agente cuenta
+  // solo si su pago está en estado "Pagado" (un pago parcial cuenta 0). Total = suma de pagados / suma de esperados.
   const cobrosEsperados = agentesFee + agentesCrm + agentesMainstreet
   const cobrosRatio     = cobrosEsperados > 0 ? (feePagados + crmPagados + mainPagados) / cobrosEsperados : 0
   const cobrosPct       = Math.round(cobrosRatio * 100)
@@ -176,7 +168,7 @@ export default async function ResumenPage({
   const kpis: KpiRow[] = [
     {
       label:    "Cobros",
-      objetivo: "100% de cobranza (ponderado)",
+      objetivo: "Todos los agentes esperados con el pago completo (FEE + CRM + Mainstreet)",
       cumplido: `${cobrosPct}% (Fee ${feePagados}/${agentesFee} = ${feePct}%, CRM ${crmPagados}/${agentesCrm} = ${crmPct}%, MS ${mainPagados}/${agentesMainstreet} = ${mainPct}%)`,
       aCobrar:  cobrosACobrar,
     },

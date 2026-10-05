@@ -1,5 +1,6 @@
 "use client"
 
+import { MONTH_NAMES } from "@/lib/constantes"
 import { useState, useTransition } from "react"
 import { guardarConfig } from "./actions"
 import type { ConfigEntry } from "./actions"
@@ -22,8 +23,9 @@ const DEFAULT_CONFIG: ConfigEntry[] = [
   { clave: "bono_b_qr",            valor: "300",    etiqueta: "Monto Bonificación QR (USD)",   grupo: "bonos" },
   { clave: "bono_b_ofi",           valor: "600",    etiqueta: "Monto Bonificación Oficina (USD)", grupo: "bonos" },
   // KPIs
-  { clave: "obj_facturacion_usd",  valor: "28000",  etiqueta: "Objetivo facturación mensual (USD)", grupo: "kpis" },
-  { clave: "obj_carteleria_pct",   valor: "95",     etiqueta: "Objetivo recuperación cartelería (%)", grupo: "kpis" },
+  // Se quitaron "Objetivo facturación mensual" y "Objetivo recuperación cartelería (%)": ningún módulo
+  // los leía y confundían. El objetivo mensual sale de "Objetivo anual USD" × estacionalidad, y el de
+  // cartelería de los objetivos mes a mes (grupo "carteles").
   { clave: "obj_encuestas_pct",    valor: "60",     etiqueta: "Objetivo respuesta encuestas (%)",   grupo: "kpis" },
   // Facturación
   { clave: "obj_anual_usd",        valor: "710000", etiqueta: "Objetivo anual USD",      grupo: "facturacion" },
@@ -59,10 +61,6 @@ const GRUPO_LABELS: Record<string, string> = {
 }
 
 // ── Estacionalidad y Cartelería ───────────────────────
-const MONTH_NAMES = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
-]
 const MONTH_KEYS = [
   "enero","febrero","marzo","abril","mayo","junio",
   "julio","agosto","septiembre","octubre","noviembre","diciembre",

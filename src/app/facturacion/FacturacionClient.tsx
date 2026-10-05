@@ -1,5 +1,6 @@
 "use client"
 
+import { MONTH_NAMES } from "@/lib/constantes"
 import { useState, useMemo, useTransition, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import KpiCard from "@/components/KpiCard"
@@ -12,12 +13,6 @@ import { fmtUSD } from "@/lib/format"
 import { ESTACIONALIDAD_PCT, calcObjetivoMes, realDelMes } from "@/lib/objetivos"
 
 // ── Constants ────────────────────────────────────────
-const MONTH_NAMES = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
-]
-
-
 // ── Types ────────────────────────────────────────────
 export interface FacturacionRow {
   id:           string

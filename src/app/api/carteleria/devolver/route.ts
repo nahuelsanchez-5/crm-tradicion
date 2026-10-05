@@ -1,3 +1,4 @@
+import { mensajeErrorDB } from "@/lib/errores"
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 import { getSession } from "@/lib/auth-guard"
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       .single()
 
     if (insertError) {
-      return NextResponse.json({ success: false, error: insertError.message }, { status: 500 })
+      return NextResponse.json({ success: false, error: mensajeErrorDB(insertError) }, { status: 500 })
     }
 
     // 2. DELETE en Airtable (solo si hay record_id)
@@ -69,8 +70,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({ success: true })
   } catch (err) {
+    console.error("[api] error:", err)
     return NextResponse.json(
-      { success: false, error: err instanceof Error ? err.message : "Error interno" },
+      { success: false, error: "Error interno" },
       { status: 500 },
     )
   }

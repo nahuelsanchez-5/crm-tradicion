@@ -1,5 +1,6 @@
-﻿"use client"
+"use client"
 
+import { MONTH_NAMES } from "@/lib/constantes"
 import { useState, useTransition, useEffect, useCallback, useMemo, Fragment } from "react"
 import { useRouter } from "next/navigation"
 import { crearAgente, actualizarAgente, actualizarPagaFee, type AgenteFormData } from "./actions"
@@ -52,8 +53,6 @@ interface Props {
 // ── Helpers ──────────────────────────────────────────
 type ModalState  = "none" | "nuevo" | "editar"
 type SortMode    = "az" | "recientes" | "antiguos" | "facturacion"
-
-const MONTH_NAMES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
 
 const EMPTY_FORM: AgenteFormData = {
   nombre: "", email: "", telefono: "",

@@ -1,5 +1,6 @@
 "use server"
 
+import { mensajeErrorDB } from "@/lib/errores"
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 import { requireSession } from "@/lib/auth-guard"
@@ -19,7 +20,7 @@ export async function marcarSeguimiento(ofertaId: string): Promise<{ error?: str
     monto_usd:   null,
   })
 
-  if (error) return { error: error.message }
+  if (error) return { error: mensajeErrorDB(error) }
 
   revalidatePath("/calendario")
   return {}

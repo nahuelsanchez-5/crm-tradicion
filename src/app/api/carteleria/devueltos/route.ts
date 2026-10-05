@@ -1,3 +1,4 @@
+import { mensajeErrorDB } from "@/lib/errores"
 import { NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@/lib/supabase"
 import { getSession } from "@/lib/auth-guard"
@@ -29,13 +30,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       .order("fecha_devolucion", { ascending: false })
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: mensajeErrorDB(error) }, { status: 500 })
     }
 
     return NextResponse.json({ data: data ?? [] })
   } catch (err) {
+    console.error("[api] error:", err)
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Error interno" },
+      { error: "Error interno" },
       { status: 500 },
     )
   }

@@ -4,15 +4,31 @@ import PagosClient, { PagoRow, AgenteInfo } from "./PagosClient"
 export default async function PagosPage() {
   const supabase = createServerClient()
 
+  // Supabase corta cada consulta en 1000 filas: se pagina para no truncar en silencio el historial
+  // (que alimenta cobranza, mora y el filtro "todos"). `id` desempata el orden entre páginas.
+  async function traerTodosLosPagos() {
+    const TAM = 1000
+    const filas: unknown[] = []
+    for (let desde = 0; ; desde += TAM) {
+      const { data, error } = await supabase
+        .from("pagos")
+        .select("id, agente_id, fecha, concepto, monto_debe, monto_pagado, estado, agentes(nombre)")
+        .order("fecha", { ascending: false })
+        .order("id", { ascending: true })
+        .range(desde, desde + TAM - 1)
+      if (error) { console.error("[pagos] error al leer:", error.code, error.message); break }
+      filas.push(...(data ?? []))
+      if (!data || data.length < TAM) break
+    }
+    return { data: filas }
+  }
+
   const [
     { data: pagosRaw },
     { data: agentesRaw },
     { data: configBonos },
   ] = await Promise.all([
-    supabase
-      .from("pagos")
-      .select("id, agente_id, fecha, concepto, monto_debe, monto_pagado, estado, agentes(nombre)")
-      .order("fecha", { ascending: false }),
+    traerTodosLosPagos(),
 
     supabase
       .from("agentes")
