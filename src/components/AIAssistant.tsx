@@ -1,11 +1,14 @@
-﻿"use client"
+"use client"
 
 import { useState, useRef, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Sparkles, X, Send, Mic } from "lucide-react"
+import type { Paso } from "@/lib/asistente-flujos"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+
+type PreguntaFlujo = Extract<Paso, { tipo: "pregunta" }>
 
 interface ChatMessage {
   id: string
@@ -23,6 +26,15 @@ interface ApiResponse {
   params?: Record<string, unknown>
   requiresConfirmation?: boolean
   success?: boolean
+  flow?: PreguntaFlujo
+}
+
+// Flujo guiado en curso: qué acción se está armando, con qué datos y qué se está preguntando
+interface FlowCtx {
+  intent: string
+  params: Record<string, unknown>
+  paso: PreguntaFlujo
+  msgId: string
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -36,10 +48,11 @@ export default function AIAssistant() {
     {
       id: "welcome",
       role: "assistant",
-      content: `¡Hola ${userName}! ¿En qué te ayudo? Puedo crear ofertas, registrar pagos, operaciones, encuestas y más.`,
+      content: `¡Hola ${userName}! ¿En qué te ayudo? Decime qué querés hacer (ej: "registrar un pago", "dejó saldo a favor", "crear una oferta") y te voy preguntando lo que falte.`,
     },
   ])
   const [input, setInput] = useState("")
+  const [flowCtx, setFlowCtx] = useState<FlowCtx | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const [hasMic, setHasMic] = useState(false)
@@ -63,7 +76,7 @@ export default function AIAssistant() {
   useEffect(() => {
     setMessages(prev =>
       prev.length === 1 && prev[0].id === "welcome"
-        ? [{ ...prev[0], content: `¡Hola ${userName}! ¿En qué te ayudo? Puedo crear ofertas, registrar pagos, operaciones, encuestas y más.` }]
+        ? [{ ...prev[0], content: `¡Hola ${userName}! ¿En qué te ayudo? Decime qué querés hacer (ej: "registrar un pago", "dejó saldo a favor", "crear una oferta") y te voy preguntando lo que falte.` }]
         : prev,
     )
   }, [userName])
@@ -79,8 +92,54 @@ export default function AIAssistant() {
 
   // ── Send message ──────────────────────────────────────────────────────────
 
+  // Respuesta a la pregunta del flujo guiado en curso (botón o texto): no usa Gemini
+  const answerFlow = async (label: string, valor: string, omitir = false) => {
+    if (!flowCtx || isLoading) return
+    const ctx = flowCtx
+    setInput("")
+    setMessages((prev) => [...prev, { id: makeId(), role: "user" as const, content: label }])
+    setIsLoading(true)
+    try {
+      const res = await fetch("/api/ai-assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ flow: { intent: ctx.intent, params: ctx.params, campo: ctx.paso.campo, valor, omitir } }),
+      })
+      const data: ApiResponse = await res.json()
+      const id = makeId()
+      setMessages((prev) => [
+        ...prev,
+        {
+          id,
+          role: "assistant",
+          content: data.message,
+          requiresConfirmation: data.requiresConfirmation,
+          pendingIntent: data.intent,
+          pendingParams: data.params,
+        },
+      ])
+      setFlowCtx(data.flow && data.intent ? { intent: data.intent, params: data.params ?? {}, paso: data.flow, msgId: id } : null)
+    } catch {
+      setMessages((prev) => [...prev, { id: makeId(), role: "assistant", content: "❌ Error de conexión. Intentá de nuevo." }])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const cancelFlow = () => {
+    setFlowCtx(null)
+    setInput("")
+    setMessages((prev) => [...prev, { id: makeId(), role: "assistant" as const, content: "Listo, lo dejamos acá. No se guardó nada." }])
+  }
+
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return
+
+    // Si hay una pregunta del flujo guiado abierta, lo que se escribe es la respuesta
+    if (flowCtx) {
+      await answerFlow(text.trim(), text.trim())
+      return
+    }
 
     setInput("")
 
@@ -117,10 +176,11 @@ export default function AIAssistant() {
 
       const data: ApiResponse = await res.json()
 
+      const id = makeId()
       setMessages((prev) => [
         ...prev,
         {
-          id: makeId(),
+          id,
           role: "assistant",
           content: data.message,
           requiresConfirmation: data.requiresConfirmation,
@@ -128,6 +188,8 @@ export default function AIAssistant() {
           pendingParams: data.params,
         },
       ])
+      // Si la acción tiene flujo guiado, la respuesta trae la primera pregunta
+      setFlowCtx(data.flow && data.intent ? { intent: data.intent, params: data.params ?? {}, paso: data.flow, msgId: id } : null)
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -148,6 +210,7 @@ export default function AIAssistant() {
     setMessages((prev) =>
       prev.map((m) => (m.id === messageId ? { ...m, actionExecuted: true } : m))
     )
+    setFlowCtx(null)
     setIsLoading(true)
 
     try {
@@ -180,6 +243,7 @@ export default function AIAssistant() {
   // ── Cancel action ─────────────────────────────────────────────────────────
 
   const handleCancel = (messageId: string) => {
+    setFlowCtx(null)
     setMessages((prev) => {
       const updated = prev.map((m) =>
         m.id === messageId ? { ...m, actionExecuted: true } : m
@@ -310,6 +374,51 @@ export default function AIAssistant() {
                     {msg.content}
                   </div>
 
+                  {/* Pregunta del flujo guiado: opciones para tocar */}
+                  {msg.role === "assistant" && flowCtx && flowCtx.msgId === msg.id && (
+                    <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label="Opciones de respuesta">
+                      {flowCtx.paso.sugerencia && (
+                        <button
+                          onClick={() => answerFlow(flowCtx.paso.sugerencia!.label, flowCtx.paso.sugerencia!.value)}
+                          disabled={isLoading}
+                          className="px-2.5 py-1.5 text-xs font-semibold text-white rounded-lg disabled:opacity-50"
+                          style={{ backgroundColor: "#2563eb" }}
+                        >
+                          {flowCtx.paso.sugerencia.label}
+                        </button>
+                      )}
+                      {(flowCtx.paso.opciones ?? []).map((o) => (
+                        <button
+                          key={o.value}
+                          onClick={() => answerFlow(o.label, o.value)}
+                          disabled={isLoading}
+                          className="px-2.5 py-1.5 text-xs font-semibold rounded-lg disabled:opacity-50 transition-colors hover:bg-white/15"
+                          style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)", color: "var(--crm-text)" }}
+                        >
+                          {o.label}
+                        </button>
+                      ))}
+                      {flowCtx.paso.opcional && (
+                        <button
+                          onClick={() => answerFlow("Omitir", "", true)}
+                          disabled={isLoading}
+                          className="px-2.5 py-1.5 text-xs font-semibold rounded-lg disabled:opacity-50"
+                          style={{ color: "var(--crm-text-muted)", border: "1px dashed rgba(255,255,255,0.25)" }}
+                        >
+                          Omitir
+                        </button>
+                      )}
+                      <button
+                        onClick={cancelFlow}
+                        disabled={isLoading}
+                        className="px-2.5 py-1.5 text-xs font-semibold rounded-lg disabled:opacity-50"
+                        style={{ color: "#f87171" }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
+
                   {/* Confirmation buttons */}
                   {msg.role === "assistant" &&
                     msg.requiresConfirmation &&
@@ -391,7 +500,7 @@ export default function AIAssistant() {
                   sendMessage(input)
                 }
               }}
-              placeholder="Escribí tu mensaje..."
+              placeholder={flowCtx ? "Respondé acá o tocá una opción..." : "Escribí tu mensaje..."}
               disabled={isLoading}
               className="flex-1 text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-transparent disabled:opacity-50"
               style={{ border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", color: "var(--crm-text)" }}

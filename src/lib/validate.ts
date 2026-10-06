@@ -8,7 +8,12 @@ export function esStringNoVacio(s: unknown): s is string {
 
 export function esFechaValida(s: unknown): s is string {
   if (typeof s !== "string") return false
-  return /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(new Date(s + "T00:00:00").getTime())
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s)
+  if (!m) return false
+  // `new Date("2026-02-31")` no falla: se corre a marzo. Se comprueba que la fecha sobreviva al viaje de ida y vuelta.
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])]
+  const f = new Date(Date.UTC(y, mo - 1, d))
+  return f.getUTCFullYear() === y && f.getUTCMonth() === mo - 1 && f.getUTCDate() === d
 }
 
 export function esUUIDValido(s: unknown): s is string {
