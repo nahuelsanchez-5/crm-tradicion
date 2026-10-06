@@ -18,6 +18,27 @@ export interface Elegibilidad {
   yaCargados: Set<string>
   /** Texto corto que explica el criterio, para mostrar en el modal */
   criterio: string
+  /** Por qué entra (o no) cada agente activo en el FEE: antigüedad y regla aplicada. Solo para "FEE mensual". */
+  motivos: Record<string, string>
+}
+
+const fmtDMY = (d: Date) =>
+  `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`
+
+/** Explica la decisión de fee de un agente a la fecha del gasto (misma regla que getEfectivoPagaFee). */
+export function motivoFee(a: AgenteElegible, fechaGasto: string, refDate: Date): string {
+  if (a.paga_fee === true) return "Marcado manualmente: Paga FEE"
+  if (a.paga_fee === false) return "Marcado manualmente: no paga FEE"
+  const alta = new Date(a.fecha_alta + "T00:00:00")
+  if (Number.isNaN(alta.getTime())) return "Fecha de alta inválida"
+  const gasto = new Date(fechaGasto + "T00:00:00")
+  const dias = Math.floor((gasto.getTime() - alta.getTime()) / 86_400_000)
+  const cumple = new Date(alta); cumple.setDate(cumple.getDate() + 180)
+  const entra = getEfectivoPagaFee(a.fecha_alta, null, refDate)
+  if (dias >= 180) return entra ? `${dias} días de antigüedad` : `${dias} días · pasó los 180 pero la regla de quincena lo pasa al mes siguiente`
+  return entra
+    ? `${dias} días · cumple 180 el ${fmtDMY(cumple)} (primera quincena: paga este mes)`
+    : `${dias} días · cumple 180 el ${fmtDMY(cumple)}`
 }
 
 /**
@@ -58,9 +79,13 @@ export function elegiblesParaGasto(
     if (mismo) yaCargados.add(p.agente_id)
   }
 
+  const motivos: Record<string, string> = {}
+  if (concepto === "FEE mensual") for (const a of activos) motivos[a.id] = motivoFee(a, fechaGasto, refDate)
+
   return {
     sugeridos: corresponden.filter((a) => !yaCargados.has(a.id)).map((a) => a.id),
     yaCargados,
     criterio,
+    motivos,
   }
 }

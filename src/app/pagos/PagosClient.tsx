@@ -1769,7 +1769,12 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                         }}
                         style={{ accentColor: "#7C3AED", width: "14px", height: "14px" }}
                       />
-                      <span style={{ fontSize: "13px", fontWeight: 500, color: "var(--crm-text)" }}>{a.nombre}</span>
+                      <span style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                        <span style={{ fontSize: "13px", fontWeight: 500, color: "var(--crm-text)" }}>{a.nombre}</span>
+                        {elegibilidadRec.motivos[a.id] && (
+                          <span style={{ fontSize: "11px", color: "var(--crm-text-muted)" }}>{elegibilidadRec.motivos[a.id]}</span>
+                        )}
+                      </span>
                       {elegibilidadRec.yaCargados.has(a.id) && (
                         <span style={{ marginLeft: "auto", fontSize: "11px", color: "#fbbf24", fontWeight: 600 }}>ya cargado este mes</span>
                       )}
