@@ -315,6 +315,8 @@ async function executeAction(
     case "cambiar_estado_oferta": {
       if (!esEnteroPositivo(params.numero)) return fallo("Número de oferta inválido")
       if (!esUnoDe(params.nuevo_estado, ESTADOS_OFERTA)) return fallo("Estado de oferta inválido")
+      // Cerrar una oferta crea su operación y el reparto de comisiones: se hace con «Registrar cierre» en el detalle
+      if ((params.nuevo_estado as string) === "Cerradas") return fallo("Para cerrar una oferta usá «Registrar cierre» en el detalle de la oferta (hay que cargar precio y reparto).")
       const numero = params.numero
       const nuevoEstado = params.nuevo_estado
       const descripcion = textoOpcional(params.descripcion) ?? ""

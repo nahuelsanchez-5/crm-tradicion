@@ -8,6 +8,8 @@ import { requireSession } from "@/lib/auth-guard"
 import { hoyArgentina } from "@/lib/fecha"
 import { esStringNoVacio, esFechaValida, esUUIDValido, esMontoValido, esNumeroNoNegativo, esEnteroPositivo, esUnoDe } from "@/lib/validate"
 import { ESTADOS_OFERTA, TIPOLOGIAS_VALIDAS, TIPOS_OPERACION_OFERTA_VALIDOS } from "@/lib/constantes"
+import { armarOperacionDeOferta } from "@/lib/cierre"
+import { armarFilasValidadas, type FilaReparto, type RefExterno, type RefInterno } from "@/lib/reparto"
 
 // ── Types ─────────────────────────────────────────────
 export interface EditarOfertaData {
@@ -131,13 +133,13 @@ export async function cambiarEstado(
   if (!esUUIDValido(id))              return { error: "ID de oferta inválido" }
   if (!esUnoDe(nuevoEstado, ESTADOS_OFERTA)) return { error: "Estado inválido" }
   if (monto != null && !esNumeroNoNegativo(monto)) return { error: "Monto inválido" }
+  // Cerrar una oferta genera su operación y el reparto de comisiones: solo se hace con "Registrar cierre"
+  // (cerrarOferta). Cambiar el estado a "Cerradas" a secas dejaba ofertas cerradas sin su comisión.
+  if (nuevoEstado === "Cerradas") return { error: "Para cerrar una oferta usá «Registrar cierre» (hay que cargar precio y reparto)." }
 
   const supabase = createServerClient()
 
   const updates: Record<string, unknown> = { estado: nuevoEstado }
-  if (nuevoEstado === "Cerradas") {
-    updates.fecha_cierre = hoyArgentina()
-  }
 
   const { error } = await supabase.from("ofertas").update(updates).eq("id", id)
   if (error) return { error: mensajeErrorDB(error) }
@@ -236,6 +238,87 @@ export async function registrarCierre(
   revalidatePath("/operaciones")
   revalidatePath("/")
   return {}
+}
+
+// ─────────────────────────────────────────────────────
+//  CERRAR OFERTA (todo o nada): oferta + historial + operación + reparto
+// ─────────────────────────────────────────────────────
+// Una sola transacción en la base (función cerrar_oferta, script A5). Si falla cualquier paso no queda nada a medias.
+// Mientras la función no exista, se cae al método anterior en pasos separados.
+export async function cerrarOferta(
+  ofertaId: string,
+  fecha: string,
+  precio: number,
+  reparto: { refInt?: RefInterno[]; refExt?: RefExterno[] },
+): Promise<{ error?: string; aviso?: string; operacionId?: string }> {
+  await requireSession()
+
+  if (!esUUIDValido(ofertaId)) return { error: "ID de oferta inválido" }
+  if (!esFechaValida(fecha))   return { error: "Fecha de cierre inválida" }
+  if (!esMontoValido(precio))  return { error: "El precio de cierre debe ser un número mayor a 0" }
+
+  const supabase = createServerClient()
+
+  const { data: oferta, error: ofertaErr } = await supabase.from("ofertas").select("*").eq("id", ofertaId).maybeSingle()
+  if (ofertaErr) return { error: mensajeErrorDB(ofertaErr, "leer la oferta") }
+  if (!oferta)   return { error: "Oferta no encontrada" }
+  if (oferta.estado === "Cerradas") return { error: "La oferta ya está cerrada" }
+
+  // Nombres de los agentes internos para el texto de la operación
+  const ids = [oferta.agente_vendedor_id, oferta.agente_comprador_id].filter((x): x is string => Boolean(x))
+  const nombrePorId = new Map<string, string>()
+  if (ids.length > 0) {
+    const { data: ags } = await supabase.from("agentes").select("id, nombre").in("id", ids)
+    for (const a of ags ?? []) nombrePorId.set(a.id as string, a.nombre as string)
+  }
+
+  // Operación y reparto: se calculan y validan en el server (el navegador solo manda los referidos)
+  const op = armarOperacionDeOferta(oferta, nombrePorId, precio)
+  const refInt = Array.isArray(reparto?.refInt) ? reparto.refInt : []
+  const refExt = Array.isArray(reparto?.refExt) ? reparto.refExt : []
+  const rep = op.puntas.length > 0
+    ? armarFilasValidadas(op.comision, { puntas: op.puntas, refInt, refExt })
+    : { filas: [] as FilaReparto[], error: undefined }
+  if (rep.error || !rep.filas) return { error: rep.error ?? "Reparto inválido" }
+
+  const descripcion = `Cerradas — Precio de cierre: USD ${Math.round(precio).toLocaleString("es-AR")}`
+  const operacion = { fecha, direccion: oferta.direccion, agentes: op.agentes, tipo: op.tipo, comision_bruta: op.comision }
+
+  const { data: opId, error: rpcErr } = await supabase.rpc("cerrar_oferta", {
+    p_oferta_id: ofertaId, p_fecha: fecha, p_precio: precio, p_descripcion: descripcion,
+    p_operacion: operacion, p_reparto: rep.filas,
+  })
+
+  if (!rpcErr) {
+    revalidatePath("/ofertas"); revalidatePath(`/ofertas/${ofertaId}`); revalidatePath("/operaciones"); revalidatePath("/")
+    return { operacionId: opId as string }
+  }
+
+  // La función todavía no existe en la base (falta correr el script A5): método anterior en pasos
+  const sinFuncion = rpcErr.code === "PGRST202" || rpcErr.code === "42883"
+  if (!sinFuncion) {
+    console.error("[cierre] error en cerrar_oferta:", rpcErr.code, rpcErr.message)
+    if ((rpcErr.message ?? "").includes("OFERTA_YA_CERRADA")) return { error: "La oferta ya está cerrada" }
+    if (rpcErr.code === "23505") return { error: "Ya existe una operación para esta oferta" }
+    return { error: mensajeErrorDB(rpcErr, "cerrar la oferta") }
+  }
+
+  console.error("[cierre] falta la función cerrar_oferta (script A5): se cierra en pasos separados")
+  const cierre = await registrarCierre(ofertaId, fecha, precio)
+  if (cierre.error) return { error: cierre.error }
+
+  const { data: existente } = await supabase.from("operaciones").select("id").eq("direccion", oferta.direccion).eq("fecha", fecha).maybeSingle()
+  if (existente) return { aviso: "La oferta se cerró, pero ya existía una operación con esa dirección y fecha: no se creó otra." }
+
+  const { data: nueva, error: opErr } = await supabase.from("operaciones")
+    .insert({ ...operacion, comision_neta: op.comision }).select("id").single()
+  if (opErr || !nueva) return { error: `La oferta quedó cerrada pero no se pudo crear la operación: ${mensajeErrorDB(opErr)}` }
+
+  if (rep.filas.length > 0) {
+    const { error: repErr } = await supabase.from("operacion_comisiones").insert(rep.filas.map((f) => ({ ...f, operacion_id: nueva.id })))
+    if (repErr) return { operacionId: nueva.id as string, aviso: "La operación se creó, pero no se pudo guardar el reparto. Podés cargarlo desde Operaciones." }
+  }
+  return { operacionId: nueva.id as string }
 }
 
 // ─────────────────────────────────────────────────────

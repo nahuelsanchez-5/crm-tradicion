@@ -84,7 +84,8 @@ export const FLUJOS: Record<string, Flujo> = {
     titulo: "Cambiar el estado de una oferta",
     campos: [
       { key: "numero",       pregunta: "¿Qué oferta?",                    tipo: "opcion", opcionesDe: "ofertas" },
-      { key: "nuevo_estado", pregunta: "¿A qué estado la pasás?",         tipo: "opcion", opciones: ESTADOS_OFERTA },
+      // "Cerradas" no se ofrece: el cierre se hace con «Registrar cierre» (precio, operación y reparto)
+      { key: "nuevo_estado", pregunta: "¿A qué estado la pasás?",         tipo: "opcion", opciones: ESTADOS_OFERTA.filter(e => e !== "Cerradas") },
       { key: "descripcion",  pregunta: "¿Querés dejar una nota?",         tipo: "texto", opcional: true },
     ],
   },

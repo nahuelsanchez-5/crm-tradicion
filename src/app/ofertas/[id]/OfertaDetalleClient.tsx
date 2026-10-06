@@ -4,7 +4,7 @@ import { MONTH_NAMES } from "@/lib/constantes"
 import { useState, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { cambiarEstado, agregarMovimiento, toggleChecklist, registrarCierre, editarOferta } from "../actions"
+import { cambiarEstado, agregarMovimiento, toggleChecklist, cerrarOferta, editarOferta } from "../actions"
 import RepartoEditor from "@/components/RepartoEditor"
 import { armarFilasValidadas, basesPorPunta, type Punta, type RefExterno, type RefInterno } from "@/lib/reparto"
 import type { EditarOfertaData } from "../actions"
@@ -432,24 +432,13 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
     if (isNaN(precio) || precio <= 0) { setErrCierre("El precio de cierre es obligatorio"); return }
     if (errRepartoCierre) { setErrCierre(errRepartoCierre); return }
     startTransition(async () => {
-      // 1. Actualizar oferta a Cerradas
-      const result = await registrarCierre(oferta.id, cierreFecha, precio)
+      // Un solo paso, todo o nada: cierra la oferta, anota el historial, crea la operación y guarda el reparto.
+      // Si algo falla no queda nada a medias y se puede reintentar.
+      const result = await cerrarOferta(oferta.id, cierreFecha, precio, { refInt, refExt })
       if (result.error) { setErrCierre(result.error); return }
-      // 2. Crear operacion con comisión auto-calculada
-      const opRes = await fetch("/api/operaciones/crear", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ oferta_id: oferta.id, precio_acordado_usd: precio, reparto: { refInt, refExt } }),
-      })
-      const opJson = (await opRes.json()) as { success: boolean; error?: string; aviso?: string }
-      // 409 = duplicado, no es error crítico (la oferta ya quedó cerrada)
-      if (!opJson.success && opRes.status !== 409) {
-        setErrCierre(opJson.error ?? "Error al crear la operación")
-        return
-      }
-      // La operación se creó pero el reparto no se pudo guardar: se muestra el aviso en vez de cerrar en silencio
-      if (opJson.aviso) {
-        setAvisoCierre(opJson.aviso)
+      // Cerró bien pero hubo algo para avisar (ej: el reparto no se pudo guardar): se muestra en vez de cerrar en silencio
+      if (result.aviso) {
+        setAvisoCierre(result.aviso)
         router.refresh()
         return
       }
