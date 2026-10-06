@@ -13,6 +13,7 @@ import Topbar from "@/components/Topbar"
 import { fmtUSD } from "@/lib/format"
 import { Backdrop, ModalHeader } from "@/components/Modal"
 import { getEfectivoPagaFee } from "@/lib/fee"
+import { elegiblesParaGasto } from "@/lib/elegibles"
 
 // ── Constants ────────────────────────────────────────
 const MONTHS_OPTIONS: Array<{ label: string; value: string }> = (() => {
@@ -267,6 +268,18 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
   })
   const [selectedAgentesRec, setSelectedAgentesRec] = useState<Set<string>>(new Set())
   const [gastoRecMontoManual, setGastoRecMontoManual] = useState("")
+  // true cuando el usuario tocó la selección a mano: deja de pisarse al cambiar concepto o fecha
+  const [recTocado, setRecTocado] = useState(false)
+
+  // A quién corresponde el cargo elegido (FEE: activos con +180 días; licencias: según plan)
+  const elegibilidadRec = useMemo(
+    () => elegiblesParaGasto(gastoRec.concepto, gastoRec.fecha, agentes, pagos),
+    [gastoRec.concepto, gastoRec.fecha, agentes, pagos],
+  )
+  useEffect(() => {
+    if (modal !== "gasto_rec" || recTocado) return
+    setSelectedAgentesRec(new Set(elegibilidadRec.sugeridos))
+  }, [modal, recTocado, elegibilidadRec])
 
   // ── Eliminar registro ──────────────────────────────
   const [deleteTarget,  setDeleteTarget]  = useState<PagoRow | null>(null)
@@ -298,7 +311,8 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
     )
 
     const agentesActivosCount = agentesActivos.length
-    const agentesFeeCount     = agentes.filter(a => getEfectivoPagaFee(a.fecha_alta, a.paga_fee)).length
+    // Solo agentes activos: uno dado de baja no debe contar como "pendiente de pagar fee"
+    const agentesFeeCount     = agentes.filter(a => a.activo && getEfectivoPagaFee(a.fecha_alta, a.paga_fee)).length
     const agentesCrmCount     = agentes.filter(a =>
       a.activo && (a.tipo_plan === "PRO" || a.tipo_plan === "PRO+")
     ).length
@@ -398,7 +412,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
     // Para FEE, CRM, Mainstreet: universo = todos los agentes elegibles, con o sin pago
     let elegibles: typeof agentes = []
     if (detalleConcepto === "FEE") {
-      elegibles = agentes.filter(a => getEfectivoPagaFee(a.fecha_alta, a.paga_fee))
+      elegibles = agentes.filter(a => a.activo && getEfectivoPagaFee(a.fecha_alta, a.paga_fee))
     } else if (detalleConcepto === "CRM") {
       elegibles = agentes.filter(a => a.activo && (a.tipo_plan === "PRO" || a.tipo_plan === "PRO+"))
     } else if (detalleConcepto === "Mainstreet") {
@@ -581,6 +595,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
 
   function openGastoRec() {
     setGastoRec({ concepto: CONCEPTOS_RECURRENTE[0], fecha: todayStr })
+    setRecTocado(false)   // al abrir, el efecto tilda solo a los agentes que corresponden
     setSelectedAgentesRec(new Set())
     setGastoRecMontoManual("")
     setError("")
@@ -1693,12 +1708,24 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                   background: "var(--crm-surface-2)",
                 }}>
                   <div style={{
-                    display: "flex", alignItems: "center", gap: "8px",
+                    display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap",
                     padding: "8px 12px", borderBottom: "1px solid var(--crm-divider)",
                   }}>
+                    {gastoRec.concepto !== "Otro" && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => { setRecTocado(false); setSelectedAgentesRec(new Set(elegibilidadRec.sugeridos)) }}
+                          style={{ fontSize: "11px", color: "#4ade80", fontWeight: 700, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", padding: 0 }}
+                        >
+                          Los que corresponden
+                        </button>
+                        <span style={{ color: "var(--crm-text-muted)" }}>|</span>
+                      </>
+                    )}
                     <button
                       type="button"
-                      onClick={() => setSelectedAgentesRec(new Set(agentes.filter(a => a.activo).map(a => a.id)))}
+                      onClick={() => { setRecTocado(true); setSelectedAgentesRec(new Set(agentes.filter(a => a.activo).map(a => a.id))) }}
                       style={{ fontSize: "11px", color: "#7C3AED", fontWeight: 700, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", padding: 0 }}
                     >
                       Todos activos
@@ -1706,11 +1733,17 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                     <span style={{ color: "var(--crm-text-muted)" }}>|</span>
                     <button
                       type="button"
-                      onClick={() => setSelectedAgentesRec(new Set())}
+                      onClick={() => { setRecTocado(true); setSelectedAgentesRec(new Set()) }}
                       style={{ fontSize: "11px", color: "var(--crm-text-muted)", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", padding: 0 }}
                     >
                       Limpiar
                     </button>
+                  </div>
+                  <div style={{ padding: "7px 12px", fontSize: "11.5px", color: "var(--crm-text-muted)", borderBottom: "1px solid var(--crm-divider)" }}>
+                    {elegibilidadRec.criterio}
+                    {elegibilidadRec.yaCargados.size > 0 && (
+                      <span style={{ color: "#fbbf24" }}> {elegibilidadRec.yaCargados.size} ya tiene{elegibilidadRec.yaCargados.size !== 1 ? "n" : ""} este cargo en el mes y no se tildó.</span>
+                    )}
                   </div>
                   {agentes.filter(a => a.activo).map(a => (
                     <label
@@ -1731,11 +1764,15 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                           const next = new Set(selectedAgentesRec)
                           if (ev.target.checked) next.add(a.id)
                           else next.delete(a.id)
+                          setRecTocado(true)
                           setSelectedAgentesRec(next)
                         }}
                         style={{ accentColor: "#7C3AED", width: "14px", height: "14px" }}
                       />
                       <span style={{ fontSize: "13px", fontWeight: 500, color: "var(--crm-text)" }}>{a.nombre}</span>
+                      {elegibilidadRec.yaCargados.has(a.id) && (
+                        <span style={{ marginLeft: "auto", fontSize: "11px", color: "#fbbf24", fontWeight: 600 }}>ya cargado este mes</span>
+                      )}
                     </label>
                   ))}
                 </div>
