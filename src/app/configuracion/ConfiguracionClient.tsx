@@ -6,10 +6,10 @@ import { guardarConfig } from "./actions"
 import type { ConfigEntry } from "./actions"
 import { Settings, Save, Loader2, Check } from "lucide-react"
 import Topbar from "@/components/Topbar"
-import { CLAVE_OBJETIVO_ANUAL, ESTACIONALIDAD_PCT, calcObjetivoMes, parseObjetivoAnual } from "@/lib/objetivos"
+import { CLAVE_OBJETIVO_ANUAL, ESTACIONALIDAD_PCT, calcObjetivoMes, claveObjetivoAnual, parseObjetivoAnual } from "@/lib/objetivos"
 
 // ── Default config (seeds empty tables) ──────────────
-const DEFAULT_CONFIG: ConfigEntry[] = [
+const DEFAULT_CONFIG_BASE: ConfigEntry[] = [
   // Licencias CRM
   { clave: "nombre_plan_pro",      valor: "PRO",    etiqueta: "Licencia CRM PRO",        grupo: "planes" },
   { clave: "nombre_plan_pro_plus", valor: "PRO+",   etiqueta: "Licencia CRM PRO+",       grupo: "planes" },
@@ -27,8 +27,7 @@ const DEFAULT_CONFIG: ConfigEntry[] = [
   // los leía y confundían. El objetivo mensual sale de "Objetivo anual USD" × estacionalidad, y el de
   // cartelería de los objetivos mes a mes (grupo "carteles").
   { clave: "obj_encuestas_pct",    valor: "60",     etiqueta: "Objetivo respuesta encuestas (%)",   grupo: "kpis" },
-  // Facturación
-  { clave: "obj_anual_usd",        valor: "710000", etiqueta: "Objetivo anual USD",      grupo: "facturacion" },
+  // Facturación: el objetivo anual es por año, se arma dentro del componente
   // Comunicación
   {
     clave:    "mensaje_whatsapp",
@@ -81,9 +80,23 @@ const inp: React.CSSProperties = {
 interface Props {
   initialEntries:    ConfigEntry[]
   recuperadosPorMes: number[]
+  anioActual:        number
+  /** Objetivo ya fijado de cada mes terminado del año en curso (null = mes en curso o futuro, se calcula) */
+  objetivosCongelados: (number | null)[]
 }
 
-export default function ConfiguracionClient({ initialEntries, recuperadosPorMes }: Props) {
+export default function ConfiguracionClient({ initialEntries, recuperadosPorMes, anioActual, objetivosCongelados }: Props) {
+  // Objetivo anual por año: el del año en curso y el siguiente (planificación). Los meses ya terminados
+  // quedan fijos con el valor que tenían: cambiar el anual solo afecta al mes en curso y a los que vienen.
+  const claveActual    = claveObjetivoAnual(anioActual)
+  const claveSiguiente = claveObjetivoAnual(anioActual + 1)
+  const valorHistorico = initialEntries.find(e => e.clave === CLAVE_OBJETIVO_ANUAL)?.valor
+  const DEFAULT_CONFIG: ConfigEntry[] = [
+    ...DEFAULT_CONFIG_BASE,
+    { clave: claveActual,    valor: valorHistorico ?? "710000", etiqueta: `Objetivo anual ${anioActual} (USD)`,                         grupo: "facturacion" },
+    { clave: claveSiguiente, valor: "",                         etiqueta: `Objetivo anual ${anioActual + 1} (USD) — planificación`, grupo: "facturacion" },
+  ]
+
   // Merge defaults with loaded entries (DB values take priority)
   const merged = DEFAULT_CONFIG.map(def => {
     const found = initialEntries.find(e => e.clave === def.clave)
@@ -249,7 +262,7 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
               }}>
                 <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#E31837" }} />
                 <span style={{ fontSize: "13px", fontWeight: 700, color: "var(--crm-text)" }}>
-                  Estacionalidad — Objetivos mensuales calculados
+                  Estacionalidad — Objetivos mensuales {anioActual} (los meses terminados quedan fijos)
                 </span>
               </div>
               <div style={{ overflowX: "auto" }}>
@@ -271,7 +284,7 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
                   <tbody>
                     {MONTH_NAMES.map((nombre, idx) => {
                       const pct    = ESTACIONALIDAD_PCT[idx]
-                      const obj    = calcObjetivoMes(parseObjetivoAnual(values[CLAVE_OBJETIVO_ANUAL]), idx + 1)
+                      const obj    = objetivosCongelados[idx] ?? calcObjetivoMes(parseObjetivoAnual(values[claveActual]), idx + 1)
                       const isLast = idx === 11
                       return (
                         <tr key={nombre} style={{ borderBottom: isLast ? "none" : "1px solid rgba(255,255,255,0.06)" }}>
@@ -289,6 +302,12 @@ export default function ConfiguracionClient({ initialEntries, recuperadosPorMes 
                           </td>
                           <td style={{ padding: "10px 20px", fontSize: "13px", fontWeight: 600, color: "var(--crm-text)" }}>
                             USD {obj.toLocaleString("es-AR")}
+                            {objetivosCongelados[idx] != null && (
+                              <span title="Mes terminado: su objetivo ya no cambia aunque modifiques el objetivo anual"
+                                style={{ marginLeft: "8px", fontSize: "10.5px", fontWeight: 700, color: "var(--crm-text-muted)", border: "1px solid var(--crm-divider)", borderRadius: "10px", padding: "1px 7px" }}>
+                                🔒 fijo
+                              </span>
+                            )}
                           </td>
                         </tr>
                       )

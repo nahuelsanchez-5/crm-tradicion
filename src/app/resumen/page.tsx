@@ -6,7 +6,8 @@ import type { KpiRow } from "./ResumenClient"
 import { fmtUSD } from "@/lib/format"
 import { getEfectivoPagaFee } from "@/lib/fee"
 import { limitesMesArgentina, mesAnioArgentina } from "@/lib/fecha"
-import { CLAVE_OBJETIVO_ANUAL, calcObjetivoMes, parseObjetivoAnual, realDelMes } from "@/lib/objetivos"
+import { realDelMes } from "@/lib/objetivos"
+import { cargarObjetivosAnio } from "@/lib/objetivos-db"
 
 const MONTH_KEYS = [
   "enero","febrero","marzo","abril","mayo","junio",
@@ -61,7 +62,7 @@ export default async function ResumenPage({
       .gte("fecha", startDate).lt("fecha", endDate),
     supabase.from("config")
       .select("clave, valor")
-      .in("clave", [CLAVE_OBJETIVO_ANUAL, "obj_encuestas_pct", objCartelesMesKey]),
+      .in("clave", ["obj_encuestas_pct", objCartelesMesKey]),
     supabase.from("facturacion")
       .select("real_usd")
       .eq("mes", month).eq("anio", year)
@@ -76,7 +77,8 @@ export default async function ResumenPage({
 
   // ── Config values ────────────────────────────────────────
   const configMap    = Object.fromEntries((configs ?? []).map(c => [c.clave, c.valor]))
-  const objFactAnual = parseObjetivoAnual(configMap[CLAVE_OBJETIVO_ANUAL])
+  // Objetivo del mes: los meses terminados vienen fijos, el resto sale del objetivo anual de ese año
+  const { objetivos: objetivosAnio } = await cargarObjetivosAnio(supabase, year)
   const objEncPct    = parseInt(configMap.obj_encuestas_pct       ?? "60")     || 60
   const objCartelesMes = parseInt(configMap[objCartelesMesKey]    ?? "0")      || 0
 
@@ -159,7 +161,7 @@ export default async function ResumenPage({
   // Misma regla que Dashboard y Facturación: carga manual si existe (>0), si no comisiones de Operaciones
   const comisiones     = (operaciones ?? []).reduce((s, o) => s + (Number(o.comision_bruta) || 0), 0)
   const comisionTotal  = realDelMes(factManual?.real_usd, comisiones)
-  const objFactMensual = calcObjetivoMes(objFactAnual, month)
+  const objFactMensual = objetivosAnio[month - 1]
   const factRatio      = objFactMensual > 0 ? comisionTotal / objFactMensual : 0
   const factACobrar    = factRatio >= 1 ? 100 : 0
 

@@ -10,7 +10,7 @@ import type { FacturacionFormData } from "./actions"
 import { DollarSign, TrendingUp, Award, Loader2 } from "lucide-react"
 import Topbar from "@/components/Topbar"
 import { fmtUSD } from "@/lib/format"
-import { ESTACIONALIDAD_PCT, calcObjetivoMes, realDelMes } from "@/lib/objetivos"
+import { ESTACIONALIDAD_PCT, realDelMes } from "@/lib/objetivos"
 
 // ── Constants ────────────────────────────────────────
 // ── Types ────────────────────────────────────────────
@@ -143,14 +143,19 @@ function EstadoBadge({ p, isFuture, real }: { p: number; isFuture: boolean; real
 interface Props {
   rows: FacturacionRow[]
   comisionesPorMes: Record<string, number>
-  anio: number          // año actual (hora Argentina), calculado en el server
+  anio: number          // año que se está viendo (selector)
+  anioActual: number    // año en curso (hora Argentina)
   mesActual: number     // 1-12, hora Argentina
-  objetivoAnual: number // config `obj_anual_usd`
+  objetivoAnual: number // objetivo anual del año que se ve
+  objetivos: number[]   // objetivo de cada mes de ese año (los meses terminados vienen fijos)
 }
 
-export default function FacturacionClient({ rows, comisionesPorMes, anio: ANIO, mesActual: currentMonth, objetivoAnual }: Props) {
+export default function FacturacionClient({ rows, comisionesPorMes, anio: ANIO, anioActual, mesActual: currentMonth, objetivoAnual, objetivos }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+
+  const esPlanificacion = ANIO > anioActual   // año siguiente: solo proyección, no hay facturación real
+  const mesCerrado = (mes: number) => ANIO < anioActual || (ANIO === anioActual && mes < currentMonth)
 
   // ── Build 12-month grid ────────────────────────────
   const meses: MesData[] = useMemo(() => {
@@ -162,14 +167,14 @@ export default function FacturacionClient({ rows, comisionesPorMes, anio: ANIO, 
       return {
         mes,
         nombre,
-        objetivo_usd: calcObjetivoMes(objetivoAnual, mes),
+        objetivo_usd: objetivos[idx] ?? 0,
         real_usd:     realDelMes(row?.real_usd, enVivo),
-        id:           row?.id       ?? null,
-        isFuture:     mes > currentMonth,
+        id:           tieneGuardado ? row!.id : null,
+        isFuture:     ANIO > anioActual || (ANIO === anioActual && mes > currentMonth),
         esEnVivo:     !tieneGuardado && enVivo > 0,
       }
     })
-  }, [rows, currentMonth, comisionesPorMes, ANIO, objetivoAnual])
+  }, [rows, currentMonth, comisionesPorMes, ANIO, anioActual, objetivos])
 
   // ── KPI stats ──────────────────────────────────────
   const stats = useMemo(() => {
@@ -210,7 +215,7 @@ export default function FacturacionClient({ rows, comisionesPorMes, anio: ANIO, 
     if (!modalMes) return
 
     const real = parseFloat(form.real_usd) || 0
-    const obj  = calcObjetivoMes(objetivoAnual, modalMes.mes)
+    const obj  = objetivos[modalMes.mes - 1] ?? 0   // el server vuelve a decidirlo (mes cerrado = fijo)
 
     const payload: FacturacionFormData = {
       mes:          modalMes.mes,
@@ -243,14 +248,38 @@ export default function FacturacionClient({ rows, comisionesPorMes, anio: ANIO, 
             fontSize: "11px", fontWeight: 700, letterSpacing: "1.2px",
             textTransform: "uppercase" as const, color: "var(--crm-text-muted)", marginBottom: "6px",
           }}>
-            Objetivo anual · {fmtUSD(objetivoAnual)}
+            {esPlanificacion ? "Planificación" : "Objetivo anual"} · {fmtUSD(objetivoAnual)}
           </div>
-          <h1 style={{
-            fontSize: "27px", fontWeight: 800, letterSpacing: "-0.02em",
-            color: "var(--crm-text)", margin: 0,
-          }}>
-            Año {ANIO}
-          </h1>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+            <h1 style={{
+              fontSize: "27px", fontWeight: 800, letterSpacing: "-0.02em",
+              color: "var(--crm-text)", margin: 0,
+            }}>
+              Año {ANIO}
+            </h1>
+            <div role="group" aria-label="Elegir año" style={{ display: "flex", gap: "6px" }}>
+              {[anioActual - 1, anioActual, anioActual + 1].map(y => (
+                <button
+                  key={y} type="button" aria-pressed={y === ANIO}
+                  onClick={() => router.push(y === anioActual ? "/facturacion" : `/facturacion?anio=${y}`)}
+                  style={{
+                    padding: "6px 14px", borderRadius: "8px", fontFamily: "inherit", cursor: "pointer",
+                    fontSize: "12.5px", fontWeight: y === ANIO ? 700 : 600,
+                    border: y === ANIO ? "1px solid var(--crm-accent)" : "1px solid var(--crm-card-border)",
+                    background: y === ANIO ? "var(--crm-accent-soft)" : "var(--crm-surface-3)",
+                    color: y === ANIO ? "var(--crm-accent-light)" : "var(--crm-text-muted)",
+                  }}
+                >
+                  {y}{y === anioActual + 1 ? " · plan" : ""}
+                </button>
+              ))}
+            </div>
+          </div>
+          {esPlanificacion && (
+            <p style={{ fontSize: "12.5px", color: "var(--crm-text-muted)", margin: "8px 0 0" }}>
+              Proyección con el objetivo anual de {ANIO} (se carga en Configuración). Todavía no hay facturación real: es para ir viendo los números del año que viene.
+            </p>
+          )}
         </header>
 
         {/* ── KPI Cards ─────────────────────────── */}
@@ -344,7 +373,7 @@ export default function FacturacionClient({ rows, comisionesPorMes, anio: ANIO, 
                 {meses.map((m, i) => {
                   const p      = pct(m.real_usd, m.objetivo_usd)
                   const isLast = i === 11
-                  const isCurrent = m.mes === currentMonth
+                  const isCurrent = ANIO === anioActual && m.mes === currentMonth
 
                   return (
                     <tr
@@ -414,6 +443,9 @@ export default function FacturacionClient({ rows, comisionesPorMes, anio: ANIO, 
 
                       {/* Action */}
                       <td style={{ padding: "14px 16px" }}>
+                        {esPlanificacion ? (
+                          <span style={{ fontSize: "12px", color: "var(--crm-text-muted)" }}>Proyección</span>
+                        ) : (
                         <button
                           onClick={() => openModal(m)}
                           style={{
@@ -427,6 +459,7 @@ export default function FacturacionClient({ rows, comisionesPorMes, anio: ANIO, 
                         >
                           {m.id ? "Editar" : "Cargar"}
                         </button>
+                        )}
                       </td>
                     </tr>
                   )
@@ -471,20 +504,20 @@ export default function FacturacionClient({ rows, comisionesPorMes, anio: ANIO, 
           <form onSubmit={handleSubmit} style={{ padding: "20px" }}>
               {/* Objetivo auto-calculado (read-only) */}
               {modalMes && (
-                <Field label="Objetivo mensual (calculado automáticamente)">
+                <Field label={mesCerrado(modalMes.mes) ? "Objetivo mensual (fijo: el mes ya terminó)" : "Objetivo mensual (calculado automáticamente)"}>
                   <div style={{
                     ...inp, background: "var(--crm-surface-3)", color: "var(--crm-text-muted)",
                     border: "1px solid var(--crm-divider)", cursor: "default",
                     display: "flex", alignItems: "center", justifyContent: "space-between",
                   }}>
                     <span style={{ fontWeight: 700, color: "var(--crm-text)" }}>
-                      {fmtUSD(calcObjetivoMes(objetivoAnual, modalMes.mes))}
+                      {fmtUSD(objetivos[modalMes.mes - 1])}
                     </span>
                     <span style={{
                       fontSize: "11px", background: "rgba(96,165,250,0.12)", color: "#60a5fa",
                       padding: "2px 8px", borderRadius: "6px", fontWeight: 600,
                     }}>
-                      {ESTACIONALIDAD_PCT[modalMes.mes - 1]}% × {fmtUSD(objetivoAnual)}
+                      {mesCerrado(modalMes.mes) ? "🔒 fijo" : `${ESTACIONALIDAD_PCT[modalMes.mes - 1]}% × ${fmtUSD(objetivoAnual)}`}
                     </span>
                   </div>
                 </Field>
@@ -525,11 +558,11 @@ export default function FacturacionClient({ rows, comisionesPorMes, anio: ANIO, 
                   <span style={{
                     fontWeight: 800, fontSize: "16px",
                     color: (() => {
-                      const p = pct(parseFloat(form.real_usd) || 0, calcObjetivoMes(objetivoAnual, modalMes.mes))
+                      const p = pct(parseFloat(form.real_usd) || 0, (objetivos[modalMes.mes - 1] ?? 0))
                       return p >= 100 ? "#4ade80" : p >= 80 ? "#0D9488" : "var(--crm-accent)"
                     })(),
                   }}>
-                    {pct(parseFloat(form.real_usd) || 0, calcObjetivoMes(objetivoAnual, modalMes.mes))}%
+                    {pct(parseFloat(form.real_usd) || 0, (objetivos[modalMes.mes - 1] ?? 0))}%
                   </span>
                 </div>
               )}

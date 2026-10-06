@@ -7,6 +7,27 @@ export const OBJETIVO_ANUAL_DEFAULT = 710_000
 // Estacionalidad (índice 0 = Enero … 11 = Diciembre), suma = 100%
 export const ESTACIONALIDAD_PCT = [4.72, 5.41, 7.12, 6.82, 8.41, 9.15, 8.66, 9.64, 9.42, 9.65, 9.78, 11.22]
 
+/** Clave de config del objetivo anual de un año concreto (ej: obj_anual_usd_2027). */
+export const claveObjetivoAnual = (anio: number) => `${CLAVE_OBJETIVO_ANUAL}_${anio}`
+
+/**
+ * Objetivo anual de un año a partir del mapa de config:
+ *  1. la clave de ese año (obj_anual_usd_2027);
+ *  2. si no existe y el año es el actual o uno pasado: la clave histórica `obj_anual_usd` (valor de siempre);
+ *  3. si no existe y es un año futuro (planificación sin cargar): el objetivo del año en curso, como proyección.
+ */
+export function objetivoAnualDe(config: Record<string, string | null | undefined>, anio: number, anioActual: number): number {
+  const delAnio = config[claveObjetivoAnual(anio)]
+  if (delAnio != null && delAnio !== "") return parseObjetivoAnual(delAnio)
+  if (anio <= anioActual) return parseObjetivoAnual(config[CLAVE_OBJETIVO_ANUAL])
+  return objetivoAnualDe(config, anioActual, anioActual)
+}
+
+/** ¿El mes ya terminó (hora Argentina)? Un mes se cierra a las 00:00 del día 1 del mes siguiente. */
+export function mesTerminado(anio: number, mes: number, hoy: { anio: number; mes: number }): boolean {
+  return anio < hoy.anio || (anio === hoy.anio && mes < hoy.mes)
+}
+
 /** Valor de config → objetivo anual. Cae al default si falta, no es número o es <= 0. */
 export function parseObjetivoAnual(valor: string | null | undefined): number {
   const n = parseFloat(valor ?? "")

@@ -7,7 +7,8 @@ import Link from "next/link"
 import { Users, Building2, DollarSign, Handshake, Clock } from "lucide-react"
 import { fmtUSD } from "@/lib/format"
 import { limitesMesArgentina, mesAnioArgentina } from "@/lib/fecha"
-import { CLAVE_OBJETIVO_ANUAL, calcObjetivoMes, parseObjetivoAnual, realDelMes } from "@/lib/objetivos"
+import { realDelMes } from "@/lib/objetivos"
+import { cargarObjetivosAnio } from "@/lib/objetivos-db"
 
 const MES_NAMES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
                    "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
@@ -85,7 +86,7 @@ export default async function DashboardPage() {
     { data: agentesListData },
     { data: opsMesData },
     { data: facturacionData },
-    { data: objAnualConfig },
+    objetivosAnio,
     { count: ofertasEnCursoCount },
     { data: ofertasSinActividadRaw },
     { data: ofertasActivasRaw },
@@ -103,7 +104,7 @@ export default async function DashboardPage() {
       .select("real_usd")
       .eq("mes", MES).eq("anio", ANIO)
       .maybeSingle(),
-    supabase.from("config").select("valor").eq("clave", CLAVE_OBJETIVO_ANUAL).maybeSingle(),
+    cargarObjetivosAnio(supabase, ANIO),   // objetivo del mes (los meses terminados quedan fijos)
     supabase.from("ofertas")
       .select("id", { count: "exact", head: true })
       .neq("estado", "Cerradas")
@@ -165,7 +166,7 @@ export default async function DashboardPage() {
   // Misma regla que Facturación y Resumen: carga manual si existe (>0), si no comisiones de Operaciones
   const comisionesMes = ((opsMesData ?? []) as Array<{ comision_bruta: number }>).reduce((s, o) => s + (Number(o.comision_bruta) || 0), 0)
   const factReal  = realDelMes(facturacionData?.real_usd, comisionesMes)
-  const factObj   = calcObjetivoMes(parseObjetivoAnual(objAnualConfig?.valor), MES)
+  const factObj   = objetivosAnio.objetivos[MES - 1]
   const factLabel = fmtUSD(factReal)
   const factPct   = factObj > 0 ? Math.round((factReal / factObj) * 100) : null
 

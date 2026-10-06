@@ -1,6 +1,8 @@
 "use server"
 
 import { mensajeErrorDB } from "@/lib/errores"
+import { mesAnioArgentina } from "@/lib/fecha"
+import { cargarObjetivosAnio } from "@/lib/objetivos-db"
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 import { requireSession } from "@/lib/auth-guard"
@@ -42,6 +44,11 @@ export async function guardarConfig(entries: ConfigEntry[]) {
 
   const supabase = createServerClient()
 
+  // Congelar los meses ya terminados con el objetivo anual VIGENTE (el viejo) antes de aplicar el nuevo:
+  // así cambiar el objetivo anual no reescribe la historia. Cada año tiene su propia clave, por eso alcanza con el año en curso.
+  const { anio: anioHoy } = mesAnioArgentina()
+  await cargarObjetivosAnio(supabase, anioHoy)
+
   const upserts = entries.map(e => ({
     clave:    e.clave,
     valor:    e.valor,
@@ -56,6 +63,8 @@ export async function guardarConfig(entries: ConfigEntry[]) {
   if (error) return { error: mensajeErrorDB(error) }
 
   revalidatePath("/configuracion")
+  revalidatePath("/facturacion")
+  revalidatePath("/resumen")
   revalidatePath("/")
   return { success: true }
 }

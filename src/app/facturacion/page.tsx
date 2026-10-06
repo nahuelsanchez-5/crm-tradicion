@@ -1,18 +1,24 @@
 import { createServerClient } from "@/lib/supabase"
 import { mesAnioArgentina } from "@/lib/fecha"
-import { CLAVE_OBJETIVO_ANUAL, parseObjetivoAnual } from "@/lib/objetivos"
+import { cargarObjetivosAnio } from "@/lib/objetivos-db"
 import FacturacionClient, { FacturacionRow } from "./FacturacionClient"
 
-export default async function FacturacionPage() {
+export default async function FacturacionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ anio?: string }>
+}) {
   const supabase = createServerClient()
-  const { anio, mes } = mesAnioArgentina()
+  const hoy = mesAnioArgentina()
 
-  const [{ data: raw }, { data: operacionesData }, { data: objConfig }] = await Promise.all([
-    supabase
-      .from("facturacion")
-      .select("id, mes, anio, objetivo_usd, real_usd")
-      .eq("anio", anio)
-      .order("mes"),
+  // Solo se puede ver el año anterior, el actual y el siguiente (planificación)
+  const { anio: anioParam } = await searchParams
+  const pedido = parseInt(anioParam ?? "", 10)
+  const anio = [hoy.anio - 1, hoy.anio, hoy.anio + 1].includes(pedido) ? pedido : hoy.anio
+
+  const [objetivosAnio, { data: operacionesData }] = await Promise.all([
+    // Objetivos del año: los meses terminados vienen fijos (y se guardan si faltaba alguno)
+    cargarObjetivosAnio(supabase, anio),
     // Suma de comisiones por mes para pre-llenar "Facturación real".
     // Se suman TODOS los tipos de operación (no solo Venta) para coincidir con el
     // KPI "Facturación USD" del Dashboard, que también suma comision_bruta sin filtrar por tipo.
@@ -21,10 +27,9 @@ export default async function FacturacionPage() {
       .select("fecha, comision_bruta")
       .gte("fecha", `${anio}-01-01`)
       .lt("fecha", `${anio + 1}-01-01`),
-    supabase.from("config").select("valor").eq("clave", CLAVE_OBJETIVO_ANUAL).maybeSingle(),
   ])
 
-  const rows = (raw ?? []) as FacturacionRow[]
+  const rows = objetivosAnio.filas.map(f => ({ ...f, objetivo_usd: Number(f.objetivo_usd ?? 0) })) as FacturacionRow[]
 
   const comisionesPorMes: Record<string, number> = {}
   for (const op of (operacionesData ?? [])) {
@@ -38,8 +43,10 @@ export default async function FacturacionPage() {
       rows={rows}
       comisionesPorMes={comisionesPorMes}
       anio={anio}
-      mesActual={mes}
-      objetivoAnual={parseObjetivoAnual(objConfig?.valor)}
+      anioActual={hoy.anio}
+      mesActual={hoy.mes}
+      objetivoAnual={objetivosAnio.objetivoAnual}
+      objetivos={objetivosAnio.objetivos}
     />
   )
 }
