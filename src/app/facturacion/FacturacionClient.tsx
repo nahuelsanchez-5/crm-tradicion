@@ -287,7 +287,7 @@ export default function FacturacionClient({ rows, comisionesPorMes, anio: ANIO, 
           <KpiCard
             title="Facturación anual acumulada"
             value={fmtUSD(stats.totalReal)}
-            badge={`de ${fmtUSD(stats.totalObj)} objetivo`}
+            badge={`de ${fmtUSD(stats.totalObj)} objetivo a la fecha · anual ${objetivoAnual > 0 ? fmtUSD(objetivoAnual) : "sin cargar"}`}
             iconBg="bg-teal-500/15"
             iconColor="text-teal-400"
             icon={<DollarSign size={18} />}
@@ -327,7 +327,8 @@ export default function FacturacionClient({ rows, comisionesPorMes, anio: ANIO, 
                 Progreso hacia el objetivo anual
               </div>
               <div style={{ fontSize: "12px", color: "var(--crm-text-muted)" }}>
-                {fmtUSD(stats.totalReal)} de {fmtUSD(stats.totalObj)} acumulado a la fecha
+                {fmtUSD(stats.totalReal)} de {fmtUSD(stats.totalObj)} (objetivo acumulado hasta el mes en curso)
+                {objetivoAnual > 0 && ` · objetivo anual ${fmtUSD(objetivoAnual)}`}
               </div>
             </div>
             <span style={{
