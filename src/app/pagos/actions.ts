@@ -1,6 +1,8 @@
 "use server"
 
 import { mensajeErrorDB } from "@/lib/errores"
+import { getConceptGroup } from "@/lib/conceptos"
+import { ordenarPendientes, repartirPago, type CargoPendiente } from "@/lib/cobros"
 import { createServerClient } from "@/lib/supabase"
 import { revalidatePath } from "next/cache"
 import { requireSession } from "@/lib/auth-guard"
@@ -369,6 +371,81 @@ export async function registrarPagoEnCargo(id: string, monto: number) {
 
   revalidatePath("/pagos")
   return { success: true, pagado: nuevoPagado, queda: round2(Math.max(0, debe - nuevoPagado)), estado }
+}
+
+// ─────────────────────────────────────────────────────
+//  REGISTRAR PAGO DE UN AGENTE (se aplica solo a sus cargos pendientes)
+// ─────────────────────────────────────────────────────
+// Botón general "Registrar Pago": elegís agente + concepto + cuánto pagó.
+//  - Si el agente tiene cargos pendientes de ese concepto, el pago se aplica al más viejo primero.
+//  - Si sobra, queda como saldo a favor (si no se acepta eso, no se guarda nada y se avisa).
+//  - Si no hay ningún cargo pendiente de ese concepto, se registra como pago ya cobrado (como antes).
+export async function registrarPagoAgente(data: {
+  agente_id: string
+  concepto: string
+  monto: number
+  fecha: string
+  sobranteASaldoFavor: boolean
+}) {
+  await requireSession()
+
+  if (!esUUIDValido(data.agente_id)) return { error: "Agente inválido" }
+  if (!esFechaValida(data.fecha))    return { error: "Fecha inválida" }
+  if (!esMontoValido(data.monto))    return { error: "El monto debe ser un número mayor a 0" }
+  const errConcepto = errorConcepto(data.concepto)
+  if (errConcepto) return { error: errConcepto }
+
+  const supabase = createServerClient()
+
+  const { data: filas, error: leerError } = await supabase
+    .from("pagos")
+    .select("id, concepto, fecha, monto_debe, monto_pagado")
+    .eq("agente_id", data.agente_id)
+  if (leerError) return { error: mensajeErrorDB(leerError, "leer los cargos del agente") }
+
+  const grupo = getConceptGroup(data.concepto)
+  const cargos: CargoPendiente[] = (filas ?? [])
+    .filter((f) => f.concepto !== CONCEPTO_SALDO_FAVOR && getConceptGroup(f.concepto as string) === grupo)
+    .map((f) => ({
+      id: f.id as string, concepto: f.concepto as string, fecha: f.fecha as string,
+      debe: Number(f.monto_debe), pagado: Number(f.monto_pagado),
+    }))
+
+  // Sin cargos pendientes de este concepto: queda registrado como pago ya cobrado
+  if (ordenarPendientes(cargos).length === 0) {
+    const { error } = await supabase.from("pagos").insert({
+      agente_id: data.agente_id, fecha: data.fecha, concepto: data.concepto.trim(),
+      monto_debe: data.monto, monto_pagado: data.monto, estado: "Pagado",
+    })
+    if (error) return { error: mensajeErrorDB(error) }
+    revalidatePath("/pagos")
+    return { success: true as const, modo: "sin_cargo" as const, aplicaciones: [], sobrante: 0 }
+  }
+
+  const rep = repartirPago(data.monto, cargos)
+  // Validar antes de escribir: si sobra plata y no se aceptó dejarla como saldo a favor, no se toca nada
+  if (rep.sobrante > 0 && !data.sobranteASaldoFavor) {
+    return { error: `El pago supera lo que falta en sus cargos por USD ${rep.sobrante.toLocaleString("es-AR")}. Marcá que el resto quede como saldo a favor, o bajá el monto.` }
+  }
+
+  for (const ap of rep.aplicaciones) {
+    const nuevoPagado = round2(ap.yaPagado + ap.aplicado)
+    const cargo = cargos.find((c) => c.id === ap.id)!
+    const estado = calcularEstado(cargo.debe - EPS, nuevoPagado)
+    const { error } = await supabase.from("pagos").update({ monto_pagado: nuevoPagado, estado }).eq("id", ap.id)
+    if (error) return { error: mensajeErrorDB(error) }
+  }
+
+  if (rep.sobrante > 0) {
+    const { error } = await supabase.from("pagos").insert({
+      agente_id: data.agente_id, fecha: data.fecha, concepto: CONCEPTO_SALDO_FAVOR,
+      monto_debe: 0, monto_pagado: rep.sobrante, estado: "Pagado",
+    })
+    if (error) return { error: mensajeErrorDB(error) }
+  }
+
+  revalidatePath("/pagos")
+  return { success: true as const, modo: "aplicado" as const, aplicaciones: rep.aplicaciones, sobrante: rep.sobrante }
 }
 
 // ─────────────────────────────────────────────────────

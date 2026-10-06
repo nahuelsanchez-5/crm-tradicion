@@ -5,7 +5,7 @@ import { fmtFecha } from "@/lib/format"
 import { MONTH_NAMES } from "@/lib/constantes"
 import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
-import { crearPago, registrarPagoEnCargo, crearGasto, crearGastoRecurrente, eliminarPago, registrarSaldoFavor, aplicarCreditoAPendientes } from "./actions"
+import { registrarPagoAgente, registrarPagoEnCargo, crearGasto, crearGastoRecurrente, eliminarPago, registrarSaldoFavor, aplicarCreditoAPendientes } from "./actions"
 import { DollarSign, Loader2, MessageCircle, TrendingDown, TrendingUp, Repeat, CheckCircle2, Save, Trash2 } from "lucide-react"
 import StatusBadge from "@/components/StatusBadge"
 import { hoyArgentina } from "@/lib/fecha"
@@ -14,6 +14,7 @@ import { fmtUSD } from "@/lib/format"
 import { Backdrop, ModalHeader } from "@/components/Modal"
 import { getEfectivoPagaFee } from "@/lib/fee"
 import { elegiblesParaGasto } from "@/lib/elegibles"
+import { ordenarPendientes, repartirPago, type CargoPendiente } from "@/lib/cobros"
 
 // ── Constants ────────────────────────────────────────
 const MONTHS_OPTIONS: Array<{ label: string; value: string }> = (() => {
@@ -536,6 +537,22 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
     return pagado > 0 ? "Pagado" : "Pendiente"
   }, [nuevoForm.monto_pagado])
 
+  // ── Registrar Pago general: a qué cargos del agente se aplica lo que paga ──
+  const [sobranteASaldo, setSobranteASaldo] = useState(true)
+  const cargosNuevo: CargoPendiente[] = useMemo(
+    () => pagos
+      .filter(p => p.agente_id === nuevoForm.agente_id && p.concepto !== "Saldo a favor" && getConceptGroup(p.concepto) === getConceptGroup(nuevoForm.concepto))
+      .map(p => ({ id: p.id, concepto: p.concepto, fecha: p.fecha, debe: Number(p.monto_debe), pagado: Number(p.monto_pagado) })),
+    [pagos, nuevoForm.agente_id, nuevoForm.concepto],
+  )
+  const hayPendientesNuevo = useMemo(() => ordenarPendientes(cargosNuevo).length > 0, [cargosNuevo])
+  const montoNuevo = parseFloat(nuevoForm.monto_pagado.replace(",", ".")) || 0
+  const repNuevo = useMemo(() => repartirPago(montoNuevo, cargosNuevo), [montoNuevo, cargosNuevo])
+  const faltaTotalNuevo = useMemo(
+    () => Math.round(ordenarPendientes(cargosNuevo).reduce((s, c) => s + (c.debe - c.pagado), 0) * 100) / 100,
+    [cargosNuevo],
+  )
+
   // En el modal de pago, `editForm.monto_pagado` es el pago NUEVO que se acaba de recibir (no el total acumulado)
   const editEstado = useMemo(() => {
     if (!selectedPago) return "Pendiente"
@@ -563,6 +580,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
 
   // ── Open modals ────────────────────────────────────
   function openNuevo(preAgente?: string) {
+    setSobranteASaldo(true)
     setNuevoForm({
       agente_id:    preAgente ?? agentesActivos[0]?.id ?? "",
       concepto:     CONCEPTOS_PAGO[0],
@@ -659,16 +677,17 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
   function handleNuevo(e: React.FormEvent) {
     e.preventDefault()
     setError("")
-    const pagado = parseFloat(nuevoForm.monto_pagado) || 0
+    const pagado = parseFloat(nuevoForm.monto_pagado.replace(",", ".")) || 0
     if (pagado <= 0) { setError("El monto debe ser mayor a 0"); return }
 
     startTransition(async () => {
-      const result = await crearPago({
-        agente_id:    nuevoForm.agente_id,
-        fecha:        nuevoForm.fecha,
-        concepto:     nuevoForm.concepto,
-        monto_debe:   pagado,
-        monto_pagado: pagado,
+      // El server aplica el pago a los cargos pendientes del agente (más viejo primero)
+      const result = await registrarPagoAgente({
+        agente_id:           nuevoForm.agente_id,
+        fecha:               nuevoForm.fecha,
+        concepto:            nuevoForm.concepto,
+        monto:               pagado,
+        sobranteASaldoFavor: sobranteASaldo,
       })
       if (result.error) setError(result.error)
       else { setSaveSuccessNuevo(true); setTimeout(() => { setSaveSuccessNuevo(false); closeModal(); router.refresh() }, 1000) }
@@ -699,7 +718,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
   function handleSaldoFavor(e: React.FormEvent) {
     e.preventDefault()
     setError("")
-    const monto = parseFloat(saldoFavorForm.monto) || 0
+    const monto = parseFloat(saldoFavorForm.monto.replace(",", ".")) || 0
     if (monto <= 0) { setError("El monto debe ser mayor a 0"); return }
 
     startTransition(async () => {
@@ -1476,20 +1495,52 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                     className="crm-input" required />
                 </Field>
               </div>
-              <Field label="Monto pagado (USD) *">
-                <input type="number" min="0" step="0.01" placeholder="95.25"
+              <Field label="Pago recibido ahora (USD) *">
+                <input type="text" inputMode="decimal" placeholder="Ej: 33,44"
                   value={nuevoForm.monto_pagado}
                   onChange={e => setNuevoForm(f => ({ ...f, monto_pagado: e.target.value }))}
                   className="crm-input" required />
               </Field>
+
+              {/* Cuenta en vivo: a qué cargos se aplica este pago */}
               <div style={{
-                display: "flex", alignItems: "center", gap: "8px",
                 padding: "10px 12px", borderRadius: "8px",
                 background: "var(--crm-surface-3)", border: "1px solid var(--crm-divider)",
-                marginBottom: "14px",
+                marginBottom: "14px", fontSize: "12.5px", color: "var(--crm-text-muted)",
               }}>
-                <span style={{ fontSize: "12px", color: "var(--crm-text-muted)", fontWeight: 500 }}>Estado calculado:</span>
-                <StatusBadge estado={nuevoEstado} />
+                {!hayPendientesNuevo ? (
+                  <span>
+                    Este agente no tiene cargos pendientes de <b style={{ color: "var(--crm-text)" }}>{nuevoForm.concepto}</b>:
+                    se registra como pago ya cobrado{montoNuevo > 0 ? ` por ${fmtUSD(montoNuevo)}` : ""}.
+                  </span>
+                ) : (
+                  <>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                      <span>Falta pagar de {nuevoForm.concepto}</span>
+                      <strong style={{ color: "var(--crm-text)" }}>{fmtUSD(faltaTotalNuevo)}</strong>
+                    </div>
+                    {montoNuevo > 0 && repNuevo.aplicaciones.map(ap => (
+                      <div key={ap.id} style={{ display: "flex", justifyContent: "space-between", gap: "8px", padding: "3px 0", borderTop: "1px solid var(--crm-divider)" }}>
+                        <span>{ap.concepto} · {fmtFecha(ap.fecha)} <span style={{ opacity: 0.7 }}>(ya pagó {fmtUSD(ap.yaPagado)})</span></span>
+                        <span style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                          + <b style={{ color: "var(--crm-text)" }}>{fmtUSD(ap.aplicado)}</b> → queda{" "}
+                          <b style={{ color: ap.quedaDespues <= 0.005 ? "#4ade80" : "var(--crm-accent)" }}>{fmtUSD(ap.quedaDespues)}</b>
+                        </span>
+                      </div>
+                    ))}
+                    {repNuevo.sobrante > 0 && (
+                      <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: "1px solid var(--crm-divider)" }}>
+                        <div style={{ color: "#fbbf24", fontWeight: 600 }}>
+                          Sobran {fmtUSD(repNuevo.sobrante)} después de cubrir todos sus cargos.
+                        </div>
+                        <label style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "6px", cursor: "pointer", color: "var(--crm-text)" }}>
+                          <input type="checkbox" checked={sobranteASaldo} onChange={e => setSobranteASaldo(e.target.checked)} />
+                          Dejar lo que sobra como saldo a favor
+                        </label>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
               <ErrorBox />
               <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center pt-1">
@@ -1934,7 +1985,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Field label="Monto (USD) *">
                   <input
-                    type="number" min="0.01" step="0.01" placeholder="0.00"
+                    type="text" inputMode="decimal" placeholder="Ej: 33,44"
                     value={saldoFavorForm.monto}
                     onChange={e => setSaldoFavorForm(f => ({ ...f, monto: e.target.value }))}
                     className="crm-input" required autoFocus
@@ -1946,6 +1997,23 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
                     className="crm-input" required />
                 </Field>
               </div>
+              {/* Cuenta en vivo: saldo a favor actual + este depósito = nuevo saldo */}
+              {(() => {
+                const actual   = creditoDisponiblePorAgente.get(saldoFavorForm.agente_id) ?? 0
+                const deposito = parseFloat(saldoFavorForm.monto.replace(",", ".")) || 0
+                return (
+                  <div style={{
+                    padding: "10px 12px", borderRadius: "8px", background: "var(--crm-surface-3)",
+                    border: "1px solid var(--crm-divider)", marginBottom: "14px", fontSize: "12.5px", color: "var(--crm-text-muted)",
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}><span>Saldo a favor actual</span><span>{fmtUSD(actual)}</span></div>
+                    <div style={{ display: "flex", justifyContent: "space-between" }}><span>+ Este depósito</span><span>{fmtUSD(deposito)}</span></div>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, color: "var(--crm-text)", borderTop: "1px solid var(--crm-divider)", marginTop: "6px", paddingTop: "6px" }}>
+                      <span>Nuevo saldo a favor</span><span>{fmtUSD(Math.round((actual + deposito) * 100) / 100)}</span>
+                    </div>
+                  </div>
+                )
+              })()}
               <ErrorBox />
               <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center pt-1">
                 <button type="button" onClick={closeModal} disabled={isPending} className="crm-btn-secondary w-full sm:w-auto min-h-[44px] px-5 py-[9px]">Cancelar</button>
