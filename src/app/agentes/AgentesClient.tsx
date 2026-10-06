@@ -10,6 +10,7 @@ import Topbar from "@/components/Topbar"
 import { fmtUSD } from "@/lib/format"
 import { Backdrop, ModalHeader } from "@/components/Modal"
 import { getEfectivoPagaFee } from "@/lib/fee"
+import { motivoFee } from "@/lib/elegibles"
 
 // ── Types ────────────────────────────────────────────
 type Plan = "PRO" | "PRO+" | "B QR" | "B Ofi" | ""
@@ -59,6 +60,20 @@ const EMPTY_FORM: AgenteFormData = {
   fecha_alta: hoyArgentina(),
   fecha_mainstreet: "",
   plan: "PRO", activo: true,
+  paga_fee: null,   // automático: según antigüedad
+}
+
+// Paga FEE: automático (null) / siempre (true) / nunca (false)
+type FeeModo = "auto" | "si" | "no"
+const feeModo  = (v: boolean | null | undefined): FeeModo => (v === true ? "si" : v === false ? "no" : "auto")
+const feeValor = (m: string): boolean | null => (m === "si" ? true : m === "no" ? false : null)
+
+// Explica qué está pasando con el FEE de un agente (antigüedad, regla de quincena o marca manual)
+function feeHint(fechaAlta: string, pagaFee: boolean | null | undefined): string {
+  const motivo = motivoFee({ id: "", activo: true, paga_fee: pagaFee ?? null, fecha_alta: fechaAlta, tipo_plan: null }, hoyArgentina(), new Date())
+  if (pagaFee === true || pagaFee === false) return motivo
+  const paga = getEfectivoPagaFee(fechaAlta, null)
+  return `Automático: hoy ${paga ? "paga" : "no paga"} FEE (${motivo})`
 }
 
 const PLAN_STYLES: Record<string, { bg: string; color: string }> = {
@@ -304,7 +319,7 @@ export default function AgentesClient({
   }
 
   // ── Paga FEE inline ────────────────────────────────
-  function handlePagaFee(id: string, value: boolean) {
+  function handlePagaFee(id: string, value: boolean | null) {
     setFeeLoading(id)
     startTransition(async () => {
       await actualizarPagaFee(id, value)
@@ -339,6 +354,7 @@ export default function AgentesClient({
       fecha_mainstreet: ag.fecha_mainstreet ?? "",
       plan:             (ag.tipo_plan ?? "") as Plan,
       activo:           ag.activo,
+      paga_fee:         ag.paga_fee,
     })
     setError("")
     setModal("editar")
@@ -764,6 +780,19 @@ export default function AgentesClient({
                 </select>
               </Field>
 
+              <Field label="Paga FEE">
+                <select value={feeModo(form.paga_fee)}
+                  onChange={e => setForm(f => ({ ...f, paga_fee: feeValor(e.target.value) }))}
+                  style={{ ...inputStyle, cursor: "pointer" }}>
+                  <option value="auto">Automático (según antigüedad)</option>
+                  <option value="si">Sí, siempre</option>
+                  <option value="no">No, nunca</option>
+                </select>
+                <p style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.45)", margin: "6px 0 0" }}>
+                  {feeHint(form.fecha_alta, form.paga_fee)}
+                </p>
+              </Field>
+
               {modal === "editar" && (
                 <Field label="Estado del agente">
                   <div style={{ display: "flex", alignItems: "center", gap: "10px", paddingTop: "2px" }}>
@@ -854,13 +883,13 @@ export default function AgentesClient({
             />
             <DetailRow label="Licencia CRM" value={<PlanBadge plan={detalleActual.tipo_plan ?? null} />} />
 
-            {/* Paga FEE: acá vive el control, ya no en la tabla */}
+            {/* Paga FEE: automático / sí / no. También se edita desde "Editar" */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)" }}>Paga FEE</span>
               <select
-                value={getEfectivoPagaFee(detalleActual.fecha_alta, detalleActual.paga_fee) ? "si" : "no"}
+                value={feeModo(detalleActual.paga_fee)}
                 disabled={feeLoading === detalleActual.id}
-                onChange={e => handlePagaFee(detalleActual.id, e.target.value === "si")}
+                onChange={e => handlePagaFee(detalleActual.id, feeValor(e.target.value))}
                 style={{
                   padding: "4px 10px", borderRadius: "7px",
                   border: "1px solid rgba(255,255,255,0.1)", background: "var(--crm-input-bg)",
@@ -870,10 +899,14 @@ export default function AgentesClient({
                   opacity: feeLoading === detalleActual.id ? 0.5 : 1,
                 }}
               >
-                <option value="si">Sí</option>
-                <option value="no">No</option>
+                <option value="auto">Automático</option>
+                <option value="si">Sí, siempre</option>
+                <option value="no">No, nunca</option>
               </select>
             </div>
+            <p style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.45)", margin: "-8px 0 0", textAlign: "right" }}>
+              {feeHint(detalleActual.fecha_alta, detalleActual.paga_fee)}
+            </p>
 
           </div>
         </Backdrop>
