@@ -5,6 +5,8 @@ import { useState, useTransition, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { cambiarEstado, agregarMovimiento, toggleChecklist, registrarCierre, editarOferta } from "../actions"
+import RepartoEditor from "@/components/RepartoEditor"
+import { armarFilasValidadas, basesPorPunta, type Punta, type RefExterno, type RefInterno } from "@/lib/reparto"
 import type { EditarOfertaData } from "../actions"
 import { fmtUSD } from "@/lib/format"
 import { hoyArgentina } from "@/lib/fecha"
@@ -273,6 +275,9 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
   const [cierreFecha,  setCierreFecha]  = useState("")
   const [cierrePrecio, setCierrePrecio] = useState("")
   const [errCierre,    setErrCierre]    = useState("")
+  const [refInt,       setRefInt]       = useState<RefInterno[]>([])
+  const [refExt,       setRefExt]       = useState<RefExterno[]>([])
+  const [avisoCierre,  setAvisoCierre]  = useState("")
 
   // ── Modal: Editar oferta ───────────────────────────
   const [modalEditar,  setModalEditar]  = useState(false)
@@ -295,6 +300,9 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
     setErrMov("")
     setErrCierre("")
     setErrEditar("")
+    setRefInt([])
+    setRefExt([])
+    setAvisoCierre("")
   }, [])
 
   useEffect(() => {
@@ -407,10 +415,22 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
   }
 
   // ── Submit: registrar cierre ───────────────────────
+  // Puntas internas de esta oferta (3% del precio cada una) y su reparto
+  const precioCierreNum = parseFloat(cierrePrecio)
+  const precioCierreOk  = Number.isFinite(precioCierreNum) && precioCierreNum > 0
+  const puntasCierre: Punta[] = []
+  if (oferta.agente_vendedor_id)  puntasCierre.push({ rol: "vendedor",  agenteId: oferta.agente_vendedor_id,  base: 0 })
+  if (oferta.agente_comprador_id) puntasCierre.push({ rol: "comprador", agenteId: oferta.agente_comprador_id, base: 0 })
+  const comisionCierre = precioCierreOk ? Math.round(precioCierreNum * 0.03 * puntasCierre.length) : 0
+  basesPorPunta(comisionCierre, puntasCierre.length).forEach((b, i) => { puntasCierre[i].base = b })
+  const repartoCierre = { puntas: puntasCierre, refInt, refExt }
+  const errRepartoCierre = puntasCierre.length > 0 && precioCierreOk ? armarFilasValidadas(comisionCierre, repartoCierre).error : undefined
+
   function handleSubmitCierre(e: React.FormEvent) {
     e.preventDefault()
     const precio = parseFloat(cierrePrecio)
     if (isNaN(precio) || precio <= 0) { setErrCierre("El precio de cierre es obligatorio"); return }
+    if (errRepartoCierre) { setErrCierre(errRepartoCierre); return }
     startTransition(async () => {
       // 1. Actualizar oferta a Cerradas
       const result = await registrarCierre(oferta.id, cierreFecha, precio)
@@ -419,12 +439,18 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
       const opRes = await fetch("/api/operaciones/crear", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ oferta_id: oferta.id, precio_acordado_usd: precio }),
+        body: JSON.stringify({ oferta_id: oferta.id, precio_acordado_usd: precio, reparto: { refInt, refExt } }),
       })
-      const opJson = (await opRes.json()) as { success: boolean; error?: string }
+      const opJson = (await opRes.json()) as { success: boolean; error?: string; aviso?: string }
       // 409 = duplicado, no es error crítico (la oferta ya quedó cerrada)
       if (!opJson.success && opRes.status !== 409) {
         setErrCierre(opJson.error ?? "Error al crear la operación")
+        return
+      }
+      // La operación se creó pero el reparto no se pudo guardar: se muestra el aviso en vez de cerrar en silencio
+      if (opJson.aviso) {
+        setAvisoCierre(opJson.aviso)
+        router.refresh()
         return
       }
       closeAll()
@@ -1243,6 +1269,25 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
               <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", margin: "-6px 0 14px" }}>
                 La comisión se calculará automáticamente: 3% por cada agente interno.
               </p>
+              {puntasCierre.length > 0 && precioCierreOk && (
+                <div style={{ marginBottom: "14px" }}>
+                  <RepartoEditor
+                    comisionBruta={comisionCierre}
+                    agentes={agentes}
+                    value={repartoCierre}
+                    onChange={(v) => { setRefInt(v.refInt); setRefExt(v.refExt) }}
+                    puntasEditables={false}
+                  />
+                </div>
+              )}
+              {avisoCierre && (
+                <div role="status" style={{
+                  background: "rgba(251,191,36,0.10)", border: "1px solid rgba(251,191,36,0.3)",
+                  borderRadius: "8px", padding: "10px 12px", fontSize: "12.5px", color: "#fbbf24", marginBottom: "14px",
+                }}>
+                  ⚠️ {avisoCierre}
+                </div>
+              )}
               {errCierre && (
                 <div style={{
                   background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
@@ -1262,7 +1307,17 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                   }}>
                   Cancelar
                 </button>
-                <button type="submit" disabled={isPending}
+                {avisoCierre ? (
+                  <button type="button" onClick={() => { closeAll(); router.refresh() }}
+                    style={{
+                      padding: "9px 24px", borderRadius: "8px", border: "none",
+                      background: "linear-gradient(135deg,#4ade80 0%,#22c55e 100%)", color: "#0a1a0a",
+                      fontSize: "13px", fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                    }}>
+                    Entendido
+                  </button>
+                ) : (
+                <button type="submit" disabled={isPending || !!errRepartoCierre}
                   style={{
                     padding: "9px 24px", borderRadius: "8px", border: "none",
                     background: isPending ? "#CBD5E1" : "linear-gradient(135deg,#4ade80 0%,#22c55e 100%)",
@@ -1274,6 +1329,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                   {isPending && <Loader2 size={14} className="animate-spin" />}
                   {isPending ? "Guardando..." : "Registrar cierre"}
                 </button>
+                )}
               </div>
             </form>
           </div>

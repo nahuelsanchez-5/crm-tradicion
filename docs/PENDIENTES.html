@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Pendientes CRM Tradición</title>
+<style>
+  @page { size: A4 landscape; margin: 12mm 12mm 14mm; }
+  :root { --ink:#16161d; --muted:#5b5b6b; --line:#e3e3ea; --red:#c8152f; --amber:#b45309; --green:#15803d; --soft:#f6f6f9; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", system-ui, sans-serif; color: var(--ink); font-size: 10.5px; line-height: 1.45; margin: 0; }
+  header { display:flex; justify-content:space-between; align-items:flex-end; border-bottom: 2px solid var(--ink); padding-bottom: 8px; margin-bottom: 12px; }
+  h1 { font-size: 20px; margin: 0; letter-spacing: -0.02em; }
+  .eyebrow { font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--red); margin-bottom: 2px; }
+  .meta { color: var(--muted); font-size: 9.5px; text-align: right; }
+  h2 { font-size: 12px; margin: 16px 0 6px; display:flex; align-items:center; gap:8px; }
+  h2 .dot { width:9px; height:9px; border-radius:50%; display:inline-block; }
+  table { width: 100%; border-collapse: collapse; page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
+  th { text-align: left; font-size: 8.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--soft); padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  td { padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.id { font-weight: 700; white-space: nowrap; width: 34px; }
+  td.tarea { font-weight: 650; width: 15%; }
+  td.mod { width: 11%; color: var(--muted); }
+  .tag { display:inline-block; font-size: 8.5px; font-weight:700; padding: 1px 6px; border-radius: 10px; border:1px solid; white-space:nowrap; }
+  .alta { color: var(--red); border-color: #f2b8c1; background:#fdf1f3; }
+  .media { color: var(--amber); border-color: #f5d29a; background:#fff8ec; }
+  .baja { color: var(--green); border-color: #b7e2c4; background:#f1faf4; }
+  .sql { color:#4338ca; border-color:#c7c9f5; background:#f3f3fe; }
+  .nota { background: var(--soft); border-left: 3px solid var(--red); padding: 8px 10px; margin-top: 14px; font-size: 10px; }
+  .leyenda { display:flex; gap:14px; font-size:9.5px; color:var(--muted); margin-bottom:4px; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="eyebrow">RE/MAX Tradición · CRM</div>
+    <h1>Tareas pendientes</h1>
+  </div>
+  <div class="meta">Actualizado: 5 de octubre de 2026<br>Último commit local sin publicar: 357fd9d</div>
+</header>
+
+<div class="leyenda">
+  <span><span class="tag alta">ALTA</span> afecta plata, números del dueño o trabajo diario</span>
+  <span><span class="tag media">MEDIA</span> molesta o es riesgo acotado</span>
+  <span><span class="tag baja">BAJA</span> visual o mejora</span>
+  <span><span class="tag sql">SQL</span> requiere que Nahuel corra un script en Supabase</span>
+</div>
+
+<h2><span class="dot" style="background:var(--red)"></span>Urgencia alta</h2>
+<table>
+  <thead><tr><th>#</th><th>Tarea</th><th>Módulo</th><th>Qué hace / para qué</th><th>Problema hoy</th><th>Solución propuesta</th></tr></thead>
+  <tbody>
+    <tr><td class="id">A1</td><td class="tarea">Publicar el lote 357fd9d <span class="tag baja">HECHO</span></td><td class="mod">Varios</td>
+      <td>Conceptos y fechas compartidos, validaciones, errores seguros, Dashboard con datos reales, historial de Pagos completo.</td>
+      <td>Publicado.</td>
+      <td>—</td></tr>
+    <tr><td class="id">A1b</td><td class="tarea">Asistente IA guiado por preguntas <span class="tag baja">HECHO</span></td><td class="mod">Asistente IA</td>
+      <td>Registrar pago, dejar saldo a favor, crear oferta y cambiar estado, preguntando de a un dato con botones.</td>
+      <td>Publicado (0872948). Probar en producción.</td>
+      <td>Pendiente a futuro: sumar operaciones y encuestas al flujo guiado.</td></tr>
+    <tr><td class="id">A2</td><td class="tarea">Reparto de comisiones y referidos <span class="tag alta">CÓDIGO LISTO · FALTA SQL</span> <span class="tag sql">SQL</span></td><td class="mod">Ofertas (cierre), Operaciones, Agentes</td>
+      <td>Registrar cuánto factura cada agente en cada cierre, incluido el % por referir (ej: Jelena refirió a Sapo y cobró el 25% de su comisión).</td>
+      <td>Hoy el cierre asume 3% fijo por agente interno y guarda los agentes como texto ("Vendedor / Comprador"). No hay forma de anotar un referido ni un %; la facturación por agente sale aproximada.</td>
+      <td>Tabla nueva <b>operacion_comisiones</b> (operación, agente, rol: vendedor / comprador / referido, %, monto USD). Al cerrar y en Operaciones: editor de reparto con % sugerido y editable. Agentes y Resumen leen de ahí. <i>Idea plantada; desarrollo a fondo mañana.</i></td></tr>
+    <tr><td class="id">A3</td><td class="tarea">Carga automática del FEE mensual <span class="tag alta">ALTA</span></td><td class="mod">Pagos › Gasto recurrente</td>
+      <td>Al cargar "FEE mensual" para todos, que ya vengan tildados los agentes que deben pagarlo (más de 180 días de antigüedad).</td>
+      <td>El modal abre sin ningún agente seleccionado: hay que marcarlos a mano. Además, el detalle de cobranza de FEE cuenta agentes <b>inactivos</b>.</td>
+      <td>Preseleccionar agentes activos que cumplen la regla de fee (180 días + regla de quincena, o el override manual "Paga FEE") a la fecha del gasto; editable antes de guardar. Lo mismo para Licencia PRO/PRO+ según el plan. Filtrar inactivos en el detalle.</td></tr>
+    <tr><td class="id">A4</td><td class="tarea">Objetivo mensual "congelado" <span class="tag alta">ALTA</span></td><td class="mod">Configuración, Facturación, Resumen</td>
+      <td>Que cada mes guarde su objetivo (ej: septiembre = 710.000 × 9,42% = USD 66.882) y el cuadro "Objetivos de KPIs" muestre el del mes en curso.</td>
+      <td>El objetivo de cada mes se calcula en vivo desde el anual. Si cambiás el anual, cambian también los objetivos de meses ya cerrados y el bono de un mes pasado puede cambiar.</td>
+      <td>Usar la columna <b>objetivo_usd</b> que ya existe en la tabla facturación: guardar el objetivo al empezar/cerrar el mes. Meses pasados = valor guardado; mes actual y futuros = calculado. Mostrar el del mes en curso en Configuración.</td></tr>
+    <tr><td class="id">A5</td><td class="tarea">Cierre de oferta "todo o nada" <span class="tag alta">ALTA</span> <span class="tag sql">SQL</span></td><td class="mod">Ofertas › Registrar cierre</td>
+      <td>Al cerrar una oferta se crea su operación (que alimenta la facturación).</td>
+      <td>Son dos pasos separados: si el segundo falla, la oferta queda "Cerrada" sin operación y esa comisión no se cuenta. El control de duplicados usa dirección + fecha (dos ofertas distintas en la misma dirección se bloquean).</td>
+      <td>Función en Supabase que haga las dos cosas en una sola transacción y vincule la operación con su oferta (oferta_id). Conviene hacerlo junto con A2.</td></tr>
+  </tbody>
+</table>
+
+<h2><span class="dot" style="background:var(--amber)"></span>Urgencia media</h2>
+<table>
+  <thead><tr><th>#</th><th>Tarea</th><th>Módulo</th><th>Qué hace / para qué</th><th>Problema hoy</th><th>Solución propuesta</th></tr></thead>
+  <tbody>
+    <tr><td class="id">M1</td><td class="tarea">Quitar "Alquiler Temporal" y comisión neta <span class="tag media">MEDIA</span></td><td class="mod">Operaciones, Ofertas, Dashboard</td>
+      <td>Simplificar: todos los alquileres son a largo plazo y se maneja solo comisión bruta.</td>
+      <td>Los formularios ofrecen "Alquiler Temporal/Temporario" (con dos nombres distintos) y piden comisión neta, que no se usa.</td>
+      <td>Sacar la opción y el campo de los formularios. En la base, neta se completa igual a bruta (no se rompe nada). Datos viejos se siguen viendo. Se retoma el neto cuando exista el módulo de movimientos.</td></tr>
+    <tr><td class="id">M2</td><td class="tarea">Nueva forma de trabajar Pagos <span class="tag media">MEDIA</span></td><td class="mod">Pagos (Cuentas)</td>
+      <td>Repensar cómo se ve y cómo se carga el día a día de cobros.</td>
+      <td>El flujo actual resulta pesado. Además "Registrar pago" desde la fila del agente crea un pago aparte en vez de saldar las deudas pendientes.</td>
+      <td>Sesión de diseño mañana: relevar cómo cobrás hoy y proponer 2 flujos. Unificar "Registrar pago" para que salde cargos pendientes.</td></tr>
+    <tr><td class="id">M3</td><td class="tarea">Crédito (saldo a favor) "todo o nada" <span class="tag media">MEDIA</span> <span class="tag sql">SQL</span></td><td class="mod">Pagos › Aplicar saldo a favor</td>
+      <td>Usa el saldo a favor de un agente para pagar sus deudas, del más viejo al más nuevo.</td>
+      <td>Ya valida todo antes de tocar nada, pero son varios pasos: si se corta a mitad, puede quedar saldo sin descontar (nunca se pierde plata).</td>
+      <td>Función en Supabase que haga todos los pasos en una transacción.</td></tr>
+    <tr><td class="id">M4</td><td class="tarea">Evitar registros duplicados <span class="tag media">MEDIA</span> <span class="tag sql">SQL</span></td><td class="mod">Facturación, Operaciones</td>
+      <td>Que no puedan existir dos filas de facturación del mismo mes ni dos operaciones de la misma oferta.</td>
+      <td>Se controla con "buscar y después insertar": dos clics casi simultáneos pueden duplicar.</td>
+      <td>Restricción única en la base (mes + año; oferta_id) y guardado con "upsert".</td></tr>
+    <tr><td class="id">M5</td><td class="tarea">Asistente IA: límite de Google <span class="tag media">MEDIA</span></td><td class="mod">Asistente IA</td>
+      <td>Crear ofertas, registrar pagos, etc. hablándole.</td>
+      <td>La clave usa el plan gratuito de Gemini: con uso intenso devuelve "cuota excedida". Ya hay respaldo entre modelos, pero el límite existe.</td>
+      <td>Activar facturación en Google AI Studio (costo bajo por uso). Luego: que pagos y saldo a favor usen las mismas funciones que la pantalla de Pagos.</td></tr>
+    <tr><td class="id">M6</td><td class="tarea">Contenido del Dashboard <span class="tag media">MEDIA</span></td><td class="mod">Dashboard</td>
+      <td>Lo primero que ves al entrar.</td>
+      <td>Los recuadros de "Resumen rápido" leían tablas abandonadas (siempre 0). Ya se cambiaron por datos reales, pero falta definir qué querés ver.</td>
+      <td>Elegir 4 indicadores: p. ej. cobranza del mes, carteles por vencer, ofertas sin actividad, avance vs objetivo de facturación.</td></tr>
+  </tbody>
+</table>
+
+<h2><span class="dot" style="background:var(--green)"></span>Urgencia baja</h2>
+<table>
+  <thead><tr><th>#</th><th>Tarea</th><th>Módulo</th><th>Qué hace / para qué</th><th>Problema hoy</th><th>Solución propuesta</th></tr></thead>
+  <tbody>
+    <tr><td class="id">B1</td><td class="tarea">Rediseño visual de 7 módulos <span class="tag baja">BAJA</span></td><td class="mod">Ofertas, Operaciones, Agentes, Resumen, Configuración, Calendario, Dashboard</td>
+      <td>Mismo lenguaje visual que Facturación, Cuentas, Cartelería y Encuestas.</td>
+      <td>Colores sueltos, estilos inconsistentes, modales armados a mano.</td>
+      <td>Primero componentes comunes (botones, campos, modal, aviso, pantallas de carga), luego módulo por módulo.</td></tr>
+    <tr><td class="id">B2</td><td class="tarea">Pantallas de carga y de error <span class="tag baja">BAJA</span></td><td class="mod">Todas</td>
+      <td>Mostrar "cargando…" y un mensaje claro si algo falla.</td>
+      <td>Al navegar la pantalla queda en blanco; si Supabase falla se ven ceros como si fueran datos reales.</td>
+      <td>Esqueletos de carga y página de error por módulo.</td></tr>
+    <tr><td class="id">B3</td><td class="tarea">Calendario en el celular <span class="tag baja">BAJA</span></td><td class="mod">Calendario</td>
+      <td>Ver cierres, aniversarios y ofertas inactivas.</td>
+      <td>En el celular el calendario queda angosto e ilegible; los eventos no se pueden tocar.</td>
+      <td>Panel lateral debajo en pantallas chicas; tocar un evento abre la oferta.</td></tr>
+    <tr><td class="id">B4</td><td class="tarea">Permisos por usuario <span class="tag baja">BAJA</span></td><td class="mod">Login / todo</td>
+      <td>Definir qué puede hacer cada persona del staff.</td>
+      <td>Cualquier usuario habilitado puede hacer todo, incluso borrar.</td>
+      <td>Rol "admin" vs "staff"; borrar y configurar solo admin.</td></tr>
+  </tbody>
+</table>
+
+<div class="nota"><b>Orden sugerido para mañana:</b> A1 (publicar) → A3 (FEE automático, rápido y de uso diario) → A4 (objetivo congelado) → A2 + A5 juntos (reparto de comisiones con cierre atómico) → M1 → sesión de diseño de Pagos (M2).</div>
+</body>
+</html>

@@ -10,7 +10,7 @@ export default async function OperacionesPage() {
       .from("operaciones")
       .select("id, fecha, direccion, agentes, tipo, comision_bruta, comision_neta, encuesta_comprador, encuesta_vendedor")
       .order("fecha", { ascending: false }),
-    supabase.from("agentes").select("nombre").eq("activo", true),
+    supabase.from("agentes").select("id, nombre").eq("activo", true).order("nombre"),
   ])
 
   let operaciones: OperacionRow[]
@@ -31,5 +31,7 @@ export default async function OperacionesPage() {
 
   const agentesInternos = (agentesRaw ?? []).map(a => a.nombre as string)
 
-  return <OperacionesClient operaciones={operaciones} agentesInternos={agentesInternos} />
+  const agentesLista = (agentesRaw ?? []).map(a => ({ id: a.id as string, nombre: a.nombre as string }))
+
+  return <OperacionesClient operaciones={operaciones} agentesInternos={agentesInternos} agentesLista={agentesLista} />
 }

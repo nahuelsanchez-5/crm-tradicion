@@ -12,6 +12,9 @@ import { Building2, DollarSign, Loader2, Trash2 } from "lucide-react"
 import Topbar from "@/components/Topbar"
 import { fmtUSD } from "@/lib/format"
 import { Backdrop, ModalHeader } from "@/components/Modal"
+import RepartoEditor from "@/components/RepartoEditor"
+import { guardarReparto, obtenerReparto } from "./reparto-actions"
+import { armarFilasValidadas, basesPorPunta, type Punta, type RepartoData } from "@/lib/reparto"
 
 // ── Constants ────────────────────────────────────────
 const TIPOS = ["Venta", "Alquiler", "Alquiler Temporal", "Referido", "Otro"]
@@ -227,6 +230,7 @@ function Toggle({
 interface Props {
   operaciones:     OperacionRow[]
   agentesInternos: string[]
+  agentesLista:    { id: string; nombre: string }[]
 }
 
 const EMPTY_FORM: FormData = {
@@ -240,11 +244,57 @@ const EMPTY_FORM: FormData = {
   encuesta_vendedor:  false,
 }
 
-export default function OperacionesClient({ operaciones, agentesInternos }: Props) {
+export default function OperacionesClient({ operaciones, agentesInternos, agentesLista }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   const internosSet = useMemo(() => new Set(agentesInternos), [agentesInternos])
+
+  // ── Reparto de comisión ────────────────────────────
+  const [repartoOp,      setRepartoOp]      = useState<OperacionRow | null>(null)
+  const [repartoVal,     setRepartoVal]     = useState<RepartoData>({ puntas: [], refInt: [], refExt: [] })
+  const [repartoErr,     setRepartoErr]     = useState("")
+  const [repartoCarga,   setRepartoCarga]   = useState(false)
+  const [repartoGuardado, setRepartoGuardado] = useState(false)
+
+  // Para operaciones sin reparto guardado se propone uno a partir del texto de agentes ("Vendedor / Comprador")
+  function repartoSugerido(o: OperacionRow): RepartoData {
+    const p = parseAgentesStr(o.agentes ?? "", internosSet)
+    const idDe = (nombre: string) => agentesLista.find(a => a.nombre === nombre)?.id ?? ""
+    const puntas: Punta[] = []
+    if (internosSet.has(p.vendedor)) puntas.push({ rol: "vendedor", agenteId: idDe(p.vendedor), base: 0 })
+    if (p.dosPuntas && internosSet.has(p.vendedor)) puntas.push({ rol: "comprador", agenteId: idDe(p.vendedor), base: 0 })
+    else if (internosSet.has(p.comprador)) puntas.push({ rol: "comprador", agenteId: idDe(p.comprador), base: 0 })
+    basesPorPunta(Number(o.comision_bruta), puntas.length).forEach((b, i) => { puntas[i].base = b })
+    return { puntas, refInt: [], refExt: [] }
+  }
+
+  function openReparto(o: OperacionRow) {
+    setRepartoOp(o)
+    setRepartoErr("")
+    setRepartoGuardado(false)
+    setRepartoVal(repartoSugerido(o))
+    setRepartoCarga(true)
+    obtenerReparto(o.id).then(r => {
+      if (r.reparto) { setRepartoVal(r.reparto); setRepartoGuardado(true) }
+      if (r.error) setRepartoErr(r.error)
+    }).finally(() => setRepartoCarga(false))
+  }
+
+  function closeReparto() { if (!isPending) setRepartoOp(null) }
+
+  const repartoValidacion = repartoOp ? armarFilasValidadas(Number(repartoOp.comision_bruta), repartoVal).error : undefined
+
+  function handleGuardarReparto() {
+    if (!repartoOp) return
+    setRepartoErr("")
+    startTransition(async () => {
+      const r = await guardarReparto(repartoOp.id, repartoVal)
+      if (r.error) { setRepartoErr(r.error); return }
+      setRepartoOp(null)
+      router.refresh()
+    })
+  }
 
   // ── Filters ────────────────────────────────────────
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -564,6 +614,18 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
                               Editar
                             </button>
                             <button
+                              onClick={() => openReparto(o)}
+                              title="Cómo se reparte la comisión entre agentes"
+                              style={{
+                                padding: "5px 12px", borderRadius: "7px",
+                                border: "1px solid rgba(96,165,250,0.25)", background: "rgba(96,165,250,0.08)",
+                                fontSize: "12px", fontWeight: 600, color: "#60a5fa",
+                                cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap",
+                              }}
+                            >
+                              Reparto
+                            </button>
+                            <button
                               onClick={() => setDeleteId(o.id)}
                               title="Eliminar operación"
                               style={{
@@ -845,6 +907,69 @@ export default function OperacionesClient({ operaciones, agentesInternos }: Prop
                 </button>
               </div>
             </form>
+        </Backdrop>
+      )}
+
+      {/* ════════════════════════════════════════════
+          MODAL — REPARTO DE COMISIÓN
+      ════════════════════════════════════════════ */}
+      {repartoOp && (
+        <Backdrop onClose={closeReparto} className="crm-modal" style={{ maxWidth: "620px" }}>
+          <ModalHeader
+            title="Reparto de la comisión"
+            subtitle={`${repartoOp.direccion} · ${fmtFecha(repartoOp.fecha)}`}
+            onClose={closeReparto}
+          />
+          <div style={{ padding: "20px", overflowY: "auto" }}>
+            {repartoCarga ? (
+              <p style={{ fontSize: "13px", color: "var(--crm-text-muted)", margin: 0 }}>Cargando…</p>
+            ) : (
+              <>
+                {!repartoGuardado && (
+                  <p style={{ fontSize: "12px", color: "var(--crm-text-muted)", margin: "0 0 12px" }}>
+                    Esta operación todavía no tiene reparto guardado. Se propone uno según los agentes cargados; revisalo y guardalo.
+                  </p>
+                )}
+                <RepartoEditor
+                  comisionBruta={Number(repartoOp.comision_bruta)}
+                  agentes={agentesLista}
+                  value={repartoVal}
+                  onChange={setRepartoVal}
+                  puntasEditables
+                />
+              </>
+            )}
+            {repartoErr && (
+              <div role="alert" style={{
+                background: "rgba(227,24,55,0.12)", border: "1px solid rgba(227,24,55,0.25)",
+                borderRadius: "8px", padding: "10px 12px", marginTop: "14px",
+                fontSize: "12.5px", color: "var(--crm-accent-light)",
+              }}>
+                ⚠️ {repartoErr}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", marginTop: "16px" }}>
+              <button type="button" onClick={closeReparto} disabled={isPending}
+                style={{
+                  padding: "9px 20px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)",
+                  background: "rgba(255,255,255,0.06)", fontSize: "13px", fontWeight: 600,
+                  color: "rgba(255,255,255,0.5)", cursor: "pointer", fontFamily: "inherit",
+                }}>
+                Cancelar
+              </button>
+              <button type="button" onClick={handleGuardarReparto} disabled={isPending || repartoCarga || !!repartoValidacion}
+                style={{
+                  padding: "9px 24px", borderRadius: "8px", border: "none",
+                  background: isPending || !!repartoValidacion ? "rgba(255,255,255,0.15)" : "linear-gradient(135deg,#E31837 0%,var(--crm-accent-hover) 100%)",
+                  color: "white", fontSize: "13px", fontWeight: 700,
+                  cursor: isPending || repartoValidacion ? "not-allowed" : "pointer", fontFamily: "inherit",
+                  display: "flex", alignItems: "center", gap: "6px",
+                }}>
+                {isPending && <Loader2 size={14} className="animate-spin" />}
+                {isPending ? "Guardando..." : "Guardar reparto"}
+              </button>
+            </div>
+          </div>
         </Backdrop>
       )}
 

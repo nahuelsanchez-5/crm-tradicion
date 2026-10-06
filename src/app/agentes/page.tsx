@@ -11,7 +11,7 @@ export default async function AgentesPage() {
   const [
     agentesResult,
     { data: planes },
-    { data: operaciones },
+    operacionesResult,
     { data: pagosMesRaw },
     { data: ofertasRaw },
   ] = await Promise.all([
@@ -26,9 +26,10 @@ export default async function AgentesPage() {
       .eq("mes", mes)
       .eq("anio", anio),
 
+    // Con el reparto de comisión (operacion_comisiones) si la tabla existe; si no, se cae al método anterior (más abajo)
     supabase
       .from("operaciones")
-      .select("agentes, comision_bruta")
+      .select("id, agentes, comision_bruta, operacion_comisiones(agente_id, monto_usd, informativo)")
       .gte("fecha", `${anioStr}-01-01`)
       .lt("fecha", `${String(anio + 1)}-01-01`),
 
@@ -64,9 +65,34 @@ export default async function AgentesPage() {
     plan: (planes ?? []).find(p => p.agente_id === a.id) ?? null,
   }))
 
-  // Facturación del año por nombre de agente (vendedor = primer fragmento del campo agentes)
+  // Si la tabla del reparto todavía no existe, la consulta con relación falla: se reintenta sin ella
+  type OpFila = {
+    id?: string; agentes: string | null; comision_bruta: number
+    operacion_comisiones?: { agente_id: string | null; monto_usd: number; informativo: boolean }[] | null
+  }
+  let operaciones: OpFila[] = (operacionesResult.data ?? []) as unknown as OpFila[]
+  if (operacionesResult.error) {
+    const { data: basicas } = await supabase
+      .from("operaciones")
+      .select("agentes, comision_bruta")
+      .gte("fecha", `${anioStr}-01-01`)
+      .lt("fecha", `${String(anio + 1)}-01-01`)
+    operaciones = (basicas ?? []) as unknown as OpFila[]
+  }
+
+  // Facturación del año por nombre de agente. Si la operación tiene reparto se usa el reparto
+  // (incluye referidos); si no, el método anterior (vendedor = primer fragmento del campo agentes).
   const facturacionPorNombre: Record<string, number> = {}
-  for (const op of (operaciones ?? [])) {
+  const nombrePorAgenteId = new Map((agentes ?? []).map(a => [a.id as string, (a.nombre as string).toLowerCase().trim()]))
+  for (const op of operaciones) {
+    const reparto = (op.operacion_comisiones ?? []).filter(r => !r.informativo && r.agente_id)
+    if (reparto.length > 0) {
+      for (const r of reparto) {
+        const k = nombrePorAgenteId.get(r.agente_id as string)
+        if (k) facturacionPorNombre[k] = (facturacionPorNombre[k] ?? 0) + Number(r.monto_usd)
+      }
+      continue
+    }
     const agStr = ((op.agentes as string) ?? "").trim()
     if (!agStr) continue
     // "Vendedor / Comprador" → "Vendedor"; "Nombre (2 puntas)" → "Nombre"
