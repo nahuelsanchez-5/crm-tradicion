@@ -5,7 +5,7 @@ import { useState, useTransition, useEffect, useCallback, useMemo, Fragment } fr
 import { useRouter } from "next/navigation"
 import { crearAgente, actualizarAgente, actualizarPagaFee, type AgenteFormData } from "./actions"
 import { hoyArgentina } from "@/lib/fecha"
-import { Users, Loader2, MessageCircle, AlertCircle, Search } from "lucide-react"
+import { Users, Loader2, MessageCircle, AlertCircle, Search, ArrowUp, ArrowDown, ChevronsUpDown } from "lucide-react"
 import Topbar from "@/components/Topbar"
 import { fmtUSD } from "@/lib/format"
 import { Backdrop, ModalHeader } from "@/components/Modal"
@@ -53,7 +53,12 @@ interface Props {
 
 // ── Helpers ──────────────────────────────────────────
 type ModalState  = "none" | "nuevo" | "editar"
-type SortMode    = "az" | "recientes" | "antiguos" | "facturacion"
+// Orden por columna. Dirección "asc" = en el orden natural del valor:
+// nombre A→Z · antigüedad: más antiguos primero · mainstreet: el más próximo primero · facturación: menor a mayor
+type SortCol = "nombre" | "antiguedad" | "mainstreet" | "facturacion"
+interface SortState { col: SortCol; dir: "asc" | "desc" }
+const SORT_INICIAL: Record<SortCol, SortState["dir"]> = { nombre: "asc", antiguedad: "asc", mainstreet: "asc", facturacion: "desc" }
+const FILTRO_PLAN = ["PRO", "PRO+", "B QR", "B Ofi"] as const
 
 const EMPTY_FORM: AgenteFormData = {
   nombre: "", email: "", telefono: "",
@@ -231,8 +236,15 @@ export default function AgentesClient({
   const [form,          setForm]          = useState<AgenteFormData>(EMPTY_FORM)
   const [error,         setError]         = useState("")
   const [feeLoading,    setFeeLoading]    = useState<string | null>(null)
-  const [sortMode,      setSortMode]      = useState<SortMode>("az")
+  const [sort,          setSort]          = useState<SortState>({ col: "nombre", dir: "asc" })
+  const [filtroPlan,    setFiltroPlan]    = useState<string>("todas")      // todas | sin | PRO | PRO+ | B QR | B Ofi
+  const [filtroEstado,  setFiltroEstado]  = useState<"todos" | "activos" | "inactivos">("todos")
   const [busqueda,      setBusqueda]      = useState("")
+
+  // Clic en el título de una columna: primero la ordena; si ya estaba ordenada, invierte el sentido
+  function toggleSort(col: SortCol) {
+    setSort(s => s.col === col ? { col, dir: s.dir === "asc" ? "desc" : "asc" } : { col, dir: SORT_INICIAL[col] })
+  }
 
   // ── Próximo Mainstreet ────────────────────────────
   const proximosMainstreet = useMemo(() => {
@@ -250,31 +262,43 @@ export default function AgentesClient({
 
   // ── Sorted agentes (activos primero, inactivos al final) ──
   const sorted = useMemo(() => {
+    const factDe = (a: typeof agentes[number]) => facturacionPorNombre[a.nombre.toLowerCase().trim()] ?? 0
+    const signo = sort.dir === "asc" ? 1 : -1
     function applySort(arr: typeof agentes) {
       const a = [...arr]
-      if (sortMode === "az")        return a.sort((x, y) => x.nombre.localeCompare(y.nombre))
-      if (sortMode === "recientes") return a.sort((x, y) => y.fecha_alta.localeCompare(x.fecha_alta))
-      if (sortMode === "antiguos")  return a.sort((x, y) => x.fecha_alta.localeCompare(y.fecha_alta))
-      if (sortMode === "facturacion") {
-        return a.sort((x, y) => {
-          const fx = facturacionPorNombre[x.nombre.toLowerCase().trim()] ?? 0
-          const fy = facturacionPorNombre[y.nombre.toLowerCase().trim()] ?? 0
-          return fy - fx
-        })
+      switch (sort.col) {
+        case "nombre":     return a.sort((x, y) => signo * x.nombre.localeCompare(y.nombre, "es"))
+        case "antiguedad": return a.sort((x, y) => signo * x.fecha_alta.localeCompare(y.fecha_alta))
+        case "facturacion":return a.sort((x, y) => signo * (factDe(x) - factDe(y)))
+        case "mainstreet":
+          // Los que no tienen fecha van siempre al final, sin importar el sentido
+          return a.sort((x, y) => {
+            if (!x.fecha_mainstreet && !y.fecha_mainstreet) return 0
+            if (!x.fecha_mainstreet) return 1
+            if (!y.fecha_mainstreet) return -1
+            return signo * (nextMainstreetDate(x.fecha_mainstreet).getTime() - nextMainstreetDate(y.fecha_mainstreet).getTime())
+          })
       }
-      return a
     }
     return [
       ...applySort(agentes.filter(a => a.activo)),
       ...applySort(agentes.filter(a => !a.activo)),
     ]
-  }, [agentes, sortMode, facturacionPorNombre])
+  }, [agentes, sort, facturacionPorNombre])
 
-  // ── Filtro por búsqueda de nombre ─────────────────
+  // ── Filtros: búsqueda por nombre, licencia y estado ─────────────────
   const agentesFiltrados = useMemo(
-    () => sorted.filter(a => a.nombre.toLowerCase().includes(busqueda.toLowerCase())),
-    [sorted, busqueda],
+    () => sorted.filter(a => {
+      if (!a.nombre.toLowerCase().includes(busqueda.toLowerCase())) return false
+      if (filtroEstado === "activos"   && !a.activo) return false
+      if (filtroEstado === "inactivos" &&  a.activo) return false
+      if (filtroPlan === "sin" && a.tipo_plan) return false
+      if (filtroPlan !== "todas" && filtroPlan !== "sin" && a.tipo_plan !== filtroPlan) return false
+      return true
+    }),
+    [sorted, busqueda, filtroEstado, filtroPlan],
   )
+  const hayFiltros = filtroEstado !== "todos" || filtroPlan !== "todas" || busqueda !== ""
 
   // ── WhatsApp reporte por agente ───────────────────
   function openWhatsApp(ag: AgenteConPlan) {
@@ -374,14 +398,36 @@ export default function AgentesClient({
     })
   }
 
-  const sortBtnStyle = (mode: SortMode): React.CSSProperties => ({
-    padding: "5px 12px", borderRadius: "7px",
-    fontSize: "12px", fontWeight: sortMode === mode ? 700 : 500,
-    cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
-    border: sortMode === mode ? "1px solid rgba(255,255,255,0.3)" : "1px solid rgba(255,255,255,0.08)",
-    background: sortMode === mode ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.04)",
-    color: sortMode === mode ? "white" : "rgba(255,255,255,0.45)",
+  const sortBtnStyle = (s: SortState): React.CSSProperties => {
+    const activo = sort.col === s.col && sort.dir === s.dir
+    return {
+      padding: "5px 12px", borderRadius: "7px",
+      fontSize: "12px", fontWeight: activo ? 700 : 500,
+      cursor: "pointer", fontFamily: "inherit", transition: "all 0.15s",
+      border: activo ? "1px solid rgba(255,255,255,0.3)" : "1px solid rgba(255,255,255,0.08)",
+      background: activo ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.04)",
+      color: activo ? "white" : "rgba(255,255,255,0.45)",
+    }
+  }
+
+  // Estilo de los títulos de columna (ordenables) y de los filtros dentro del encabezado
+  const thStyle: React.CSSProperties = {
+    padding: "10px 16px", textAlign: "left", fontSize: "10.5px", fontWeight: 700,
+    textTransform: "uppercase", letterSpacing: "0.8px", color: "rgba(255,255,255,0.35)", whiteSpace: "nowrap",
+  }
+  const thBtn = (col: SortCol): React.CSSProperties => ({
+    display: "inline-flex", alignItems: "center", gap: "5px", background: "none", border: "none", padding: 0,
+    cursor: "pointer", font: "inherit", textTransform: "inherit", letterSpacing: "inherit",
+    color: sort.col === col ? "var(--crm-text)" : "inherit",
   })
+  const thSelect: React.CSSProperties = {
+    marginLeft: "8px", padding: "2px 6px", borderRadius: "6px", border: "1px solid rgba(255,255,255,0.12)",
+    background: "var(--crm-input-bg)", color: "var(--crm-text)", fontSize: "11px", fontFamily: "inherit", cursor: "pointer",
+    textTransform: "none", letterSpacing: 0,
+  }
+  const SortIcon = ({ col }: { col: SortCol }) =>
+    sort.col !== col ? <ChevronsUpDown size={11} style={{ opacity: 0.45 }} />
+    : sort.dir === "asc" ? <ArrowUp size={11} /> : <ArrowDown size={11} />
 
   // ── RENDER ─────────────────────────────────────────
   return (
@@ -497,29 +543,49 @@ export default function AgentesClient({
                 Lista de agentes
               </span>
               <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", marginLeft: "4px" }}>
-                {agentes.length} registrados
+                {hayFiltros ? `${agentesFiltrados.length} de ${agentes.length}` : `${agentes.length} registrados`}
               </span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <span style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.35)", marginRight: "4px" }}>ORDEN</span>
               {([
-                ["az", "A→Z"],
-                ["recientes", "Más recientes"],
-                ["antiguos", "Más antiguos"],
-                ["facturacion", "Facturación"],
-              ] as [SortMode, string][]).map(([mode, label]) => (
-                <button key={mode} onClick={() => setSortMode(mode)} style={sortBtnStyle(mode)}>
+                [{ col: "nombre", dir: "asc" }, "A→Z"],
+                [{ col: "antiguedad", dir: "desc" }, "Más recientes"],
+                [{ col: "antiguedad", dir: "asc" }, "Más antiguos"],
+                [{ col: "facturacion", dir: "desc" }, "Facturación"],
+              ] as [SortState, string][]).map(([s, label]) => (
+                <button key={label} onClick={() => setSort(s)} style={sortBtnStyle(s)}>
                   {label}
                 </button>
               ))}
             </div>
           </div>
 
+          {/* Filtros en el celular (en escritorio están en el encabezado de la tabla) */}
+          <div className="md:hidden" style={{ display: "flex", gap: "8px", flexWrap: "wrap", padding: "10px 16px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+            <select aria-label="Filtrar por licencia" value={filtroPlan} onChange={e => setFiltroPlan(e.target.value)} style={{ ...thSelect, marginLeft: 0, padding: "6px 8px" }}>
+              <option value="todas">Licencia: todas</option>
+              {FILTRO_PLAN.map(p => <option key={p} value={p}>{p}</option>)}
+              <option value="sin">Sin licencia</option>
+            </select>
+            <select aria-label="Filtrar por estado" value={filtroEstado} onChange={e => setFiltroEstado(e.target.value as typeof filtroEstado)} style={{ ...thSelect, marginLeft: 0, padding: "6px 8px" }}>
+              <option value="todos">Estado: todos</option>
+              <option value="activos">Activos</option>
+              <option value="inactivos">Inactivos</option>
+            </select>
+            {hayFiltros && (
+              <button type="button" onClick={() => { setFiltroPlan("todas"); setFiltroEstado("todos"); setBusqueda("") }}
+                style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: "12px", fontWeight: 600, color: "#60a5fa" }}>
+                Limpiar filtros
+              </button>
+            )}
+          </div>
+
           {/* Mobile card list */}
           <div className="md:hidden divide-y divide-white/[0.06]">
             {agentesFiltrados.length === 0 ? (
               <div style={{ padding: "32px 20px", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "13px" }}>
-                {busqueda ? "No se encontraron agentes" : "No hay agentes registrados."}
+                {hayFiltros ? "No se encontraron agentes con esos filtros" : "No hay agentes registrados."}
               </div>
             ) : (
               agentesFiltrados.map((ag, i) => {
@@ -598,24 +664,58 @@ export default function AgentesClient({
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
                 <tr style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                  {["Nombre", "Antigüedad", "Próx. Mainstreet", "Licencia CRM", "Facturación año", "Estado", "WA", ""].map(h => (
-                    <th key={h} style={{
-                      padding: "10px 16px", textAlign: "left",
-                      fontSize: "10.5px", fontWeight: 700,
-                      textTransform: "uppercase" as const,
-                      letterSpacing: "0.8px", color: "rgba(255,255,255,0.35)",
-                      whiteSpace: "nowrap",
-                    }}>
-                      {h}
-                    </th>
-                  ))}
+                  <th style={thStyle} aria-sort={sort.col === "nombre" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
+                    <button type="button" onClick={() => toggleSort("nombre")} style={thBtn("nombre")} title="Ordenar por nombre (A→Z / Z→A)">
+                      Nombre <SortIcon col="nombre" />
+                    </button>
+                  </th>
+                  <th style={thStyle} aria-sort={sort.col === "antiguedad" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
+                    <button type="button" onClick={() => toggleSort("antiguedad")} style={thBtn("antiguedad")} title="Ordenar por antigüedad">
+                      Antigüedad <SortIcon col="antiguedad" />
+                    </button>
+                  </th>
+                  <th style={thStyle} aria-sort={sort.col === "mainstreet" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
+                    <button type="button" onClick={() => toggleSort("mainstreet")} style={thBtn("mainstreet")} title="Ordenar por próximo Mainstreet">
+                      Próx. Mainstreet <SortIcon col="mainstreet" />
+                    </button>
+                  </th>
+                  <th style={thStyle}>
+                    Licencia CRM
+                    <select aria-label="Filtrar por licencia" value={filtroPlan} onChange={e => setFiltroPlan(e.target.value)} style={thSelect}>
+                      <option value="todas">Todas</option>
+                      {FILTRO_PLAN.map(p => <option key={p} value={p}>{p}</option>)}
+                      <option value="sin">Sin licencia</option>
+                    </select>
+                  </th>
+                  <th style={thStyle} aria-sort={sort.col === "facturacion" ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}>
+                    <button type="button" onClick={() => toggleSort("facturacion")} style={thBtn("facturacion")} title="Ordenar por facturación del año">
+                      Facturación año <SortIcon col="facturacion" />
+                    </button>
+                  </th>
+                  <th style={thStyle}>
+                    Estado
+                    <select aria-label="Filtrar por estado" value={filtroEstado} onChange={e => setFiltroEstado(e.target.value as typeof filtroEstado)} style={thSelect}>
+                      <option value="todos">Todos</option>
+                      <option value="activos">Activos</option>
+                      <option value="inactivos">Inactivos</option>
+                    </select>
+                  </th>
+                  <th style={thStyle}>WA</th>
+                  <th style={thStyle}>
+                    {hayFiltros && (
+                      <button type="button" onClick={() => { setFiltroPlan("todas"); setFiltroEstado("todos"); setBusqueda("") }}
+                        style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: "inherit", fontSize: "11px", fontWeight: 600, color: "#60a5fa", textTransform: "none", letterSpacing: 0 }}>
+                        Limpiar filtros
+                      </button>
+                    )}
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {agentesFiltrados.length === 0 ? (
                   <tr>
                     <td colSpan={8} style={{ padding: "40px", textAlign: "center", color: "rgba(255,255,255,0.35)", fontSize: "13px" }}>
-                      {busqueda ? "No se encontraron agentes" : "No hay agentes registrados. Hacé clic en \"+ Nuevo Agente\" para empezar."}
+                      {hayFiltros ? "No se encontraron agentes con esos filtros" : "No hay agentes registrados. Hacé clic en \"+ Nuevo Agente\" para empezar."}
                     </td>
                   </tr>
                 ) : (
