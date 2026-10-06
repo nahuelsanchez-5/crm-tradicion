@@ -100,7 +100,7 @@ const TIPO_MOV_STYLE: Record<string, { bg: string; color: string }> = {
 }
 
 const TIPOLOGIAS_OPS = ["Depto", "Casa", "PH", "Terreno", "Oficina", "Cochera", "Campo", "Otro"]
-const TIPOS_OP       = ["Venta", "Alquiler", "Alquiler Temporario"]
+const TIPOS_OP       = ["Venta", "Alquiler"]   // "Alquiler Temporario" ya no se ofrece; las ofertas viejas lo conservan (ver el selector)
 
 interface EditForm {
   direccion:                string
@@ -1037,7 +1037,7 @@ export default function OfertaDetalleClient({ oferta, historial, checklist, agen
                 </Field>
                 <Field label="Tipo de operación *">
                   <select value={editForm.tipo_operacion} onChange={e => setEF("tipo_operacion", e.target.value)} className="crm-input" required>
-                    {TIPOS_OP.map(t => <option key={t} value={t}>{t}</option>)}
+                    {(TIPOS_OP.includes(editForm.tipo_operacion) ? TIPOS_OP : [...TIPOS_OP, editForm.tipo_operacion]).map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </Field>
               </div>

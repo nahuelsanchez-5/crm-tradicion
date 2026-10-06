@@ -13,7 +13,8 @@ export interface OperacionFormData {
   agentes:            string
   tipo:               string
   comision_bruta:     number
-  comision_neta:      number
+  /** Ya no se carga: solo se maneja la comisión bruta. Se guarda igual a la bruta (la columna sigue en la base). */
+  comision_neta?:     number
   encuesta_comprador: boolean
   encuesta_vendedor:  boolean
 }
@@ -24,8 +25,6 @@ function validarOperacion(data: OperacionFormData): string | null {
   if (!esStringNoVacio(data.direccion))         return "La dirección no puede estar vacía"
   if (!esUnoDe(data.tipo, TIPOS_OPERACION_VALIDOS)) return "Tipo de operación inválido"
   if (!esNumeroNoNegativo(data.comision_bruta)) return "La comisión bruta debe ser un número mayor o igual a 0"
-  if (!esNumeroNoNegativo(data.comision_neta))  return "La comisión neta debe ser un número mayor o igual a 0"
-  if (data.comision_neta > data.comision_bruta + 0.005) return "La comisión neta no puede superar a la bruta"
   if (typeof data.encuesta_comprador !== "boolean" || typeof data.encuesta_vendedor !== "boolean") return "Datos de encuesta inválidos"
   return null
 }
@@ -47,7 +46,7 @@ export async function crearOperacion(data: OperacionFormData) {
     agentes:            data.agentes,
     tipo:               data.tipo,
     comision_bruta:     data.comision_bruta,
-    comision_neta:      data.comision_neta,
+    comision_neta:      data.comision_bruta,
     encuesta_comprador: data.encuesta_comprador,
     encuesta_vendedor:  data.encuesta_vendedor,
   })
@@ -78,7 +77,7 @@ export async function actualizarOperacion(id: string, data: OperacionFormData) {
       agentes:            data.agentes,
       tipo:               data.tipo,
       comision_bruta:     data.comision_bruta,
-      comision_neta:      data.comision_neta,
+      comision_neta:      data.comision_bruta,
       encuesta_comprador: data.encuesta_comprador,
       encuesta_vendedor:  data.encuesta_vendedor,
     })

@@ -29,9 +29,9 @@ interface Props { agentes: AgenteSimple[]; ofertasActivas: OfertaActiva[] }
 type ModalT = "none" | "pago" | "carteleria" | "encuesta" | "operacion" | "oferta" | "actualizar_oferta"
 
 const CONCEPTOS_PAGO      = ["FEE mensual", "Licencias CRM", "Mainstreet", "Otros"]
-const TIPOS_OP            = ["Venta", "Alquiler", "Alquiler Temporal", "Referido", "Otro"]
+const TIPOS_OP            = ["Venta", "Alquiler", "Referido", "Otro"]
 const TIPOLOGIAS_OFERTA   = ["Casa", "Departamento", "Terreno", "Local Comercial", "Oficina", "PH", "Campo", "Galpón", "Edificio", "Otro"]
-const TIPOS_OP_OFERTA     = ["Venta", "Alquiler", "Alquiler Temporal"]
+const TIPOS_OP_OFERTA     = ["Venta", "Alquiler"]
 const TIPOS_MOVIMIENTO    = ["Seguimiento", "Llamada", "Reunión", "Nota", "Documentación", "Otro"]
 
 // ── Shared field wrapper ─────────────────────────────
@@ -92,7 +92,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
 
   const [pagoForm,      setPagoForm]      = useState({ agente_id: agentes[0]?.id ?? "", concepto: CONCEPTOS_PAGO[0], monto_pagado: "", fecha: todayStr })
   const [encForm,       setEncForm]       = useState({ mes: mesActual, anio: anioActual, enviadas: "", respondidas: "", nps_promedio: "" })
-  const [opForm,        setOpForm]        = useState({ fecha: todayStr, direccion: "", agentes: "", tipo: TIPOS_OP[0], comision_bruta: "", comision_neta: "", encuesta_comprador: false, encuesta_vendedor: false })
+  const [opForm,        setOpForm]        = useState({ fecha: todayStr, direccion: "", agentes: "", tipo: TIPOS_OP[0], comision_bruta: "", encuesta_comprador: false, encuesta_vendedor: false })
   const [cartelNro,        setCartelNro]        = useState("")
   const [cartelSearching,  setCartelSearching]  = useState(false)
   const [cartelResult,     setCartelResult]     = useState<CartelBuscarResult | null>(null)
@@ -137,7 +137,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
   function openModal(m: ModalT) {
     setError("")
     setPagoForm({ agente_id: agentes[0]?.id ?? "", concepto: CONCEPTOS_PAGO[0], monto_pagado: "", fecha: todayStr })
-    setOpForm({ fecha: todayStr, direccion: "", agentes: "", tipo: TIPOS_OP[0], comision_bruta: "", comision_neta: "", encuesta_comprador: false, encuesta_vendedor: false })
+    setOpForm({ fecha: todayStr, direccion: "", agentes: "", tipo: TIPOS_OP[0], comision_bruta: "", encuesta_comprador: false, encuesta_vendedor: false })
     setCartelNro("")
     setCartelResult(null)
     setCartelDirEdit("")
@@ -171,7 +171,7 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
     e.preventDefault()
     if (!opForm.direccion) { setError("La dirección es obligatoria"); return }
     startTransition(async () => {
-      const r = await crearOperacion({ fecha: opForm.fecha, direccion: opForm.direccion, agentes: opForm.agentes, tipo: opForm.tipo, comision_bruta: parseFloat(opForm.comision_bruta) || 0, comision_neta: parseFloat(opForm.comision_neta) || 0, encuesta_comprador: opForm.encuesta_comprador, encuesta_vendedor: opForm.encuesta_vendedor })
+      const r = await crearOperacion({ fecha: opForm.fecha, direccion: opForm.direccion, agentes: opForm.agentes, tipo: opForm.tipo, comision_bruta: parseFloat(opForm.comision_bruta) || 0, encuesta_comprador: opForm.encuesta_comprador, encuesta_vendedor: opForm.encuesta_vendedor })
       if (r.error) setError(r.error)
       else { closeModal(); router.refresh() }
     })
@@ -480,14 +480,9 @@ export default function DashboardActions({ agentes, ofertasActivas }: Props) {
             <Field label="Agentes">
               <input type="text" placeholder="Juan, María" value={opForm.agentes} onChange={e => setOpForm(f => ({ ...f, agentes: e.target.value }))} className={inp} />
             </Field>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Comisión bruta (USD)">
-                <input type="number" min="0" step="0.01" placeholder="5000" value={opForm.comision_bruta} onChange={e => setOpForm(f => ({ ...f, comision_bruta: e.target.value }))} className={inp} />
-              </Field>
-              <Field label="Comisión neta (USD)">
-                <input type="number" min="0" step="0.01" placeholder="4200" value={opForm.comision_neta} onChange={e => setOpForm(f => ({ ...f, comision_neta: e.target.value }))} className={inp} />
-              </Field>
-            </div>
+            <Field label="Comisión bruta (USD)">
+              <input type="number" min="0" step="0.01" placeholder="5000" value={opForm.comision_bruta} onChange={e => setOpForm(f => ({ ...f, comision_bruta: e.target.value }))} className={inp} />
+            </Field>
             <div className="flex gap-5 mb-5">
               {([
                 { key: "encuesta_comprador" as const, label: "Encuesta comprador" },

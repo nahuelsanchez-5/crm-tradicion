@@ -17,7 +17,9 @@ import { guardarReparto, obtenerReparto } from "./reparto-actions"
 import { armarFilasValidadas, basesPorPunta, type Punta, type RepartoData } from "@/lib/reparto"
 
 // ── Constants ────────────────────────────────────────
-const TIPOS = ["Venta", "Alquiler", "Alquiler Temporal", "Referido", "Otro"]
+// "Alquiler Temporal" ya no se ofrece (todos los alquileres son a largo plazo). Las operaciones viejas que lo
+// tengan siguen viéndose y editándose: el estilo de abajo se conserva y el selector agrega su valor actual.
+const TIPOS = ["Venta", "Alquiler", "Referido", "Otro"]
 
 const TIPO_STYLES: Record<string, { bg: string; color: string }> = {
   Venta:               { bg: "rgba(96,165,250,0.12)",   color: "#60a5fa" },
@@ -683,7 +685,7 @@ export default function OperacionesClient({ operaciones, agentesInternos, agente
                     style={inp}
                     required
                   >
-                    {TIPOS.map(t => <option key={t} value={t}>{t}</option>)}
+                    {(TIPOS.includes(form.tipo) ? TIPOS : [...TIPOS, form.tipo]).map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </Field>
               </div>

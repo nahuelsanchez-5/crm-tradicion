@@ -52,7 +52,7 @@ interface OperacionRow {
   direccion: string
   agentes: string
   tipo: string
-  comision_neta: number
+  comision_bruta: number
 }
 
 export interface OfertaSinActividad {
@@ -123,7 +123,7 @@ export default async function DashboardPage() {
       .order("numero", { ascending: false })
       .limit(50),
     supabase.from("operaciones")
-      .select("fecha, direccion, agentes, tipo, comision_neta")
+      .select("fecha, direccion, agentes, tipo, comision_bruta")
       .order("fecha", { ascending: false })
       .limit(5),
     // Mismas tablas vivas que usan Resumen y Cartelería (`carteles` y `encuestas` ya no se escriben)
@@ -430,7 +430,7 @@ export default async function DashboardPage() {
                         <p className="text-crm-xs mt-0.5 truncate m-0" style={{ color: "var(--crm-text-muted)" }}>{op.tipo} · {op.agentes}</p>
                         <p className="text-crm-xs mt-1 m-0" style={{ color: "var(--crm-text-muted)" }}>
                           {fmtFecha(op.fecha)} ·{" "}
-                          <span className="font-semibold" style={{ color }}>{fmtUSD(op.comision_neta)}</span>
+                          <span className="font-semibold" style={{ color }}>{fmtUSD(op.comision_bruta)}</span>
                         </p>
                       </div>
                     </div>

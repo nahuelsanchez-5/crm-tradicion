@@ -58,15 +58,15 @@
       <td>Registrar pago, dejar saldo a favor, crear oferta y cambiar estado, preguntando de a un dato con botones.</td>
       <td>Publicado (0872948). Probar en producción.</td>
       <td>Pendiente a futuro: sumar operaciones y encuestas al flujo guiado.</td></tr>
-    <tr><td class="id">A2</td><td class="tarea">Reparto de comisiones y referidos <span class="tag alta">CÓDIGO LISTO · FALTA SQL</span> <span class="tag sql">SQL</span></td><td class="mod">Ofertas (cierre), Operaciones, Agentes</td>
+    <tr><td class="id">A2</td><td class="tarea">Reparto de comisiones y referidos <span class="tag baja">HECHO</span></td><td class="mod">Ofertas (cierre), Operaciones, Agentes</td>
       <td>Registrar cuánto factura cada agente en cada cierre, incluido el % por referir (ej: Jelena refirió a Sapo y cobró el 25% de su comisión).</td>
       <td>Hoy el cierre asume 3% fijo por agente interno y guarda los agentes como texto ("Vendedor / Comprador"). No hay forma de anotar un referido ni un %; la facturación por agente sale aproximada.</td>
       <td>Tabla nueva <b>operacion_comisiones</b> (operación, agente, rol: vendedor / comprador / referido, %, monto USD). Al cerrar y en Operaciones: editor de reparto con % sugerido y editable. Agentes y Resumen leen de ahí. <i>Idea plantada; desarrollo a fondo mañana.</i></td></tr>
-    <tr><td class="id">A3</td><td class="tarea">Carga automática del FEE mensual <span class="tag alta">ALTA</span></td><td class="mod">Pagos › Gasto recurrente</td>
+    <tr><td class="id">A3</td><td class="tarea">Carga automática del FEE mensual <span class="tag baja">HECHO</span></td><td class="mod">Pagos › Gasto recurrente</td>
       <td>Al cargar "FEE mensual" para todos, que ya vengan tildados los agentes que deben pagarlo (más de 180 días de antigüedad).</td>
       <td>El modal abre sin ningún agente seleccionado: hay que marcarlos a mano. Además, el detalle de cobranza de FEE cuenta agentes <b>inactivos</b>.</td>
       <td>Preseleccionar agentes activos que cumplen la regla de fee (180 días + regla de quincena, o el override manual "Paga FEE") a la fecha del gasto; editable antes de guardar. Lo mismo para Licencia PRO/PRO+ según el plan. Filtrar inactivos en el detalle.</td></tr>
-    <tr><td class="id">A4</td><td class="tarea">Objetivo mensual "congelado" <span class="tag alta">ALTA</span></td><td class="mod">Configuración, Facturación, Resumen</td>
+    <tr><td class="id">A4</td><td class="tarea">Objetivo mensual "congelado" <span class="tag baja">HECHO</span></td><td class="mod">Configuración, Facturación, Resumen</td>
       <td>Que cada mes guarde su objetivo (ej: septiembre = 710.000 × 9,42% = USD 66.882) y el cuadro "Objetivos de KPIs" muestre el del mes en curso.</td>
       <td>El objetivo de cada mes se calcula en vivo desde el anual. Si cambiás el anual, cambian también los objetivos de meses ya cerrados y el bono de un mes pasado puede cambiar.</td>
       <td>Usar la columna <b>objetivo_usd</b> que ya existe en la tabla facturación: guardar el objetivo al empezar/cerrar el mes. Meses pasados = valor guardado; mes actual y futuros = calculado. Mostrar el del mes en curso en Configuración.</td></tr>
@@ -81,11 +81,11 @@
 <table>
   <thead><tr><th>#</th><th>Tarea</th><th>Módulo</th><th>Qué hace / para qué</th><th>Problema hoy</th><th>Solución propuesta</th></tr></thead>
   <tbody>
-    <tr><td class="id">M1</td><td class="tarea">Quitar "Alquiler Temporal" y comisión neta <span class="tag media">MEDIA</span></td><td class="mod">Operaciones, Ofertas, Dashboard</td>
+    <tr><td class="id">M1</td><td class="tarea">Quitar "Alquiler Temporal" y comisión neta <span class="tag baja">HECHO</span></td><td class="mod">Operaciones, Ofertas, Dashboard</td>
       <td>Simplificar: todos los alquileres son a largo plazo y se maneja solo comisión bruta.</td>
       <td>Los formularios ofrecen "Alquiler Temporal/Temporario" (con dos nombres distintos) y piden comisión neta, que no se usa.</td>
       <td>Sacar la opción y el campo de los formularios. En la base, neta se completa igual a bruta (no se rompe nada). Datos viejos se siguen viendo. Se retoma el neto cuando exista el módulo de movimientos.</td></tr>
-    <tr><td class="id">M2</td><td class="tarea">Nueva forma de trabajar Pagos <span class="tag media">MEDIA</span></td><td class="mod">Pagos (Cuentas)</td>
+    <tr><td class="id">M2</td><td class="tarea">Nueva forma de trabajar Pagos <span class="tag media">EN CURSO</span> (pagos que se suman y se aplican a los cargos: hecho · queda el diseño visual)</td><td class="mod">Pagos (Cuentas)</td>
       <td>Repensar cómo se ve y cómo se carga el día a día de cobros.</td>
       <td>El flujo actual resulta pesado. Además "Registrar pago" desde la fila del agente crea un pago aparte en vez de saldar las deudas pendientes.</td>
       <td>Sesión de diseño mañana: relevar cómo cobrás hoy y proponer 2 flujos. Unificar "Registrar pago" para que salde cargos pendientes.</td></tr>

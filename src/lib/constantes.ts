@@ -13,8 +13,8 @@ export const ESTADOS_OFERTA = [
   "Caídas",
 ] as const
 
-// El dominio de tipo de operación de las OFERTAS está mezclado entre pantallas
-// ("Temporal" en Dashboard, "Temporario" en el detalle): el server acepta ambas.
+// "Alquiler Temporal/Temporario" ya NO se ofrece en ningún formulario (todos los alquileres son a largo plazo),
+// pero el server lo sigue aceptando para poder editar ofertas y operaciones viejas que lo tengan.
 export const TIPOS_OPERACION_OFERTA_VALIDOS = ["Venta", "Alquiler", "Alquiler Temporal", "Alquiler Temporario"] as const
 
 // Idem tipologías: Ofertas usa "Depto", el Dashboard "Departamento", etc. Se acepta la unión.
