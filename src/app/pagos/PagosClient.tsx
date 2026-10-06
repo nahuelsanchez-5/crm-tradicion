@@ -5,7 +5,7 @@ import { fmtFecha } from "@/lib/format"
 import { MONTH_NAMES } from "@/lib/constantes"
 import { useState, useMemo, useTransition, useEffect, useCallback, Fragment } from "react"
 import { useRouter } from "next/navigation"
-import { crearPago, actualizarPago, crearGasto, crearGastoRecurrente, eliminarPago, registrarSaldoFavor, aplicarCreditoAPendientes } from "./actions"
+import { crearPago, registrarPagoEnCargo, crearGasto, crearGastoRecurrente, eliminarPago, registrarSaldoFavor, aplicarCreditoAPendientes } from "./actions"
 import { DollarSign, Loader2, MessageCircle, TrendingDown, TrendingUp, Repeat, CheckCircle2, Save, Trash2 } from "lucide-react"
 import StatusBadge from "@/components/StatusBadge"
 import { hoyArgentina } from "@/lib/fecha"
@@ -536,9 +536,11 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
     return pagado > 0 ? "Pagado" : "Pendiente"
   }, [nuevoForm.monto_pagado])
 
+  // En el modal de pago, `editForm.monto_pagado` es el pago NUEVO que se acaba de recibir (no el total acumulado)
   const editEstado = useMemo(() => {
     if (!selectedPago) return "Pendiente"
-    return calcEstado(Number(selectedPago.monto_debe), parseFloat(editForm.monto_pagado) || 0)
+    const yaPagado = Number(selectedPago.monto_pagado)
+    return calcEstado(Number(selectedPago.monto_debe), yaPagado + (parseFloat(editForm.monto_pagado) || 0))
   }, [selectedPago, editForm.monto_pagado])
 
   // ── Auto-fill monto for gasto recurrente ──────────
@@ -604,7 +606,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
 
   function openEditar(p: PagoRow) {
     setSelectedPago(p)
-    setEditForm({ monto_pagado: String(Number(p.monto_pagado)) })
+    setEditForm({ monto_pagado: "" })   // arranca vacío: se anota solo el pago nuevo
     setError("")
     setModal("editar")
   }
@@ -736,13 +738,12 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
     e.preventDefault()
     setError("")
     if (!selectedPago) return
-    const pagado = parseFloat(editForm.monto_pagado) || 0
+    const pago = parseFloat(editForm.monto_pagado.replace(",", ".")) || 0
+    if (pago <= 0) { setError("Anotá cuánto pagó ahora (mayor a 0)"); return }
 
     startTransition(async () => {
-      const result = await actualizarPago(selectedPago.id, {
-        monto_pagado: pagado,
-        estado:       editEstado,
-      })
+      // El server suma este pago a lo ya pagado y recalcula el estado
+      const result = await registrarPagoEnCargo(selectedPago.id, pago)
       if (result.error) setError(result.error)
       else { closeModal(); router.refresh() }
     })
@@ -1808,7 +1809,7 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
           <div className="crm-modal" style={{ maxWidth: "440px" }}>
             <ModalHeader
               title="Registrar Pago Parcial"
-              subtitle="Actualizá el monto abonado"
+              subtitle="Anotá solo el pago que recibís ahora: el sistema lo suma"
               onClose={closeModal}
             />
             <form onSubmit={handleEditar} style={{ padding: "20px" }}>
@@ -1818,55 +1819,88 @@ export default function PagosClient({ pagos, agentes, configBonos, mensajeWhatsa
               />
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <ReadOnlyField label="Concepto" value={selectedPago.concepto} />
-                <ReadOnlyField label="Monto que debe" value={fmtUSD(Number(selectedPago.monto_debe))} />
+                <ReadOnlyField label="Monto del cargo" value={fmtUSD(Number(selectedPago.monto_debe))} />
               </div>
-              <label style={{
-                display: "flex", alignItems: "center", gap: "8px",
-                padding: "10px 12px", borderRadius: "8px",
-                background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.25)",
-                cursor: "pointer", marginBottom: "10px", fontSize: "13px", fontWeight: 600, color: "#4ade80",
-              }}>
-                <input
-                  type="checkbox"
-                  checked={parseFloat(editForm.monto_pagado) === Number(selectedPago.monto_debe)}
-                  onChange={e => {
-                    if (e.target.checked) {
-                      setEditForm({ monto_pagado: String(selectedPago.monto_debe) })
-                    } else {
-                      setEditForm({ monto_pagado: "" })
-                    }
-                  }}
-                />
-                Pago completo ({fmtUSD(Number(selectedPago.monto_debe))})
-              </label>
-              <Field label="Nuevo monto pagado total (USD) *">
-                <input
-                  type="number" min="0" max={Number(selectedPago.monto_debe)} step="0.01"
-                  value={editForm.monto_pagado}
-                  onChange={e => setEditForm({ monto_pagado: e.target.value })}
-                  className="crm-input" required autoFocus
-                />
-              </Field>
-              <div style={{
-                display: "flex", alignItems: "center", gap: "8px",
-                padding: "10px 12px", borderRadius: "8px",
-                background: "var(--crm-surface-3)", border: "1px solid var(--crm-divider)",
-                marginBottom: "14px",
-              }}>
-                <span style={{ fontSize: "12px", color: "var(--crm-text-muted)", fontWeight: 500 }}>Nuevo estado:</span>
-                <StatusBadge estado={editEstado} />
-                <span style={{ marginLeft: "auto", fontSize: "12px", color: "var(--crm-text-muted)" }}>
-                  Saldo: <strong style={{ color: editEstado === "Pagado" ? "#059669" : "var(--crm-accent)" }}>
-                    {fmtUSD(Math.max(0, Number(selectedPago.monto_debe) - (parseFloat(editForm.monto_pagado) || 0)))}
-                  </strong>
-                </span>
-              </div>
+              {(() => {
+                const debe     = Number(selectedPago.monto_debe)
+                const yaPagado = Number(selectedPago.monto_pagado)
+                const faltaHoy = Math.max(0, Math.round((debe - yaPagado) * 100) / 100)
+                const pagoNuevo = parseFloat(editForm.monto_pagado.replace(",", ".")) || 0
+                const totalPagado = Math.round((yaPagado + pagoNuevo) * 100) / 100
+                const quedaDespues = Math.round((debe - totalPagado) * 100) / 100
+                const sePasa = quedaDespues < -0.01
+                return (
+                  <>
+                    {/* Situación actual */}
+                    <div className="grid grid-cols-2 gap-3" style={{ marginBottom: "10px" }}>
+                      <ReadOnlyField label="Ya pagó" value={fmtUSD(yaPagado)} />
+                      <ReadOnlyField label="Falta pagar" value={fmtUSD(faltaHoy)} />
+                    </div>
+
+                    <label style={{
+                      display: "flex", alignItems: "center", gap: "8px",
+                      padding: "10px 12px", borderRadius: "8px",
+                      background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.25)",
+                      cursor: "pointer", marginBottom: "10px", fontSize: "13px", fontWeight: 600, color: "#4ade80",
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={faltaHoy > 0 && Math.abs(pagoNuevo - faltaHoy) < 0.005}
+                        onChange={e => setEditForm({ monto_pagado: e.target.checked ? String(faltaHoy) : "" })}
+                      />
+                      Pagó todo lo que falta ({fmtUSD(faltaHoy)})
+                    </label>
+
+                    <Field label="Pago recibido ahora (USD) *">
+                      <input
+                        type="text" inputMode="decimal" placeholder="Ej: 33,44"
+                        value={editForm.monto_pagado}
+                        onChange={e => setEditForm({ monto_pagado: e.target.value })}
+                        className="crm-input" required autoFocus
+                      />
+                    </Field>
+
+                    {/* Cuenta en vivo: lo ya pagado + este pago = total, y cuánto queda */}
+                    <div style={{
+                      padding: "10px 12px", borderRadius: "8px",
+                      background: "var(--crm-surface-3)", border: `1px solid ${sePasa ? "rgba(248,113,113,0.4)" : "var(--crm-divider)"}`,
+                      marginBottom: "14px", fontSize: "12.5px", color: "var(--crm-text-muted)",
+                    }}>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span>Ya pagó</span><span>{fmtUSD(yaPagado)}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span>+ Este pago</span><span>{fmtUSD(pagoNuevo)}</span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, color: "var(--crm-text)", borderTop: "1px solid var(--crm-divider)", marginTop: "6px", paddingTop: "6px" }}>
+                        <span>Total pagado</span><span>{fmtUSD(totalPagado)} de {fmtUSD(debe)}</span>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px" }}>
+                        <span>Estado:</span>
+                        <StatusBadge estado={editEstado} />
+                        <span style={{ marginLeft: "auto" }}>
+                          {sePasa ? (
+                            <strong style={{ color: "#f87171" }}>Se pasa por {fmtUSD(Math.abs(quedaDespues))}</strong>
+                          ) : (
+                            <>Queda: <strong style={{ color: quedaDespues <= 0.005 ? "#4ade80" : "var(--crm-accent)" }}>{fmtUSD(Math.max(0, quedaDespues))}</strong></>
+                          )}
+                        </span>
+                      </div>
+                      {sePasa && (
+                        <p style={{ margin: "8px 0 0", fontSize: "11.5px" }}>
+                          Si pagó de más, cargá acá lo que falta y el resto como <b>saldo a favor</b>.
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )
+              })()}
               <ErrorBox />
               <div className="flex flex-col-reverse sm:flex-row gap-2.5 sm:justify-end sm:items-center pt-1">
                 <button type="button" onClick={closeModal} disabled={isPending} className="crm-btn-secondary w-full sm:w-auto min-h-[44px] px-5 py-[9px]">Cancelar</button>
                 <button type="submit" disabled={isPending} className="crm-btn-primary w-full sm:w-auto min-h-[44px] justify-center px-6 py-[9px]">
                   {isPending && <Loader2 size={14} className="animate-spin" />}
-                  {isPending ? "Guardando..." : "Actualizar pago"}
+                  {isPending ? "Guardando..." : "Registrar pago"}
                 </button>
               </div>
             </form>

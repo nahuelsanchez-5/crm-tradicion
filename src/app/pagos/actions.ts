@@ -328,6 +328,50 @@ export async function actualizarPago(
 }
 
 // ─────────────────────────────────────────────────────
+//  REGISTRAR UN PAGO SOBRE UN CARGO (se suma a lo ya pagado)
+// ─────────────────────────────────────────────────────
+// A diferencia de actualizarPago (que recibe el total acumulado), acá se informa solo el pago NUEVO:
+// el server lo suma a lo que ya estaba pagado, controla que no se pase de lo que falta y recalcula el estado.
+export async function registrarPagoEnCargo(id: string, monto: number) {
+  await requireSession()
+
+  if (!esUUIDValido(id))     return { error: "ID inválido" }
+  if (!esMontoValido(monto)) return { error: "El pago debe ser un número mayor a 0" }
+
+  const supabase = createServerClient()
+
+  const { data: cargo, error: fetchError } = await supabase
+    .from("pagos")
+    .select("concepto, monto_debe, monto_pagado")
+    .eq("id", id)
+    .maybeSingle()
+  if (fetchError) return { error: mensajeErrorDB(fetchError, "leer el cargo") }
+  if (!cargo)     return { error: "Cargo no encontrado" }
+  if (cargo.concepto === CONCEPTO_SALDO_FAVOR) return { error: "Esta fila es un saldo a favor, no un cargo" }
+
+  const debe      = Number(cargo.monto_debe)
+  const yaPagado  = Number(cargo.monto_pagado)
+  const pendiente = round2(debe - yaPagado)
+
+  if (pendiente <= EPS) return { error: "Este cargo ya está pagado por completo" }
+  if (monto > pendiente + EPS) {
+    return { error: `El pago (USD ${monto.toLocaleString("es-AR")}) supera lo que falta (USD ${pendiente.toLocaleString("es-AR")}). Si pagó de más, cargá el pago por lo que falta y el resto como saldo a favor.` }
+  }
+
+  const nuevoPagado = round2(yaPagado + monto)
+  const estado = calcularEstado(debe - EPS, nuevoPagado)
+
+  const { error } = await supabase
+    .from("pagos")
+    .update({ monto_pagado: nuevoPagado, estado })
+    .eq("id", id)
+  if (error) return { error: mensajeErrorDB(error) }
+
+  revalidatePath("/pagos")
+  return { success: true, pagado: nuevoPagado, queda: round2(Math.max(0, debe - nuevoPagado)), estado }
+}
+
+// ─────────────────────────────────────────────────────
 //  APLICAR SALDO A FAVOR A PENDIENTES EXISTENTES
 // ─────────────────────────────────────────────────────
 export async function aplicarCreditoAPendientes(data: {
