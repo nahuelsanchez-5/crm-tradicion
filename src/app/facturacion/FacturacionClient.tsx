@@ -248,7 +248,7 @@ export default function FacturacionClient({ rows, comisionesPorMes, anio: ANIO, 
             fontSize: "11px", fontWeight: 700, letterSpacing: "1.2px",
             textTransform: "uppercase" as const, color: "var(--crm-text-muted)", marginBottom: "6px",
           }}>
-            {esPlanificacion ? "Planificación" : "Objetivo anual"} · {fmtUSD(objetivoAnual)}
+            {esPlanificacion ? "Planificación" : "Objetivo anual"} · {objetivoAnual > 0 ? fmtUSD(objetivoAnual) : "sin objetivo cargado"}
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
             <h1 style={{

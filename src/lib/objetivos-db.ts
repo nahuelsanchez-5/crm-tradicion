@@ -41,6 +41,16 @@ export async function cargarObjetivosAnio(supabase: Supa, anio: number): Promise
 
   const mapa = Object.fromEntries((cfg ?? []).map((c) => [c.clave as string, c.valor as string]))
   const objetivoAnual = objetivoAnualDe(mapa, anio, hoy.anio)
+
+  // El año en curso todavía usa la clave histórica `obj_anual_usd`: se le crea su clave propia para que
+  // el año siga teniendo su objetivo cuando pase a ser un año anterior (si no, quedaría "sin objetivo").
+  if (anio === hoy.anio && !mapa[claveObjetivoAnual(anio)] && mapa[CLAVE_OBJETIVO_ANUAL]) {
+    const { error } = await supabase.from("config").upsert(
+      { clave: claveObjetivoAnual(anio), valor: mapa[CLAVE_OBJETIVO_ANUAL], etiqueta: `Objetivo anual ${anio} (USD)`, grupo: "facturacion" },
+      { onConflict: "clave" },
+    )
+    if (error) console.error("[objetivos] no se pudo crear la clave del año", anio, error.message)
+  }
   const filas = ((filasRaw ?? []) as unknown) as FilaFacturacion[]
 
   const objetivos: number[] = []
@@ -55,7 +65,8 @@ export async function cargarObjetivosAnio(supabase: Supa, anio: number): Promise
         objetivos.push(guardado)
       } else {
         objetivos.push(calculado)
-        porGuardar.push({ mes, objetivo: calculado, fila })
+        // Sin objetivo anual para ese año (calculado = 0): no se guarda nada
+        if (calculado > 0) porGuardar.push({ mes, objetivo: calculado, fila })
       }
     } else {
       objetivos.push(calculado)

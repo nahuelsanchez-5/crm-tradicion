@@ -13,14 +13,16 @@ export const claveObjetivoAnual = (anio: number) => `${CLAVE_OBJETIVO_ANUAL}_${a
 /**
  * Objetivo anual de un año a partir del mapa de config:
  *  1. la clave de ese año (obj_anual_usd_2027);
- *  2. si no existe y el año es el actual o uno pasado: la clave histórica `obj_anual_usd` (valor de siempre);
- *  3. si no existe y es un año futuro (planificación sin cargar): el objetivo del año en curso, como proyección.
+ *  2. año en curso sin clave propia: la clave histórica `obj_anual_usd` (el valor de siempre);
+ *  3. año futuro sin cargar (planificación): el objetivo del año en curso, como proyección;
+ *  4. año pasado sin clave propia: 0 = "sin objetivo". No se inventa uno con el valor de otro año.
  */
 export function objetivoAnualDe(config: Record<string, string | null | undefined>, anio: number, anioActual: number): number {
   const delAnio = config[claveObjetivoAnual(anio)]
   if (delAnio != null && delAnio !== "") return parseObjetivoAnual(delAnio)
-  if (anio <= anioActual) return parseObjetivoAnual(config[CLAVE_OBJETIVO_ANUAL])
-  return objetivoAnualDe(config, anioActual, anioActual)
+  if (anio === anioActual) return parseObjetivoAnual(config[CLAVE_OBJETIVO_ANUAL])
+  if (anio > anioActual) return objetivoAnualDe(config, anioActual, anioActual)
+  return 0
 }
 
 /** ¿El mes ya terminó (hora Argentina)? Un mes se cierra a las 00:00 del día 1 del mes siguiente. */
